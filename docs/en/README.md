@@ -21,7 +21,7 @@
 | | |
 | --- | --- |
 | Direct download (file carries the `alpha-` prefix) | [`alpha-HintIsolation.dll`](../alpha-HintIsolation.dll) |
-| Release page (recommended) | [Releases](https://github.com/lll111III111/HintIsolation/releases/latest) |
+| Release page (recommended) | [Releases](https://github.com/lll111III111/HintIsolation/releases) |
 
 The `alpha-` prefix only marks the build stage — the **assembly name stays `HintIsolation`**, so renaming the
 file changes nothing about loading, nor about how the bootstrap locates it.

@@ -22,7 +22,7 @@
 | 方式 | 链接 |
 | --- | --- |
 | 直接下载（仓库内，文件名带 `alpha` 前缀） | [`alpha-HintIsolation.dll`](alpha-HintIsolation.dll) |
-| 发行页（推荐，含版本说明） | [Releases](https://github.com/lll111III111/HintIsolation/releases/latest) |
+| 发行页（推荐，含版本说明） | [alpha-v1.0.0](https://github.com/lll111III111/HintIsolation/releases/tag/alpha-v1.0.0) ｜ [全部发行](https://github.com/lll111III111/HintIsolation/releases) |
 
 > 文件名前面的 `alpha-` 只是**标记这是 alpha 阶段的产物**；插件内部的程序集名始终是 `HintIsolation`，
 > 所以改名不影响加载，也不影响引导器找它。
