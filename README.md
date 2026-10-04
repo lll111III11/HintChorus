@@ -1,5 +1,10 @@
 <!-- language tabs: keep this block at the very top so the switcher is visible on GitHub -->
-**语言 / Language：** **中文（主）** ｜ [English](docs/en/README.md)
+## 语言 / Language
+
+| 语言 | 入口 |
+| --- | --- |
+| **中文（主）** | 本页即为中文说明 ｜ 完整技术文档：[docs/zh/](docs/zh/) |
+| English（辅） | [docs/en/README.md](docs/en/README.md) |
 
 ---
 

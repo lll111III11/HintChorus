@@ -1,5 +1,10 @@
 <!-- language tabs -->
-**语言 / Language：** [中文（主）](../README.md) ｜ **English**
+## Language / 语言
+
+| Language | Entry |
+| --- | --- |
+| **中文（主）** | [仓库首页中文说明](../../README.md) ｜ [完整技术文档](../zh/README.md) |
+| **English**（secondary） | this page |
 
 ---
 
