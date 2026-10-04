@@ -11,6 +11,8 @@
 # HintIsolation
 
 **SCP:SL 动态 UI 隔离底层** —— 让**互不相识的插件**在同一个屏幕上和平共处，谁也不用改写法。
+> **关键词 / Keywords**：SCP:SL ｜ SCP Secret Laboratory ｜ 秘密实验室 ｜ LabAPI ｜ EXILED ｜ Hint ｜ HUD ｜ 提示条 ｜ 屏幕文本 ｜ 多插件共存 ｜ 提示互相顶掉 ｜ 提示错位 ｜ UI 隔离 ｜ hint framework ｜ hint isolation ｜ UI isolation ｜ plugin compatibility ｜ zero code changes
+
 
 > 一句话：游戏只给了一个「提示条」通道，谁后发谁覆盖。本插件把这个通道变成**多个互不干扰的信口**，
 > 并且**按调用方自动归因** —— 插件照原来的样子写 `SendHint` / `SendBroadcast`，丢进去就能用。
@@ -27,7 +29,7 @@
 | 方式 | 链接 |
 | --- | --- |
 | 直接下载（仓库内，文件名带 `alpha` 前缀） | [`alpha-HintIsolation.dll`](alpha-HintIsolation.dll) |
-| 发行页（推荐，含版本说明） | [alpha-v1.0.0](https://github.com/lll111III111/HintIsolation/releases/tag/alpha-v1.0.0) ｜ [全部发行](https://github.com/lll111III111/HintIsolation/releases) |
+| 发行页（推荐，含版本说明） | [alpha-v1.0.0](https://github.com/lll111III111/HintIsolation/releases/latest) ｜ [全部发行](https://github.com/lll111III111/HintIsolation/releases) |
 
 > 文件名前面的 `alpha-` 只是**标记这是 alpha 阶段的产物**；插件内部的程序集名始终是 `HintIsolation`，
 > 所以改名不影响加载，也不影响引导器找它。

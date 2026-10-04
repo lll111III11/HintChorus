@@ -11,6 +11,8 @@
 # HintIsolation — dynamic UI isolation layer for SCP:SL
 
 **Let unrelated plugins share one screen without any of them changing a line of code.**
+> **Keywords**: SCP:SL ｜ SCP Secret Laboratory ｜ LabAPI ｜ EXILED ｜ hint ｜ HUD ｜ hint framework ｜ hint isolation ｜ UI isolation ｜ multiple plugins ｜ hints overwriting each other ｜ hint position ｜ plugin compatibility ｜ zero code changes ｜ CC0
+
 
 > The game exposes exactly **one** hint channel, and the last writer wins. HintIsolation turns that single
 > channel into **independent slots**, one per caller, attributed automatically from the call stack —
