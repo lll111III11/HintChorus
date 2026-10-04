@@ -1,0 +1,120 @@
+HintIsolation 补丁目标核验报告
+生成日期: 2026-10-04
+核验方式: 把本项目里每一处 Harmony 目标, 用**与运行时完全相同**的解析方式
+          (Harmony 的 AccessTools.TypeByName / AccessTools.Method) 对着**真实游戏服务器程序集**逐条解析。
+游戏程序集: D:\SteamLibrary\steamapps\common\SCP Secret Laboratory Dedicated Server\SCPSL_Data\Managed\
+            Assembly-CSharp.dll / Mirror.dll / NorthwoodLib.dll / UnityEngine.CoreModule.dll
+探针工程:   %TEMP%\PatchProbe (net48 控制台, 引用上述程序集, 只读不写游戏目录)
+结果:       RESULT=ALL_TARGETS_OK  (16/16 目标解析成功, 8/8 守卫类型名解析成功, 0 问题)
+
+====================================================================================
+一、Harmony 补丁目标 (16 条)
+====================================================================================
+编号 项目内补丁                          解析结果 (真实签名)                                     同名重载
+---- ----------------------------------- ------------------------------------------------------- --------
+ 1   HintDisplayShowPatch                HintDisplay.Show(Hint hint)                                  1
+ 2   BroadcastTargetAddElementPatch      Broadcast.TargetAddElement(NetworkConnection conn,
+                                       string data, ushort time, BroadcastFlags flags)               1
+ 3   BroadcastRpcAddElementPatch         Broadcast.RpcAddElement(string data, ushort time,
+                                       BroadcastFlags flags)                                         1
+ 4   BroadcastTargetClearElementsPatch   Broadcast.TargetClearElements(NetworkConnection conn)         1
+ 5   BroadcastRpcClearElementsPatch      Broadcast.RpcClearElements()                                  1
+ 6   GameConsoleSendToClientPatch        GameConsoleTransmission.SendToClient(string text,
+                                       string color)                                                 1
+ 7   CassieAddToQueuePatch               Cassie.CassieAnnouncementDispatcher.AddToQueue(
+                                       CassieAnnouncement announcement)  [扩展方法→静态]              1
+ 8   CassieClearAllPatch                 Cassie.CassieAnnouncementDispatcher.ClearAll()                1
+ 9   CompatPatches                       EncryptedChannelManager.TrySendMessageToClient(
+                                       string content, EncryptedChannel channel)  [实例方法]        4
+10   HitmarkerSendPatch                  Hitmarker.SendHitmarkerDirectly(NetworkConnection conn,
+                                       float size)                                                   2
+11   IntercomDisplaySerializePatch       PlayerRoles.Voice.IntercomDisplay.SerializeSyncVars(
+                                       NetworkWriter writer, bool forceAll)                          1
+12   AspectRatioSyncPatch                AspectRatioSync.UserCode_CmdSetAspectRatio__Single(
+                                       float aspectRatio)  [protected]                               1
+13   SssSendToAllPatch                   ServerSpecificSettingsSync.SendToAll()                        1
+14   SssSendToPlayersConditionallyPatch  ServerSpecificSettingsSync.SendToPlayersConditionally(
+                                       Func<ReferenceHub,bool> filter)                               1
+15   SssSendToPlayerPatch                ServerSpecificSettingsSync.SendToPlayer(ReferenceHub hub)     2
+16   SssSendToPlayerCollectionPatch      ServerSpecificSettingsSync.SendToPlayer(ReferenceHub hub,
+                                       ServerSpecificSettingBase[] collection, int? versionOverride)2
+
+结论: 16 条全部命中。「同名重载」列 >1 的 4 条 (9/10/15/16) 在代码里都显式写了参数类型数组,
+      因此 Harmony 能唯一定位, 不会抛 AmbiguousMatchException。
+
+====================================================================================
+二、前缀参数名逐条比对 (Harmony 要求前缀形参名/类型与目标一一对上)
+====================================================================================
+补丁                                    前缀签名                                          目标形参              判定
+--------------------------------------- ------------------------------------------------- ------------------ ----
+HintDisplayShowPatch                     Prefix(HintDisplay __instance, Hint hint)          hint               ✔
+BroadcastTargetAddElementPatch           Prefix(string data, ref ushort time, flags)        data/time/flags     ✔
+BroadcastRpcAddElementPatch              Prefix(string data, ref ushort time, flags)        data/time/flags     ✔
+BroadcastTargetClearElementsPatch        Prefix()                                          conn(可省略)         ✔
+BroadcastRpcClearElementsPatch           Prefix()                                          (无参)               ✔
+GameConsoleSendToClientPatch             Prefix(GameConsoleTransmission __instance,
+                                                string text, string color)                  text/color          ✔
+CassieAddToQueuePatch                    Prefix(CassieAnnouncement announcement)           announcement        ✔
+CassieClearAllPatch                      Prefix()                                          (无参)               ✔
+CompatPatches                            Prefix(EncryptedChannelManager __instance,
+                                                string content, EncryptedChannel channel)   content/channel     ✔
+HitmarkerSendPatch                       Prefix(NetworkConnection conn, float size)        conn/size           ✔
+IntercomDisplaySerializePatch             Prefix(IntercomDisplay __instance)                writer/forceAll(省略)✔
+AspectRatioSyncPatch                     Postfix(AspectRatioSync __instance)               aspectRatio(省略)    ✔
+SssSendToAllPatch                        Prefix()                                          (无参)               ✔
+SssSendToPlayersConditionallyPatch       Prefix(Func<ReferenceHub,bool> filter)            filter              ✔
+SssSendToPlayerPatch                     Prefix(ReferenceHub hub)                          hub                 ✔
+SssSendToPlayerCollectionPatch           Prefix(ref ServerSpecificSettingBase[] collection) collection          ✔
+
+结论: 无一条前缀声明了目标上不存在的形参 → 安装补丁时不会因 "Parameter not found" 抛异常。
+
+====================================================================================
+三、网络哨兵 (默认关闭; 由 NetworkPatches 用反射动态安装)
+====================================================================================
+目标                                                  解析结果
+----------------------------------------------------- --------------------------------------------
+Mirror.NetworkConnection.Send<T>(T message, int channelId = 0)  存在 (泛型方法定义, 2 参)
+  ├─ Send<HintMessage>                                 HintMessage = readonly struct : NetworkMessage  ✔
+  ├─ Send<CassieTtsPayload>                            CassieTtsPayload = readonly struct : NetworkMessage ✔
+  └─ Send<RpcMessage>                                  Mirror.RpcMessage = struct : NetworkMessage,
+                                                       field netId/componentIndex/functionHash        ✔
+Mirror.NetworkConnection.Send(ArraySegment<byte> segment, int channelId = 0)  存在 (virtual, 非泛型, 2 参) ✔
+  └─ PrefixByteStream(ArraySegment<byte> segment)      形参名 segment 对上                          ✔
+解析器 ResolveOpenSend()/ResolveByteStreamSend() 的筛选条件 (名字 Send + 参数个数 2 + 泛型/非泛型 + 首参类型)
+与上述真实签名完全吻合。
+
+====================================================================================
+四、PatchGuard 自愈清单 (12 条 = 8 个不同目标)
+====================================================================================
+清单里的类型名            解析结果 (AccessTools.TypeByName)
+------------------------- --------------------------------------------------
+"Hints.HintDisplay"       -> Hints.HintDisplay            ✔
+"Broadcast"               -> Broadcast                    ✔  (该类型 FullName 就是 "Broadcast", 位于全局命名空间)
+"GameConsoleTransmission" -> GameConsoleTransmission      ✔
+"CassieAnnouncementDispatcher" -> Cassie.CassieAnnouncementDispatcher ✔
+"EncryptedChannelManager" -> EncryptedChannelManager      ✔
+"Hitmarker"               -> Hitmarker                    ✔
+"IntercomDisplay"         -> PlayerRoles.Voice.IntercomDisplay ✔
+"AspectRatioSync"         -> AspectRatioSync              ✔
+
+结论: 12 条自愈条目全部能解析到类型, 不会出现"因为名字写错而静默不守"的情况。
+
+====================================================================================
+五、原生反射读取的属性 (非补丁, 但运行时一旦取不到就降级)
+====================================================================================
+属性                                  真实签名                                      判定
+------------------------------------- -------------------------------------------- ----
+TextHint.Text                         protected string Text { get; private set; }     ✔
+Hint.Parameters                       protected HintParameter[] Parameters { get; }   ✔
+TranslationHint.Translation           protected HintTranslations Translation { get; }  ✔
+(call: AccessTools.Property(...)?.GetGetMethod(nonPublic: true) → 三处都带 nonPublic)  ✔
+
+====================================================================================
+六、复现方式 (以后版本升级后可重跑)
+====================================================================================
+1. 构建探针:  cd %TEMP%\PatchProbe ; dotnet build .\PatchProbe.csproj -c Release
+2. 运行:      %TEMP%\PatchProbe\bin\Release\net48\PatchProbe.exe   (>nul 2>&1)
+3. 读结果:    %TEMP%\PatchProbe\bin\Release\net48\probe_result.txt
+   期望末行:  RESULT=ALL_TARGETS_OK
+提示: 探针只读游戏程序集, 不加载游戏、不写磁盘到游戏目录, 可安全反复运行。
+      若游戏版本升级后某条目标消失, 该行会变成 MISSING-TYPE / MISSING-METHOD。

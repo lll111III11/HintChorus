@@ -1,0 +1,594 @@
+【2026-10-04 修订说明】
+  1) 本指南里所有配置键名一律用 snake_case（例: intercept_third_party_ui），
+     与插件真正写出的 config.yml 一致；写成 InterceptThirdPartyUi 会被当成未知键忽略。
+  2) 完整 49 项默认配置见同目录 参考_默认config.yml；逐条补丁目标核验见 补丁目标核验报告_2026-10-04.txt。
+  3) 早期版本里 "Console / Cassie 预留" 的说法已过时：控制台、CASSIE、管理端聊天、
+     命中标记、对讲机显示屏都已接管（见 README 第三节表）。
+================================================================================
+HintIsolation —— API 调用写法指南 + 现有写法兼容对照
+版本: 1.0.0     生成: 2026-09-30
+定位: 纯 API 底层。不含任何玩家玩法逻辑, 不提供任何命令。
+部署: <AppData>\SCP Secret Laboratory\LabAPI\plugins\global\HintIsolation.dll
+================================================================================
+
+【本文件怎么读】
+
+  第一部分  怎么使用它的 API          <- 先看这里, 这是"标准写法"
+  第二部分  现在什么写法不用改         <- 再对照你自己的代码
+
+  第二部分按四类归档:
+    (c) 完全不用改   —— 原样调用, 行为一字不变
+    (d) 不用改写法   —— 原样调用, 调度由底层接管(白拿隔离)
+    (b) 需要改写法   —— 原样写不出你要的效果, 改用第一部分的口
+    (a) 已经完全失效 —— 原样调用会被拦住, 必须改用第一部分的口或改配置
+
+
+════════════════════════════════════════════════════════════════════════════════
+第一部分   怎么使用它的 API
+════════════════════════════════════════════════════════════════════════════════
+
+────────────────────────────────────────────────────────────────────────────────
+0. 先看前提: 本底层有两种运行状态
+────────────────────────────────────────────────────────────────────────────────
+
+  行为完全取决于配置, 先确认你在哪一档:
+
+  状态甲  intercept_third_party_ui: false   (默认, 最保守)
+          只有 SSS 强力复写在兜底。提示条与广播【完全不接管】,
+          原版写法行为 100% 不变。
+
+  状态乙  intercept_third_party_ui: true
+          额外接管 提示条(Hint) + 屏幕广播(Broadcast),
+          按"调用方插件"自动分配独立 UiId 信口。
+
+  第二部分里凡是标了 【需状态乙】的条目, 只在拦截层开启时才成立。
+
+  引入命名空间:
+      using HintIsolation;                     // 门面 UiIsolation
+      using HintIsolation.Core.Interfaces;     // 契约接口
+      using HintIsolation.Core.Enums;          // 枚举
+      using HintIsolation.Core.Models;         // UiScope / RegisterResult
+      using HintIsolation.Core.Identity;       // UiId 目录
+
+
+  ────────────────────────────────────────────────────────────────────────────
+  0.1 它是怎么把"一个口"变成"很多信口"的(务必先理解这一段)
+  ────────────────────────────────────────────────────────────────────────────
+
+  先说清一个前提: 屏幕提示在服务器端【没有状态】。
+
+  服务器端唯一的下发入口是 HintDisplay 上的 Show(Hint)。它做的事情只有两件:
+  查一下该玩家连接此刻是否被抑制, 然后把这条提示作为一条网络消息发给他的客户端。
+  它既不保存"当前显示的是什么", 也不排队。
+
+  关键结论:
+    · 服务器端【没有】"当前提示"变量, 也【没有】队列 —— 每次 Show 就是发一条消息。
+    · 真正"只有一个槽"的是【客户端】: 收到一条就替换掉当前显示的那条。
+    · 所以"扩大口"在服务器端唯一的着力点就是 —— 【谁把这条消息发出去】。
+
+  本底层的做法(四步):
+
+    ① 拦截   所有 Show(Hint) 调用(插件 + 游戏原生)都被拦下, 不直接放行。
+    ② 路由   沿调用栈解析出"这是谁、哪个方法、哪个偏移" → 派生 UiId
+             → 写入该 UiId 专属信口(信口内容 = 一串带到期时间的条目)。
+             本底层自己的合并结果带自研标记, 直接放行(防自环)。
+    ③ 合成   本核心成为【唯一写者】: 把全部存活信口的条目按优先级拼成一条
+             复合 TextHint(多行), 由它一个人发给客户端。
+    ④ 驱动   每次路由写入都【立刻】触发一次重算(40ms 快速通道),
+             而不是等 750ms 的整轮刷新 —— 所以调用方那一次 Show 被吞掉后,
+             内容几乎瞬时又以"合并结果里属于它的那一行"出现。
+
+  由此得到三个性质:
+    · 隔离: 每个 UiId 独立信口, 重叠写同一个 API 也不会串到一起, 各自分配 UiId。
+    · 不抢占: 屏幕内容恒等于"全部存活信口的合并", 没有谁把谁顶掉的窗口期。
+    · 各自到期: 每条条目有自己的到期时间, A 的 3 秒和 B 的 10 秒各走各的。
+
+  参数与副作用:
+    NativeHintPolicy   原生提示是否也纳入路由。默认 Isolate(纳入, 否则它会直发客户端
+                       顶掉合并结果, 与下一轮刷新来回覆盖 = 闪烁)。
+    HintRefreshInterval 整轮刷新间隔(默认 0.75s), 负责条目自然过期与续期下发。
+    快速通道 40ms 为内置常量, 空闲时目标集合为空, 不产生额外开销。
+
+
+────────────────────────────────────────────────────────────────────────────────
+1. 常驻状态栏(内容固定)
+────────────────────────────────────────────────────────────────────────────────
+
+  IHintChannel ch = UiIsolation.RegisterHintChannel(
+      "MyPlugin.Hud",                      // moduleId: 全局唯一, 被占用则返回 null(绝不抢占)
+      "HUD",                               // displayName: 行首 [标签]
+      "初始内容",                          // 初始文本
+      duration: 3f,                        // 持续时长(秒)
+      priority: (byte)HintChannelPriority.High);   // 越小越靠上
+
+  ch.SetText("血量 75");                   // 更新内容, 下次刷新自动重发
+  ch.Enabled      = false;                 // 单独停用本通道(不影响别人)
+  ch.ShowLabel    = true;                  // 是否显示 [HUD]
+  ch.Alignment    = HintAlignment.Right;   // Left / Center / Right
+  ch.Duration     = 5f;
+  ch.Priority     = 100;
+  ch.ReceiverFilter = hub => !hub.isLocalPlayer;   // 按游戏原生 ReferenceHub 过滤
+
+  UiIsolation.GetHintChannel("MyPlugin.Hud");       // 查询
+  UiIsolation.UnregisterHintChannel("MyPlugin.Hud"); // 注销(只删自己的)
+  UiIsolation.HintChannels;                          // 全部通道 ID
+
+  要点: moduleId 是你自己起的名, 全局唯一。多个插件各自注册各自的, 互不覆盖。
+
+
+────────────────────────────────────────────────────────────────────────────────
+2. 每玩家不同的动态内容(推荐做法)
+────────────────────────────────────────────────────────────────────────────────
+
+  底层每个刷新周期会对每个玩家调用一次 TryGetText, 你【不要】再自己起计时器刷 UI。
+
+  public sealed class MyHud : IHintTextSource
+  {
+      public string ModuleId    => "MyPlugin.Hud";
+      public string DisplayName => "状态";
+      public byte   Priority    => (byte)HintChannelPriority.Low;
+
+      public bool TryGetText(ReferenceHub hub, out string text)
+      {
+          text = $"HP {hub.playerStats.GetModule<HealthStat>().CurValue:F0}";
+          return true;      // 返回 false = 该玩家这一行不显示
+      }
+  }
+
+  UiIsolation.RegisterHintSource(new MyHud());
+  UiIsolation.UnregisterHintSource("MyPlugin.Hud");
+  UiIsolation.HintSources;
+
+  要点: 底层完全不感知你的玩法逻辑, 只负责合并渲染。
+
+
+────────────────────────────────────────────────────────────────────────────────
+3. 一次性提示(升级 / 击杀 / 结算)
+────────────────────────────────────────────────────────────────────────────────
+
+  UiIsolation.ShowTransient(hub, "<color=#32CD32>击杀 +1</color>", 3f);  // 原生类型
+  UiIsolation.ShowTransient(player, "LabAPI 包装类重载", 3f);
+
+  UiIsolation.Broker.ClearTransients(hub);   // 清某玩家的一次性提示
+  UiIsolation.Broker.Enabled = false;        // 暂停全部下发
+  UiIsolation.Broker.ReSort();               // 改过 Priority 后重排
+  UiIsolation.Broker.IsRunning;
+
+  要点: 一次性提示与常驻通道共存, 不会被常驻内容顶掉。
+
+
+────────────────────────────────────────────────────────────────────────────────
+4. 玩家设置页控件(SSS)
+────────────────────────────────────────────────────────────────────────────────
+
+  RegisterResult r = UiIsolation.RegisterSssPorts("MyPlugin", new ServerSpecificSettingBase[]
+  {
+      new SSGroupHeader("我的插件"),
+      new SSButton(41101, "治愈", "点我", 0.5f),
+      new SSSliderSetting(41102, "数值", 0f, 100f, 50f, true),
+  });
+
+  r.Success;      // 是否成功
+  r.Conflicts;    // 失败时列出撞车的 SettingId
+  r.Message;
+
+  UiIsolation.SubscribeSssValue("MyPlugin", (hub, setting) =>
+  {
+      if (setting.SettingId == 41101) Player.Get(hub)?.Heal(30f);
+  });
+  UiIsolation.UnsubscribeSssValue(handler);
+
+  UiIsolation.SubscribeSssStatus("MyPlugin", (hub, status) => { /* 玩家开关设置页 */ });
+  UiIsolation.UnsubscribeSssStatus(handler);
+
+  UiIsolation.UnregisterSssPorts("MyPlugin");
+  UiIsolation.SssPorts;
+
+  要点一: 给自己划一段互不重叠的 SettingId。
+          经验值—— EXPAS 用 258-267, TrainBot 用 190-241。撞车会被拒绝注册。
+  要点二: 不要自己去动 ServerSpecificSettingsSync.DefinedSettings,
+          用这里的 RegisterSssPorts, 底层会做增量合并。
+
+
+────────────────────────────────────────────────────────────────────────────────
+5. 生命周期作用域(自动注销, 不漏)
+────────────────────────────────────────────────────────────────────────────────
+
+  using UiScope scope = UiIsolation.CreateScope("MyPlugin");
+
+  scope.RegisterChannel("MyPlugin.A", "A", "内容");
+  scope.RegisterSource(new MyHud());
+  scope.RegisterSssPorts("MyPlugin", settings);
+  scope.SubscribeSssValue("MyPlugin", handler);
+
+  scope.ModuleId;  scope.Count;  scope.IsDisposed;
+
+  // 离开 using 块 -> 逆序自动全部注销。不会漏, 也不会误清别人的注册项。
+  // 插件热重载 / Disable 时尤其有用。
+
+
+────────────────────────────────────────────────────────────────────────────────
+6. 原生事件隔离(防一个插件异常拖垮整条事件链)
+────────────────────────────────────────────────────────────────────────────────
+
+  // LabAPI 的 PlayerEvents / ServerEvents 自带逐订阅者隔离, 直接用, 不需要包。
+  // 只有"游戏原生 .NET event"才需要这一层:
+
+  SomeNativeEvent += UiIsolation.WrapEvent("MyPlugin", () => { });
+  SomeNativeEvent += UiIsolation.WrapEvent<int>("MyPlugin", n => { });
+  SomeNativeEvent += UiIsolation.WrapEvent<A, B>("MyPlugin", (a, b) => { });
+  SomeNativeEvent += UiIsolation.WrapEvent<A, B, C>("MyPlugin", (a, b, c) => { });
+
+  // 卸载时用同一个返回值做对称 -=
+  //   myHandler = UiIsolation.WrapEvent(...); SomeNativeEvent += myHandler;
+  //   SomeNativeEvent -= myHandler;
+
+
+────────────────────────────────────────────────────────────────────────────────
+7. 广播
+────────────────────────────────────────────────────────────────────────────────
+
+  保持原版写法即可(见第二部分 (d)), 不需要改:
+
+  player.SendBroadcast("回合开始", 5);
+  Server.SendBroadcast("全服公告", 10);
+
+  注意: 若你要"发之前先清屏", 原版的 shouldClearPrevious 参数会失效,
+        见第二部分 (a)。这种情况建议改用一次性提示或通道。
+
+
+────────────────────────────────────────────────────────────────────────────────
+8. 查询与诊断
+────────────────────────────────────────────────────────────────────────────────
+
+  查询:
+      UiIsolation.AttributedPlugins;                     // 被自动归因到的插件清单
+      UiIsolation.GetSlots();                            // 全部信口
+      UiIsolation.GetSlots(UiSurface.Hint);              // 按 UI 表面
+      UiIsolation.GetSlots(UiSurface.Hint, "插件名");     // 按插件
+      UiIsolation.UiIds.Records;                         // UiId 明细(谁/哪个方法/命中几次)
+
+  表面覆盖情况:
+      foreach (UiSurfaceDescriptor s in UiIsolation.Surfaces)
+          { s.Surface; s.DisplayName; s.Implemented; s.Handler; s.EntryPoint; }
+      UiSurfaceRegistry.Implemented;   // 已接管
+      UiSurfaceRegistry.Pending;       // 未接管的盲区
+
+  报告:
+      UiIsolation.CreateDiagnosticsReport();           // 完整报告(多行富文本)
+      UiIsolation.CaptureStatistics();                 // 统计快照
+      HintIsolationDiagnostics.CreateUiIdReport();     // 只要 UiId 明细
+      HintIsolationDiagnostics.CreateSurfaceReport();  // 只要表面覆盖
+
+  UiId 管理(给信口起别名 / 合并两个信口):
+      UiIsolation.UiIds.SetAlias("A1B2C3D4", "我的HUD");
+      UiIsolation.UiIds.Merge("A1B2C3D4", "E5F6A7B8");
+      UiIsolation.UiIds.Unmerge("A1B2C3D4");
+
+  拦截层开关:
+      UiIsolation.IsThirdPartyInterceptionEnabled;
+      UiIsolation.EnableThirdPartyInterception();
+      UiIsolation.DisableThirdPartyInterception();
+      UiIsolation.Interception.Granularity = UiIdGranularity.Method;  // Assembly/Type/Method/CallSite
+
+  SSS 强力复写:
+      UiIsolation.EnableSssForceRewrite();
+      UiIsolation.DisableSssForceRewrite();
+      UiIsolation.IsSssForceRewriteEnabled;
+      UiIsolation.ForceRewriteSettings();     // 手动立即复写一次
+      UiIsolation.SssForceRewriteCount;       // 累计强制复写次数
+
+  接口单例(依赖注入风格, 与静态门面等价):
+      IUiIsolation ui = UiIsolation.Service;
+
+
+────────────────────────────────────────────────────────────────────────────────
+9. 枚举速查
+────────────────────────────────────────────────────────────────────────────────
+
+  HintChannelPriority    Lowest=64 / Low=96 / Medium=128 / High=160 / Highest=192
+                         (数值越小越靠上)
+
+  HintAlignment          Left(默认, 不输出标签) / Center / Right
+
+  NativeHintPolicy       Isolate(默认, 原生提示也并入隔离信口) / PassThrough(放行原生, 会与合并结果交替闪烁)
+
+  UiIdGranularity        Assembly / Type / Method(默认) / CallSite
+
+  UiSurface              Hint / Broadcast / Console / Cassie / AdminChat / HitMarker / ServerSettings（均已接管；ServerSettings 指设置页）
+
+  HintOrigin             Plugin / Attributed / Native / Transient
+
+
+────────────────────────────────────────────────────────────────────────────────
+10. 让存量插件零改动生效
+────────────────────────────────────────────────────────────────────────────────
+
+  配置里打开:
+
+      intercept_third_party_ui: true
+      AutoAttributeThirdPartyUi: true
+
+  之后插件继续写 player.SendHint(...) / hintDisplay.Show(...) /
+  player.SendBroadcast(...), 一行都不用改, 就会各自拿到独立 UiId 信口。
+
+  这就是第二部分 (d) 类的内容。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第二部分   现在什么写法不用改 —— 现有写法兼容对照
+════════════════════════════════════════════════════════════════════════════════
+
+────────────────────────────────────────────────────────────────────────────────
+2.1 总览
+────────────────────────────────────────────────────────────────────────────────
+
+  你的写法                                 状态甲   状态乙        归类
+  ─────────────────────────────────────────────────────────────────────────────
+  player.SendHint(文本, 时长)              不变   自动隔离        (d)
+  hub.hints.Show(new TextHint(...))        不变   自动隔离        (d)
+  SendHint(文本, parameters, ...)          不变   放行原生        (d)+特例
+  player.SendBroadcast(文本, 时长)          不变   去重+独立信口    (d)
+  Server.SendBroadcast(文本, 时长)          不变   去重+独立信口    (d)
+  DefinedSettings = 我的数组; SendToAll()   不变   不变(不被清掉)   (c)
+
+  player.ClearBroadcasts()                 不变   被吞            (a)
+  SendBroadcast(..., shouldClearPrevious)  不变   清除部分失效     (a)
+  第三方 Hint 框架(自 patch Show)            共存   被压制失效       (a)
+
+  player.SendConsoleMessage(...)           不变   不变            (c)
+  TextToy / PrimitiveObjectToy 等           不变   不变            (c)
+  Cassie.Message(...)                      不变   不变            (c)
+  player.SendHitMarker(...)                不变   不变            (c)
+  SendToPlayer(hub, collection, version)   不变   不拦            (c)
+  PlayerEvents.* / ServerEvents.*          不变   不变            (c)
+  Plugin<TConfig> / Config / SaveConfig     不变   不变            (c)
+
+  其余所有非 UI 的 LabAPI(Heal / SetRole / Damage / AddItem /
+  Round.* / Server.* / Map.* / Warhead.* )   不变   不变            (c)
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.2 (c) 完全不用改 —— 原样调用, 行为一字不变
+────────────────────────────────────────────────────────────────────────────────
+
+  这些根本不经过被接管的通道, 也不需要你动任何代码:
+
+  · 控制台消息      player.SendConsoleMessage(msg, color)
+  · 世界空间文字     TextToy.Create(...) / PrimitiveObjectToy / LightSourceToy
+                    (整个 AdminToy 家族, 是世界物体不是屏幕 UI)
+  · CASSIE 语音     Cassie.Message(...) / Announcer
+  · 命中标记        player.SendHitMarker(size)
+  · SSS 分页重载    ServerSpecificSettingsSync.SendToPlayer(hub, collection, version)
+                    (这个重载由官方分页示例使用, 底层【刻意不拦】,
+                     因为强改会破坏"显式指定集合"的分页语义)
+  · 所有非 UI API   player.Heal / SetRole / Damage / AddItem / SetAmmo ...
+                    Round.* / Server.* / Map.* / Warhead.* / Cassie.*
+  · 所有事件订阅    PlayerEvents.* / ServerEvents.*
+                    (LabAPI 自带逐订阅者异常隔离, 不需要额外包裹)
+  · 插件骨架        Plugin<TConfig> / LoadConfigs / Config / SaveConfig / Priority
+  · SSS 原始写法    ServerSpecificSettingsSync.DefinedSettings = 我的数组; SendToAll();
+                    你的设置项照常生效。区别只是: 底层会在下发前把"本核心注册的"
+                    设置项拼回数组 —— 也就是说, 这个经典写法【不会再清掉别人的 UI】了。
+                    这是官方文档警告过的坑, 现在被自动兜住, 对你是纯收益。
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.3 (d) 不用改写法 —— 原样调用, 调度由底层接管【需状态乙】
+────────────────────────────────────────────────────────────────────────────────
+
+  这一类是"白拿的收益": 插件作者完全不需要知道本底层存在。
+
+  · player.SendHint(文本, 时长)
+    → 自动归因到该插件自己的 UiId 信口。文字照常显示, 并且不再被别的插件顶掉。
+      语义变化: 进入合并管线 —— 按优先级排序、同文本去重续期、
+      受 MaxEntries / MaxDuration 上限约束。
+
+  · hub.hints.Show(new TextHint(...))
+    → 同上。原生写法与 LabAPI 封装走的是同一个 HintDisplay.Show, 归因路径一致。
+
+  · player.SendBroadcast(文本, 时长) / Server.SendBroadcast(文本, 时长)
+    → 首次出现【零延迟放行】; 存活期内重复的相同文本被去重抑制
+      (防止插件"每秒重发"把同一条广播叠成 N 条)。
+
+  · ServerSpecificSettingsSync.DefinedSettings = 我的数组; SendToAll();
+    → 同 (c), 两个状态下都安全。
+
+  副作用说明: 合并后玩家看到的是"一条复合提示", 由底层统一排版。
+              如果你依赖原版"后发覆盖先发"的观感, 请关掉 intercept_third_party_ui。
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.4 (b) 需要改成第一部分的 API
+────────────────────────────────────────────────────────────────────────────────
+
+  这些【不是坏了】, 而是原版做不到你要的效果, 换第一部分的入口才成立:
+
+  你想要的                       原版为何不行                     改成
+  ─────────────────────────────────────────────────────────────────────────────
+  每个玩家不同的常驻 HUD         只能自己起计时器反复 SendHint,    第 2 节
+                                 且会被别人顶掉                   RegisterHintSource
+                                 + IHintTextSource
+
+  多个信息块同时共存              Hint 通道全局唯一, 后发覆盖先发   第 1 节
+                                                                 RegisterHintChannel
+                                                                 多通道
+
+  精确控制显示顺序                只能靠富文本硬拼                  通道的 Priority
+                                                                 (64/96/128/160/192)
+
+  右对齐 / 居中                   要自己写 <align=...>              通道的 Alignment
+
+  只发给部分玩家                  要自己 if 判断逐人发              通道的 ReceiverFilter
+
+  在设置页放控件                  要自己动 DefinedSettings,         第 4 节
+                                 并踩"清掉别人"的坑               RegisterSssPorts
+
+  卸载时干净退场                  容易漏还原数组                    第 5 节 UiScope
+
+  排查"这条字是谁写的"            做不到                            第 8 节
+                                                                 UiIds.Records
+
+  精确控制"清屏后重发"            见 (a), 原版已失效                改用 ShowTransient
+                                                                 或独立通道
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.5 (a) 已经完全失效 —— 必须改写法或改配置
+────────────────────────────────────────────────────────────────────────────────
+
+  (a-1) player.ClearBroadcasts()  /  Server.ClearBroadcasts()
+        状态: 状态乙下【被吞掉】, 广播清不掉。
+        原因: 它内部走 Broadcast.TargetClearElements, 正是底层打的补丁。
+              判定调用方是插件时直接抑制。
+        目的: 防止一个插件把【别人的】广播一起清掉。
+        不受影响: 管理端命令 / 游戏自身 / 服务器控制台。
+        恢复原行为: 配置 BlockThirdPartyBroadcastClear: false
+        替代写法:   如果你只想控制自己的内容, 用第 1/2 节的通道或第 3 节的
+                    ShowTransient —— 它们天然只影响自己那一份。
+
+  (a-2) player.SendBroadcast(文本, 时长, flags, shouldClearPrevious: true)
+        状态: 状态乙下"清除部分"失效, 等价于 shouldClearPrevious: false。
+        原因: 已核实 LabApi 源码(Server.cs L473) ——
+              shouldClearPrevious 为真时先调 ClearBroadcasts(player),
+              再调 Broadcast.TargetAddElement。前半段被补丁吞掉。
+        实际表现: 广播【照常发出】, 只是不再清掉别人已有的广播。
+        恢复原行为: 同 (a-1), 配置 BlockThirdPartyBroadcastClear: false
+
+  (a-3) 自己 Harmony patch 了 HintDisplay.Show 的第三方 UI 框架
+        (典型: HintServiceMeow 这类"接管提示显示"的框架)
+        状态: 状态乙下【整个框架失效】。
+        原因: 底层的补丁前缀带 [HarmonyPriority(Priority.First)] (800, 最高档),
+              且对插件发出的提示【返回 false 吞掉调用】。
+              Harmony 的规则是 prefix 返回 false 就短路 —— 对方的前缀根本不会执行。
+        这是最需要提前知道的一条:
+              【两套接管 HintDisplay.Show 的方案不能同时开。】
+        处理办法(二选一):
+              1) 卸载/停用该框架, 用本底层统一接管;
+              2) 把 intercept_third_party_ui 设为 false ——
+                 此时本底层只做 SSS 兜底, 完全不碰提示条, 双方共存。
+
+  (a-4) 注意: 下面这条【没有】失效, 不要误判
+        ServerSpecificSettingsSync.SendToPlayer(hub, collection, versionOverride)
+        这个重载底层刻意不拦, 分页语义完整保留。见 (c)。
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.6 特例: 带 {0} 占位符的提示【必读】
+────────────────────────────────────────────────────────────────────────────────
+
+  这类写法(客户端插值的动态数值)会被底层【放行原生】, 不参与隔离:
+
+      player.SendHint("剩余 {0} 发",
+          new HintParameter[] { new IntHintParameter(ammo) }, null, 3f);
+
+      hub.hints.Show(new TextHint("剩余 {0} 发",
+          new HintParameter[] { new IntHintParameter(ammo) }, null, 5f));
+
+  原因:
+      {0} 是客户端用 HintParameter 实时插值的。底层的合并渲染只搬运纯文本,
+      无法保真插值 —— 如果硬接管, {0} 会渲染成空串。
+      数据丢失比"不隔离"更糟, 所以底层检测到文本含 { 就原样放行。
+
+  影响:
+      这类提示的写法与行为【完全不变】(归入 (d)),
+      代价是【不参与 UiId 隔离】, 仍可能被其它插件的提示顶掉。
+
+  想让它也隔离:
+      自己在插件里先插值成纯文本再发 ——
+
+      UiIsolation.ShowTransient(hub, $"剩余 {ammo} 发", 3f);   // 已是纯文本 -> 走隔离管线
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.7 社区插件专题
+────────────────────────────────────────────────────────────────────────────────
+
+  本服的 plugin 目录里既有 LabAPI 插件, 也有 Exiled 桥接的插件。
+
+  (1) LabAPI 插件  (AutoTFF-LabApi、CustomDoor、MapLightBooster、NamePrefix ...)
+      走 LabAPI 包装类 -> 最终落到同一个 HintDisplay.Show / Broadcast.*
+      → 归入 (d): 写法不用改, 状态乙下自动获得独立信口。
+
+  (2) Exiled 插件  (通过 Exiled.Loader.dll 桥接运行)
+      Exiled 的 Player.ShowHint / Player.Broadcast / Player.CurrentHint
+      内部同样调用 HintDisplay.Show, 命中同一个拦截点。
+      → 归入 (d): 写法不用改。
+      → 例外: Exiled 的 CurrentHint 是"自己维护一份提示"的写法,
+              与我们的合并管线并存时, 它那一份仍由它自己显示。
+
+  (3) 自带显示框架的插件  (HintServiceMeow 类)
+      → 归入 (a-3): 状态乙下会被压制。必须先决定用哪一套。
+
+  (4) 只用世界物体做 UI 的插件  (TextToy / 光源 / 载具类)
+      → 归入 (c): 完全不受影响。
+
+  (5) 只做玩法逻辑的插件  (EXPAS、TrainBot、BGMCC 等)
+      → 归入 (c): 没碰屏幕 UI 通道, 完全不受影响。
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.8 快速决策: 我该不该开拦截层?
+────────────────────────────────────────────────────────────────────────────────
+
+  情形一: 你只是被"设置页 UI 全部消失"坑过, 提示条其实还行
+          配置:  intercept_third_party_ui: false
+                  EnableSssRegistry: true
+                  EnableSssForceRewrite: true
+          结果:  提示/广播行为 100% 不变; 设置页有 SSS 兜底, 不会再被清空。
+                  这是推荐的第一步。
+
+  情形二: 你确实被"多个插件提示互相顶掉"烦到
+          配置:  intercept_third_party_ui: true
+                  InterceptHints: true
+                  InterceptBroadcasts: true
+                  AutoAttributeThirdPartyUi: true
+                  UiIdGranularity: Method
+          前置:  先把服务器上【自己也 patch HintDisplay.Show】的框架停用, 否则它们失效。
+          结果:  所有插件的提示各占一个信口, 不再互相覆盖。
+
+  情形三: 有插件依赖 ClearBroadcasts() 清屏
+          配置:  BlockThirdPartyBroadcastClear: false
+          结果:  (a-1)(a-2) 的行为恢复, 代价是放弃"禁止插件清别人广播"的隔离。
+
+  情形四: 原生提示的观感必须保持原版(不允许和插件 HUD 拼在一起)
+          配置:  NativeHintPolicy: PassThrough
+          代价:  原生提示会直发客户端顶掉合并结果, 与下一轮刷新来回覆盖
+                 —— 表现为闪烁。这是唯一需要这一档的场合。
+          注:    默认是 Isolate —— 原生提示同样并进合并结果, 玩家能同时看到,
+                 排版服从底层规则, 但【不再互相顶】。
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.9 排障: 我的提示去哪了?
+────────────────────────────────────────────────────────────────────────────────
+
+  代码侧:
+      UiIsolation.AttributedPlugins;                       // 被归因到的插件清单
+      UiIsolation.UiIds.Records;                           // 信口 <-> 插件/方法/命中次数
+      UiIsolation.GetSlots(UiSurface.Hint, "你的插件名");    // 你占的信口
+      UiIsolation.CreateDiagnosticsReport();               // 完整报告
+
+  日志关键词:
+      已在其它插件之前安装 UI 拦截补丁(顺序 #N)   -> 引导器抢位成功
+      已安装 SSS 强力复写补丁                     -> SSS 最后一道防线就位
+      检测到有插件整体覆盖了 ... DefinedSettings   -> 防劫持守卫已自动合并恢复
+      注册口 'xxx' 已存在                         -> moduleId 被占用
+      SettingId 冲突, 已拒绝注册                  -> SSS 端口撞车, 改自己的 ID 段
+      抛异常(已放行原生) / 已隔离                 -> 拦截层自身或插件回调异常, 已安全降级
+
+  归因显示成"公共库名"而不是你的插件名:
+      说明你的插件是通过某个共享库发的提示 —— 属正常现象, 隔离依然生效。
+
+
+────────────────────────────────────────────────────────────────────────────────
+2.10 一句话总结
+────────────────────────────────────────────────────────────────────────────────
+
+  绝大多数原版写法【照常能用】。
+  真正需要你动手的只有三类:
+      1) 想做出原版做不到的 UI(常驻多块 / 每玩家不同 / 精确顺序) -> 用第一部分 1-3 节;
+      2) 设置页控件                                -> 用第一部分第 4 节;
+      3) 广播的"清除"类操作 + 自带 Show 补丁的框架  -> 见 2.5, 改配置或换写法。
+
+================================================================================

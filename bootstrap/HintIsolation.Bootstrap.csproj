@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!--
+	  HintIsolation 抢先引导器(0 前缀)。
+	  由主项目 HintIsolation.dll 在运行时从内嵌资源释放为
+	  plugins\global\0HintIsolation.Bootstrap.dll —— 文件名以 0 开头,
+	  在 LabAPI 按同优先级枚举时会排在前面, 从而抢先 Enable。
+	  本工程刻意保持极小依赖(只引用 LabApi), 避免引导阶段出现解析问题。
+	-->
+
+	<PropertyGroup>
+		<TargetFramework>net48</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<AssemblyName>HintIsolation.Bootstrap</AssemblyName>
+		<RootNamespace>HintIsolation.Bootstrap</RootNamespace>
+		<Version>1.0.0</Version>
+		<PlatformTarget>x64</PlatformTarget>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<ManagedDir>D:\SteamLibrary\steamapps\common\SCP Secret Laboratory Dedicated Server\SCPSL_Data\Managed</ManagedDir>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="LabApi">
+			<HintPath>$(ManagedDir)\LabApi.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="Assembly-CSharp">
+			<HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="netstandard">
+			<HintPath>$(ManagedDir)\netstandard.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+	</ItemGroup>
+
+</Project>

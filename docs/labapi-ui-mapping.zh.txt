@@ -1,0 +1,333 @@
+﻿================================================================================
+LabApi UI 接口 —— 反向对照
+从 LabApi 源码反查: 每个 UI 接口最终落到引擎的哪一次调用
+================================================================================
+生成: 2026-09-30
+对照源码: LabAPI-master\LabApi       版本 1.1.7 (net48 / LangVersion 12.0)
+配合阅读: API调用写法指南.txt (插件作者视角)
+================================================================================
+
+【为什么做这份对照】
+
+  这份对照从【LabApi 源码】出发, 逐个成员往上追:
+
+      LabApi 的每一个 UI 成员  →  它内部真正调用的方法  →  是否经过本底层的补丁
+
+  目的是回答一个问题: "本底层的补丁点, 是否覆盖了 LabApi 里所有通往 UI 的写法?"
+  答案是: 通往"提示条"和"屏幕广播"的, 100% 覆盖; 另有 4 个落点在别的表面(见第三部分)。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第一部分   全部 UI 接口总表
+════════════════════════════════════════════════════════════════════════════════
+
+  ┌────────────────────────────────────┬──────────────────────────────────────┬──────┐
+  │ LabApi 成员                        │ 底层落点                             │ 本底层│
+  ├────────────────────────────────────┼──────────────────────────────────────┼──────┤
+  │ Player.SendHint ×3 重载            │ HintDisplay.Show                     │ 已接管│
+  │ Player.SendBroadcast               │ Broadcast.TargetAddElement           │ 已接管│
+  │ Server.SendBroadcast(全服)         │ Broadcast.RpcAddElement              │ 已接管│
+  │ Server.SendBroadcast(单个)         │ Broadcast.TargetAddElement           │ 已接管│
+  │ Player.ClearBroadcasts()           │ Broadcast.TargetClearElements        │ 已接管│
+  │ Server.ClearBroadcasts()           │ Broadcast.RpcClearElements           │ 已接管│
+  │ Server.ClearBroadcasts(player)     │ Broadcast.TargetClearElements        │ 已接管│
+  ├────────────────────────────────────┼──────────────────────────────────────┼──────┤
+  │ Player.SendConsoleMessage          │ GameConsoleTransmission.SendToClient │ 预留  │
+  │ Player.SendHitMarker               │ Hitmarker.SendHitmarkerDirectly      │ 非提示│
+  │ Announcer.Message 等(CASSIE)       │ CassieAnnouncementDispatcher.*       │ 预留  │
+  │ Server.SendAdminChatMessage ×2     │ EncryptedChannelManager.…AdminChat   │ 未接管│
+  │ TextToy.Create                     │ AdminToy 网络生成                    │ 必然不│
+  │                                    │                                      │ 受影响│
+  ├────────────────────────────────────┼──────────────────────────────────────┼──────┤
+  │ (无 —— LabApi 未包装)              │ ServerSpecificSettingsSync.*         │ 已接管│
+  └────────────────────────────────────┴──────────────────────────────────────┴──────┘
+
+  注: 最后一行是个反例 —— SSS 不是通过 LabApi 走的, 而是插件直接写引擎 API。
+      详见第 2.7 节, 这也是"设置页 UI 全消失"那个坑的根源。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第二部分   逐条详解(确切签名 + 默认值 + 底层调用)
+════════════════════════════════════════════════════════════════════════════════
+
+  ────────────────────────────────────────────────────────────────────────────
+  2.1 提示条 Hint —— 全部只有 2 处底层调用
+  ────────────────────────────────────────────────────────────────────────────
+
+  文件: LabApi\Features\Wrappers\Players\Player.cs
+
+    L1709  public void SendHint(string text, float duration = 3f)
+               => SendHint(text, [new StringHintParameter(string.Empty)], null, duration);
+
+    L1718  public void SendHint(string text, HintEffect[] effects, float duration = 3f)
+    L1719      => ReferenceHub.hints.Show(new TextHint(text,
+                   [new StringHintParameter(string.Empty)], effects, duration));
+
+    L1732  public void SendHint(string text, HintParameter[] parameters,
+                                HintEffect[]? effects = null, float duration = 3f)
+    L1733      => ReferenceHub.hints.Show(new TextHint(text,
+                   parameters.IsEmpty() ? [new StringHintParameter(string.Empty)] : parameters,
+                   effects, duration));
+
+  把整个 LabApi 库 grep 了一遍 `hints.Show`: 只有上面 L1719 / L1733 两处。
+  (第一个重载 L1709 只是转发给 L1732 那个重载, 自己不发。)
+
+  三个细节值得注意:
+
+    · 无参效果时 effects 传 null, 但 parameters 永远会被补成
+      [new StringHintParameter(string.Empty)] —— 即使你不用占位符。
+      所以 LabApi 发出的提示【总是带一个空参数】。这也是为什么本底层用
+      "文本里有没有 { 来判定是否放行原生"是安全的: LabApi 的普通提示文本里没有 {}。
+
+    · L1728-L1731 的文档注释里 LabApi 自己明确写了:
+      "Parameters are interpolated into the string on the client."
+      —— 官方确认插值发生在客户端。这就是本底层不能硬接管 {0} 提示的原因。
+
+    · LabApi 1.1.7 【没有】ClearHints / 清提示接口。
+      提示只能靠"再发一条覆盖"或自然到期来消失。
+
+  ────────────────────────────────────────────────────────────────────────────
+  2.2 屏幕广播 Broadcast —— 4 个落点全部被接管
+  ────────────────────────────────────────────────────────────────────────────
+
+  文件: LabApi\Features\Wrappers\Players\Player.cs + Wrappers\Server\Server.cs
+
+    L1346  Player.ClearBroadcasts()  => Server.ClearBroadcasts(this);
+
+    L1355  Player.SendBroadcast(string message, ushort duration,
+                                BroadcastFlags type = Normal, bool shouldClearPrevious = false)
+               => Server.SendBroadcast(this, message, duration, type, shouldClearPrevious);
+
+    L455   Server.SendBroadcast(string message, ushort duration,
+                                BroadcastFlags type = Normal, bool shouldClearPrevious = false)
+    L457-460   if (shouldClearPrevious) ClearBroadcasts();
+    L462       Broadcast.Singleton.RpcAddElement(message, duration, type);
+
+    L473   Server.SendBroadcast(Player player, string message, ushort duration,
+                                BroadcastFlags type = Normal, bool shouldClearPrevious = false)
+    L475-478   if (shouldClearPrevious) ClearBroadcasts(player);
+    L480       Broadcast.Singleton.TargetAddElement(player.Connection, message, duration, type);
+
+    L525   Server.ClearBroadcasts()        => Broadcast.Singleton.RpcClearElements();
+    L531   Server.ClearBroadcasts(Player p) => Broadcast.Singleton.TargetClearElements(p.Connection);
+
+  三个关键事实:
+
+    · 【duration 是 ushort, 不是 float】。LabApi 的广播时长单位是秒的整数,
+      与提示条的 float 不同。写插件时别搞混。
+
+    · shouldClearPrevious 默认 false。也就是说"先清屏再发"是显式选择,
+      多数插件不会用到 —— 被我们拦掉影响面比想象的小。
+
+    · Rpc* 是全服, Target* 是单人。四个落点正好对应本底层 4 个广播补丁。
+
+  ────────────────────────────────────────────────────────────────────────────
+  2.3 控制台 Console
+  ────────────────────────────────────────────────────────────────────────────
+
+    L1363  public void SendConsoleMessage(string message, string color = "green")
+               => ReferenceHub.gameConsoleTransmission.SendToClient(message, color);
+
+    · 默认颜色 "green"(小写)。
+    · 这是独立表面, 与提示条/广播互不影响。本底层标记为"预留", 暂未接管。
+
+  ────────────────────────────────────────────────────────────────────────────
+  2.4 命中标记 HitMarker
+  ────────────────────────────────────────────────────────────────────────────
+
+    L1739  public void SendHitMarker(float size = 1f)
+               => Hitmarker.SendHitmarkerDirectly(Connection, size);
+
+    · 准星反馈, 属于独立表面, 与提示条无关。本底层不接管(也没有必要)。
+
+  ────────────────────────────────────────────────────────────────────────────
+  2.5 CASSIE 语音 —— 注意 Cassie 类已被硬废弃
+  ────────────────────────────────────────────────────────────────────────────
+
+    文件: LabApi\Features\Wrappers\Facility\Cassie.cs
+    L9     [Obsolete("Use Announcer instead of Cassie.", true)]
+
+    ⚠ 第二个参数是 true = 编译期报错。也就是说 LabApi 1.1.7 里
+      【任何使用 Cassie 的插件都编译不过】, 必须改成 Announcer。
+
+    文件: LabApi\Features\Wrappers\Facility\Announcer.cs  (static class)
+
+      IsSpeaking                          => CassieAnnouncementDispatcher.CurrentAnnouncement != null
+      Message(string, isHeld=false, isNoisy=true, isSubtitles=true, customSubtitles="")   [L90]
+      Message(string, customSubtitles="", playBackground=true, priority=0f, glitchScale=1f)[L101]
+      Message(CassieTtsPayload, priority=0f, glitchScale=1f)                             [L113]
+          → CassieAnnouncementDispatcher.AddToQueue(new CassieAnnouncement(payload, priority, glitchScale))
+      GlitchyMessage(string, float glitchChance, float jamChance)                         [L125]
+      ScpTermination(Player, DamageHandlerBase) → CassieScpTerminationAnnouncement.…      [L136]
+      Clear()                             => CassieAnnouncementDispatcher.ClearAll()      [L142]
+      CalculateDuration(...) / ConvertTeam / ConvertNumber / ConvertScp / LineDatabase / AllLines
+
+    · 落点是 CassieAnnouncementDispatcher —— 与提示条完全不同的表面。
+    · 本底层标记为"预留"; CASSIE 是音频, 不存在"被顶掉"的争抢问题, 优先级低。
+
+  ────────────────────────────────────────────────────────────────────────────
+  2.6 管理员聊天 AdminChat —— 【不走广播】
+  ────────────────────────────────────────────────────────────────────────────
+
+    文件: LabApi\Features\Wrappers\Server\Server.cs
+
+    L488  Server.SendAdminChatMessage(string message, bool isSilent = false)
+    L496  Server.SendAdminChatMessage(IEnumerable<Player> targetPlayers, string message,
+                                      bool isSilent = false)
+
+    消息组装(L498-L510):
+        sb.Append(Host!.NetworkId); sb.Append('!');
+        if (isSilent) sb.Append("@@");
+        sb.Append(message);
+        → 形如 "<主机ID>!@@正文"
+
+    实际发送(L518):
+        player.ReferenceHub.encryptedChannelManager.TrySendMessageToClient(
+            toSend, EncryptedChannelManager.EncryptedChannel.AdminChat);
+
+    · 走的是【加密频道管理器】, 不是 Broadcast。
+      所以管理员聊天不受本底层广播补丁的任何影响 ——
+      插件调 ClearBroadcasts() 也清不掉管理员消息。这其实是好事。
+
+  ────────────────────────────────────────────────────────────────────────────
+  2.7 服务器设置页 SSS —— LabApi 完全没有包装
+  ────────────────────────────────────────────────────────────────────────────
+
+    把整个 LabApi 库 grep 了一遍 `ServerSpecificSetting`: 【零处命中】。
+
+    这意味着:
+      · 插件要加设置项, 只能自己写
+            ServerSpecificSettingsSync.DefinedSettings = 我的数组;
+            ServerSpecificSettingsSync.SendToAll();
+      · LabApi 不会替你保存原数组、也不会替你合并 —— 谁整体赋值谁就清掉别人的。
+
+    这正是官方文档里警告过、也确实让整服设置页 UI 消失的那个坑。
+    本底层的 SSS 三个补丁(强力复写)正好补在这个 LabApi 完全没管的缺口上。
+
+  ────────────────────────────────────────────────────────────────────────────
+  2.8 世界空间文字 TextToy
+  ────────────────────────────────────────────────────────────────────────────
+
+    文件: LabApi\Features\Wrappers\AdminToys\TextToy.cs
+    L26/L30/L34/L46  TextToy.Create(...)  →  Create<BaseTextToy>(position, rotation, scale, parent)
+
+    · 这是在地图里生成一个 AdminToy 网络物体, 属于【世界渲染】而不是屏幕 UI。
+    · 与提示条毫无关系, 不受任何影响。整个 AdminToy 家族(光源/载具/文字)同理。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第三部分   完整性校验 —— 本底层 8 个补丁 vs LabApi 全部落点
+════════════════════════════════════════════════════════════════════════════════
+
+  ┌──────────────────────────────────────────────────────┬────────┬──────────────┐
+  │ LabApi 能到达的落点                                   │ 补丁   │ 状态         │
+  ├──────────────────────────────────────────────────────┼────────┼──────────────┤
+  │ Hints.HintDisplay::Show                              │  有    │ 提示条已接管 │
+  │ Broadcast::RpcAddElement                             │  有    │ 广播已接管   │
+  │ Broadcast::TargetAddElement                          │  有    │ 广播已接管   │
+  │ Broadcast::RpcClearElements                          │  有    │ 广播已接管   │
+  │ Broadcast::TargetClearElements                       │  有    │ 广播已接管   │
+  │ ServerSpecificSettingsSync::SendToAll                │  有    │ SSS 已接管   │
+  │ ServerSpecificSettingsSync::SendToPlayersConditionally│ 有    │ SSS 已接管   │
+  │ ServerSpecificSettingsSync::SendToPlayer(ReferenceHub)│ 有    │ SSS 已接管   │
+  ├──────────────────────────────────────────────────────┼────────┼──────────────┤
+  │ GameConsoleTransmission::SendToClient                │  无    │ 别的表面(预留)│
+  │ Hitmarker::SendHitmarkerDirectly                     │  无    │ 别的表面     │
+  │ CassieAnnouncementDispatcher::AddToQueue / ClearAll  │  无    │ 别的表面(预留)│
+  │ EncryptedChannelManager::TrySendMessageToClient      │  无    │ 加密频道     │
+  │ ServerSpecificSettingsSync::SendToPlayer(hub,coll,ver)│ 无    │ 刻意不拦     │
+  └──────────────────────────────────────────────────────┴────────┴──────────────┘
+
+  结论:
+
+    ✓ LabApi 里【所有会汇入"提示条"和"屏幕广播"的写法】, 100% 落在补丁范围内。
+      包括以后再新增的包装类 —— 因为它们也只能走这几个漏斗。
+
+    ✓ 未补的 4 个落点不是漏, 是别的 UI 表面(Console / HitMarker / CASSIE / 加密频道),
+      其中两个已在 UiSurface 枚举里明确标为"预留", 未接管状态是可查的, 不靠记忆。
+
+    ✓ 最后一个(带 collection + versionOverride 的 SendToPlayer)是【刻意不拦】,
+      官方分页示例靠它显式指定集合, 强改会破坏分页语义。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第四部分   归类 —— 装了本底层之后, 这些 LabApi 写法怎么处理
+════════════════════════════════════════════════════════════════════════════════
+
+  (c) 完全不用改 —— 原样调用, 行为一字不变
+      Player.SendConsoleMessage(...)
+      Player.SendHitMarker(...)
+      Announcer.Message(...) / Announcer.Clear() / Announcer.CalculateDuration(...)
+      Server.SendAdminChatMessage(...)             ← 走加密频道, 不受广播隔离影响
+      TextToy.Create(...) 及整个 AdminToy 家族
+      除以上之外的【全部】LabApi(玩法、地图、事件、权限、Config ...)
+
+  (d) 不用改写法 —— 由本底层接管调度(拦截层开启时)
+      Player.SendHint(text, duration)               → 归因到该插件独立信口
+      Player.SendHint(text, effects, duration)      → 同上(effects 会被复合体统一取代)
+      Player.SendHint(text, parameters, effects, duration)
+          ├ 文本含 {  → 放行原生(保插值), 不参与隔离
+          └ 文本无 {  → 参与隔离(注意 LabApi 发的普通提示都没有 {)
+      Player.SendBroadcast(...) / Server.SendBroadcast(...)  → 去重 + 独立信口
+      ServerSpecificSettingsSync.DefinedSettings = …; SendToAll();  → 你的设置项照常生效,
+          且底层会在下发前把别人的设置项拼回(不会再清掉别人)
+
+  (b) 需要改成第一份指南里的 API —— 原版做不到你要的效果
+      每玩家不同的常驻 HUD        → IHintTextSource
+      多块内容同时共存            → RegisterHintChannel
+      顺序 / 对齐 / 只发给部分人   → 通道的 Priority / Alignment / ReceiverFilter
+      设置页控件                  → RegisterSssPorts(LabApi 没有包装, 别自己裸写)
+      干净卸载                    → UiScope
+
+  (a) 已经完全失效 —— 必须改配置或改写法(拦截层开启时)
+      Player.ClearBroadcasts()                      → 被吞(防插件清别人的广播)
+      Server.ClearBroadcasts() / (player)           → 同上
+      SendBroadcast(..., shouldClearPrevious: true) → "清除"那半段被吞, 广播照常发
+      自己 Harmony patch 了 HintDisplay.Show 的框架  → 被我们最高优先级前缀短路
+
+
+════════════════════════════════════════════════════════════════════════════════
+第五部分   LabApi 侧默认数值速查
+════════════════════════════════════════════════════════════════════════════════
+
+  ┌──────────────────────────────────────────────┬──────────────────────────────┐
+  │ 成员                                          │ 默认值                        │
+  ├──────────────────────────────────────────────┼──────────────────────────────┤
+  │ Player.SendHint(text, duration=)              │ 3f (秒)                       │
+  │ Player.SendHint(text, effects, duration=)     │ 3f                            │
+  │ Player.SendHint(text, parameters, effects=, …)│ effects = null, duration = 3f │
+  │ Player.SendBroadcast(message, duration, type=)│ type = BroadcastFlags.Normal  │
+  │                                              │ shouldClearPrevious = false   │
+  │ Server.SendBroadcast(…)                       │ 同上(两个重载一致)             │
+  │ Player.SendConsoleMessage(message, color=)    │ "green"(小写)                 │
+  │ Player.SendHitMarker(size=)                   │ 1f                            │
+  │ Server.SendAdminChatMessage(…, isSilent=)     │ false                         │
+  │ Announcer.Message(…, isHeld=, isNoisy=, …)    │ isHeld=false, isNoisy=true,   │
+  │                                              │ isSubtitles=true, custom=""   │
+  │ Announcer.Message(…, customSubtitles=, …)     │ customSubtitles="",           │
+  │                                              │ playBackground=true,          │
+  │                                              │ priority=0f, glitchScale=1f   │
+  └──────────────────────────────────────────────┴──────────────────────────────┘
+
+  与引擎侧的换算(详见 Hint系统操作数值.txt):
+      LabApi 提示默认 3f  ·  游戏原生提示只有 1.5f / 2f  ·  广播时长是 ushort
+
+
+════════════════════════════════════════════════════════════════════════════════
+第六部分   从这份对照里读出的三个结论
+════════════════════════════════════════════════════════════════════════════════
+
+  1. "提示条"这条路, LabApi 只开了两个口(L1719 / L1733), 都汇入
+     HintDisplay.Show。所以我们只需补一个点, 就覆盖了 LabApi 的全部提示写法 —
+     包括插件作者未来可能用到的新重载。这就是"补在最窄漏斗上"的价值。
+
+  2. SSS 是 LabApi 的【服务空白】。插件只能裸写引擎 API,
+     于是"整体覆盖 DefinedSettings"成了常态 —— 坑不在 LabApi 的设计,
+     而在这块根本没被设计。本底层的强力复写补的正是这个空白。
+
+  3. 真正常用、也最容易被忽略的其实是没有 { 这个细节:
+     LabApi 发的提示永远不带占位符, 所以插件用 SendHint(文本, 时长) 时,
+     【一定会参与隔离】; 只有显式用 parameters 且文本里写了 {0} 才会放行原生。
+     换句话说: 本底层对绝大多数插件的提示是"全接管"的。
+
+================================================================================

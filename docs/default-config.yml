@@ -1,0 +1,153 @@
+# ══════════════════════════════════════════════════════════════════════════
+# HintIsolation 默认配置（权威版）
+#
+# 键名与默认值**一字未改**，直接取自 用 LabAPI 自己的 YamlConfigParser.Serializer
+# 序列化编译好的 HintIsolation.dll 里 HintIsolationPlugin.PluginConfig 的输出；
+# 本文件只做了重新分组与补小标题（便于阅读），所以它是 config.yml 的可靠对照。
+# 共 61 个配置项。
+#
+# 真实路径： %APPDATA%\SCP Secret Laboratory\LabAPI\configs\<端口>\HintIsolation\config.yml
+#   （注意是 configs\<端口>\ 这一层，例如 configs\7777\HintIsolation\config.yml）
+#
+# 键名风格： 全小写下划线（YamlDotNet 的 UnderscoredNamingConvention），
+#           不是 PascalCase。写成 EnableHintIsolation 会被当成"未知键"而被忽略。
+#
+# 重新生成的方法（游戏版本升级 / 新增配置项后）：
+#   1) dotnet build HintIsolation.csproj -c Release
+#   2) 用 %TEMP%\ConfigDump 里那个小程序加载 HintIsolation.dll 并序列化 PluginConfig
+# ══════════════════════════════════════════════════════════════════════════
+
+# ── 合并渲染核心 ──────────────────────────────────────────────────────────
+# 启用 Hint 合并渲染核心(唯一写者)
+enable_hint_isolation: true
+# 合并刷新间隔(秒), 越小越及时、网络包越多
+hint_refresh_interval: 0.75
+# 续期提前量(秒), 在到期前提前重发防止闪烁消失
+# 注: 0.150000006 就是 float 0.15 的十进制展开, 不是错值, 改成 0.15 写回也没区别
+hint_resend_leeway: 0.150000006
+# 打印每个玩家的复合 Hint 内容(排障用)
+hint_debug_log: false
+# 内容未变时跳过重发(默认开): 一个字没变就绝不重发, 消除 UI 闪烁与后台卡顿; 关掉会退回'每轮都重发'的旧行为
+suppress_unchanged_resend: true
+# 输入摘要快筛(默认开): 本轮渲染输入的结构摘要没变就连字符串合成都整段跳过, 比'内容未变跳过重发'更早一步
+input_signature_enabled: true
+# 排版模式(治"上下位置错位"):
+#   rows    = 固定行位(默认): 用空行占位, 位置绝对稳定, 代价是占屏
+#   offsets = 算偏移: 不给空行, 每行用 <voffset> 摆到自己的固定槽位; 不占屏且位置同样稳定
+#             (思路取自 CC0 的 RueI: 它不是网格/行基, 而是算偏移)
+#   compact = 紧凑: 最省屏, 但位置会随内容增减而变
+layout_mode: rows
+# offsets 模式的一行高度(voffset 单位; 参考: 整屏高度约 2140)
+offset_row_height: 40
+# offsets 模式的方向: 1=默认 | 若整块朝反方向偏了就改成 -1
+offset_sign: 1
+# offsets 模式量文本宽度用的字号(游戏提示默认约 20), 用于估算每行实际占几个视觉行
+offset_font_size: 20
+# 易变区行数(一次性提示 + 吸收进来的原生提示): 多了丢最老的, 少了补空行
+volatile_rows: 3
+# 同一个插件/模块最多占几行: 1=一行(顺序稳定) | 0=不限
+rows_per_plugin: 1
+# 常驻区最多补几行空位(只限制空行数量, 有内容的行永远不会丢)
+persistent_rows_max: 8
+
+# ── 动态 UIID 系统 / 拦截层 ───────────────────────────────────────────────
+# 安装拦截层: 把各 UI 通道按调用方自动分配独立 UiId 信口(默认关)
+intercept_third_party_ui: false
+# 拦截到的 UI 按【调用方插件】自动归因(插件无需改代码)
+auto_attribute_third_party_ui: true
+# UiId 派生粒度: Assembly=每插件一份 | Type=每类 | Method=每方法(推荐) | CallSite=每调用点(最细)
+ui_id_granularity: Method
+# 是否把 UiId 明细落盘到 configs/<端口>/HintIsolation/uiids.yml
+persist_ui_ids: true
+# 游戏自身 UI 的处理: Isolate=也并入隔离信口(默认) | PassThrough=放行原生(会与合并结果交替, 表现为闪烁)
+native_hint_policy: Isolate
+
+# ── 提示条表面 (HintDisplay.Show) ─────────────────────────────────────────
+# 接管提示条表面(HintDisplay.Show)
+intercept_hints: true
+# 提示条信口优先级(64/96/128/160/192, 越小越靠上)
+hint_slot_priority: 128
+# 提示条信口是否显示 [来源] 标签(默认关, 保持插件原本观感)
+hint_show_labels: false
+# 原生提示翻译合并(默认开): 游戏自己的译文提示用内嵌全量模板翻成纯文本并入复合体; 关掉退回'让路'
+translate_native_hints: true
+# 原生提示翻译语言: zh=内置中文模板(默认) | en=内置英文并优先用服务器 Translations\en\GameHints.txt 刷新
+native_hint_translation_language: zh
+# 提示条: 每个信口最多同时保留几条(1 = 替换, 与原版一致; 内容每秒变化的 HUD 必须用 1)
+hint_max_entries_per_slot: 1
+# 提示条: 单条最长保留秒数(防插件传超大 duration 占屏)
+hint_max_entry_duration: 10
+
+# ── 屏幕中央广播表面 (Broadcast.AddElement / ClearElements) ────────────────
+# 接管屏幕中央广播表面
+intercept_broadcasts: true
+# 阻止第三方插件清空广播(防一个插件清掉别人全部广播)
+block_third_party_broadcast_clear: true
+# 广播信口优先级(64/96/128/160/192)
+broadcast_slot_priority: 128
+# 广播信口是否显示 [来源] 标签
+broadcast_show_labels: false
+# 广播: 每个信口最多同时保留几条
+broadcast_max_entries_per_slot: 2
+# 广播: 单条最长保留秒数
+broadcast_max_entry_duration: 15
+# 广播: 重复发送的信口两次放行之间的最小间隔(秒)
+broadcast_repeat_interval: 1
+# 广播: 重复发送的信口被压到的时长上限(秒)。压短它, 旧的一团才会跟着过期
+broadcast_repeat_duration: 1
+
+# ── 玩家控制台表面 (GameConsoleTransmission.SendToClient) ──────────────────
+# 接管玩家控制台表面
+intercept_console: true
+# 控制台信口优先级(仅用于记账排序)
+console_slot_priority: 128
+# 控制台信口是否显示 [来源] 标签
+console_show_labels: false
+# 控制台: 每个信口最多保留几条(仅记账用)
+console_max_entries_per_slot: 1
+# 控制台: 单条最长保留秒数(仅记账用)
+console_max_entry_duration: 15
+# 控制台: 重复消息两次放行之间的最小间隔(秒)。0 = 只归因不拦(默认)
+console_repeat_interval: 0
+
+# ── CASSIE 语音播报表面 (CassieAnnouncementDispatcher) ────────────────────
+# 接管 CASSIE 播报表面
+intercept_cassie: true
+# 阻止第三方插件清空 CASSIE 播报队列
+block_third_party_cassie_clear: true
+# CASSIE 信口优先级(仅用于记账排序)
+cassie_slot_priority: 128
+# CASSIE 信口是否显示 [来源] 标签
+cassie_show_labels: false
+# CASSIE: 每个信口最多保留几条(仅记账用)
+cassie_max_entries_per_slot: 1
+# CASSIE: 单条最长保留秒数(仅记账用)
+cassie_max_entry_duration: 30
+
+# ── 网络层哨兵 (可选, 默认关闭) ───────────────────────────────────────────
+# 在 Mirror 的消息汇流点 NetworkConnection.Send<T> 上挂补丁, 看住绕过语义层的直发与伪造包
+enable_network_sentinel: false
+# 是否把'绕过语义层的提示'收编进隔离信口。默认关 = 只观测不改写(最安全)
+network_sentinel_intercept: false
+
+# ── 管理端聊天面板 / 命中标记 / 对讲机 ────────────────────────────────────
+# 接管管理端聊天面板(LabAPI 的 Server.SendAdminChatMessage 落点)
+intercept_admin_chat: true
+# 管理端聊天: 重复消息两次放行之间的最小间隔(秒)。0 = 只归因不拦(默认)
+admin_chat_repeat_interval: 0
+# 接管准星命中标记。只归因记账, 从不拦截
+intercept_hit_marker: true
+# 对讲机显示屏守卫: 拦 Mirror 的同步序列化, 在下发前把值改回已放行的那一份
+enable_intercom_guard: true
+# 对讲机显示屏: 间隔内被反复改写时的回滚阈值(秒)。0 = 只观测不改写(默认)
+intercom_throttle_interval: 0
+
+# ── 抢占最先头(引导器) / SSS 端口隔离 ────────────────────────────────────
+# 释放并启用 0 前缀抢先引导器(0HintIsolation.Bootstrap.dll)
+enable_bootstrap_first_loader: true
+# 启用 SSS 端口隔离核心
+enable_sss_registry: true
+# 强力复写: 拦截游戏下发入口, 在发出去之前强制拼回本核心设置项(最强的一道保证)
+enable_sss_force_rewrite: true
+# 防劫持: 检测到其它插件整体覆盖 DefinedSettings 时自动合并恢复
+protect_sss_from_overwrites: true

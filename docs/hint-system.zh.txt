@@ -1,0 +1,513 @@
+﻿================================================================================
+Hint 系统说明
+调用写法 · 网络层 · 序列化 · 参数/效果体系 · 显示原理 · 底层接入
+================================================================================
+版本: 1.0.0        生成: 2026-09-30
+
+
+方法: 
+================================================================================
+
+【结论速览】(懒得看细节就看这 7 条)
+
+  1. 提示条在服务器端【没有状态】。Show 就是往客户端发一条网络消息, 客户端收到即替换。
+     → 所谓"只有一个口", 是客户端只有一个显示槽, 不是服务器端有什么锁。
+
+  2. 服务器端【没有】渲染代码。运行时里的 HUD 类型全是 SCP 专属
+     (AbilityHud / ScpWarningHud / ScpHudController / ViewmodelScpHud ...)。
+     → 提示条的位置/字号/行距由客户端固定, 服务器端改不了。
+     → 服务器端能影响观感的只有三条: 文本内容、TMP 富文本标签、HintEffect 动画。
+
+  3. Hint 只有【两种】: Text 和 Translation。对应 TextHint / TranslationHint。
+     → 想加新花样, 只能在文本层做, 加不出第三种提示类型。
+
+  4. 插值参数有【19 种】(HintParameterType), 效果有【3 种】(HintEffectType)。
+
+  5. 游戏自带一张静态抑制表 HintDisplay.SuppressedReceivers (HashSet<NetworkConnection>),
+     Show 之前会查它。这是游戏官方留的"按连接屏蔽提示"的口子。
+
+  6. Show 的最后一步是 conn.Send(new HintMessage(hint)) ——
+     而 Mirror.NetworkConnection.Send<T> 是 public 的。
+     → 底层可以完全绕开 HintDisplay 组件, 直接走引擎网络层下发。
+
+  7. 本底层已按此实现: 拦截全部调用 → 路由进独立信口 → 由唯一写者经
+     "引擎直连"下发合并结果。IL 已核对, 与游戏 Show 的尾段完全一致。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第一部分   调用层 —— 所有写法入口
+════════════════════════════════════════════════════════════════════════════════
+
+  ────────────────────────────────────────────────────────────────────────────
+  1.1 从"一行代码"到"屏幕像素"的完整链路
+  ────────────────────────────────────────────────────────────────────────────
+
+    【服务器端】                                    【客户端】
+
+    player.SendHint(文本, 时长)          <- LabApi 包装类
+              |
+              v
+    hub.hints.Show(new TextHint(...))   <- 组件方法(HintDisplay, NetworkBehaviour)
+              |
+              v
+    if (isLocalPlayer) throw                        （无头服务器不能给自己发）
+    if (!NetworkServer.active) return               （非服务端直接返回）
+              |
+              v
+    conn = netIdentity.connectionToClient
+    if (SuppressedReceivers.Contains(conn)) 跳过     <- 静态抑制表
+              |
+              v
+    conn.Send(new HintMessage(hint))    <- Mirror 网络层
+              |
+              ~~~~~~~~ 网络 ~~~~~~~~>
+                                                HintMessage 反序列化
+                                                         |
+                                                         v
+                                                客户端 HUD 替换当前显示的那条
+                                                (渲染代码不在服务器运行时内)
+
+
+  ────────────────────────────────────────────────────────────────────────────
+  1.2 全部调用写法一览(按"离引擎的远近"排序)
+  ────────────────────────────────────────────────────────────────────────────
+
+    (a) LabApi 包装类 —— 最常用
+        Player.SendHint(string text, float duration = 3f)
+        Player.SendHint(string text, HintEffect[] effects, float duration = 3f)
+        Player.SendHint(string text, HintParameter[] parameters, HintEffect[]? effects = null, float duration = 3f)
+        └ 内部: hub.hints.Show(new TextHint(text, [new StringHintParameter("")], effects, duration))
+        └ 注意: LabApi 1.1.7 【没有】ClearHints 之类的清除接口 ——
+                提示只能靠新的一条覆盖掉(或让其自然到期)。
+
+    (b) 组件方法 —— 原生
+        hub.hints.Show(Hint hint)
+        hub.hints.Show(new TextHint(text, parameters, effects, duration))
+        └ 注意: 这是 HintDisplay 组件上的方法, 组件被禁用/换掉就失效
+
+    (c) 低层 —— 直接构造 Hint 对象(本底层合成时用的就是这条路)
+        new TextHint(string text, HintParameter[] parameters, HintEffect[] effects, float durationScalar)
+        new TranslationHint(HintTranslations translation, HintParameter[] parameters, HintEffect[] effects, float durationScalar)
+        new TextHint() / new TranslationHint()          <- 无参构造也存在(供反序列化)
+
+    (d) 引擎直连 —— 最深的一层, 绕过 HintDisplay
+        conn = hub.netIdentity.connectionToClient;
+        conn.Send(new HintMessage(new TextHint(...)), 0);
+        └ 与 Show 内部最后一步等价, 但不受组件状态影响。本底层采用这一条。
+
+    (e) Exiled 桥接插件
+        player.ShowHint(text, duration) / player.CurrentHint = new Hint(...)
+        └ 最终同样落到 (a)/(b), 因此同样被本底层接管。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第二部分   对象层 —— 类层次与可构造性
+════════════════════════════════════════════════════════════════════════════════
+
+  ────────────────────────────────────────────────────────────────────────────
+  2.1 显示对象层次
+  ────────────────────────────────────────────────────────────────────────────
+
+    object
+     └ NetworkObject<T>                     成员: Serialize(NetworkWriter) / Deserialize(NetworkReader)
+        └ DisplayableObject<T>              字段: DurationScalar (float, protected setter)
+           ├ Hint                           (abstract) 字段: _effects (HintEffect[])
+           │   └ FormattableHint<T>         (abstract) 泛型基类
+           │       ├ TextHint               Text : string           + 无参 ctor + 4 参 ctor
+           │       └ TranslationHint        Translation : HintTranslations
+           ├ HintParameter                  (abstract) Formatted : string
+           └ HintEffect                     (abstract) StartScalar : float
+               └ DurationScalar 亦来自此层
+
+    注: "DurationScalar" 的语义是【时长倍率】, 不是秒。真正显示多久由客户端据此换算。
+
+  ────────────────────────────────────────────────────────────────────────────
+  2.2 关键构造签名(可直接 new)
+  ────────────────────────────────────────────────────────────────────────────
+
+    Hint.Hint(HintParameter[] parameters, HintEffect[] effects, float durationScalar)
+    TextHint.TextHint(string text, HintParameter[] parameters, HintEffect[] effects, float durationScalar)
+    TranslationHint.TranslationHint(HintTranslations translation, HintParameter[] parameters, HintEffect[] effects, float durationScalar)
+    HintEffect.HintEffect(float startScalar, float durationScalar)
+
+  ────────────────────────────────────────────────────────────────────────────
+  2.3 网络消息
+  ────────────────────────────────────────────────────────────────────────────
+
+    struct Hints.HintMessage
+    {
+        Hint Content;                          <- 唯一字段
+        HintMessage(Hint content);             <- 唯一构造函数
+    }
+
+    整个提示系统在网络上传的就是这一个结构体。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第三部分   网络层 —— HintDisplay.Show 梳理
+════════════════════════════════════════════════════════════════════════════════
+
+  行为说明( → Hints.HintDisplay::Show):
+
+
+  等价 C#:
+
+    public void Show(Hint hint)
+    {
+        if (hint == null) throw new ArgumentNullException("hint");
+        if (isLocalPlayer)
+            throw new InvalidOperationException("Cannot display a hint to the local player (headless server).");
+
+        if (NetworkServer.active)
+        {
+            NetworkConnection conn = netIdentity.connectionToClient;
+            if (!SuppressedReceivers.Contains(conn))
+                conn.Send(new HintMessage(hint), 0);
+        }
+    }
+
+  ────────────────────────────────────────────────────────────────────────────
+  3.1 从这段 IL 能读出什么(这几条决定了整套架构)
+  ────────────────────────────────────────────────────────────────────────────
+
+    · 没有 this 上的"当前提示"字段 —— 服务器端不保存任何显示状态。
+    · 没有队列 —— 连发两条就是连发两条消息, 客户端收一条替换一次。
+    · 所以"只有一个口"完全发生在客户端。服务器端能控制的只有【发不发、发什么】。
+
+    · 能影响"发不发"的两个开关:
+        (1) isLocalPlayer          —— 结构性的, 改不了
+        (2) SuppressedReceivers    —— 游戏留的 public static 抑制表, 可以读写
+
+    · 能影响"发什么"的只有一个入口: 交给 conn.Send 的那个 Hint 对象。
+
+    => 因此"扩大这个口"在服务器端唯一可行的做法就是:
+       【成为唯一调用 conn.Send 的人】, 其他人想发的内容先交给我们。
+
+  ────────────────────────────────────────────────────────────────────────────
+  3.2 静态抑制表 HintDisplay.SuppressedReceivers
+  ────────────────────────────────────────────────────────────────────────────
+
+    核对确认:
+      IsStatic = True
+      Type     = System.Collections.Generic.HashSet`1[[Mirror.NetworkConnection, Mirror]]
+
+    语义: 游戏认为某个连接此刻不该收到提示时, 把它的 NetworkConnection 加进去,
+          Show 就会静默跳过。典型用途是开局/黑屏/加载阶段不给玩家刷提示。
+
+    本底层的处理: 直连下发【同样查这张表】—— 游戏不想发的时候我们也不越过它。
+                  (见第四部分末: TrySendDirect 的 IL 里 ldsfld SuppressedReceivers 那一句)
+
+
+════════════════════════════════════════════════════════════════════════════════
+第四部分   序列化与注册表 —— 多态是怎么走网络的
+════════════════════════════════════════════════════════════════════════════════
+
+  Hint 是抽象类, 网络上传的却是具体对象, 所以必须有一个"类型标签 + 注册表"的机制。
+  三层各自有一套:
+
+  ────────────────────────────────────────────────────────────────────────────
+  4.1 提示类型(Utils.Networking.HintReaderWriter)
+  ────────────────────────────────────────────────────────────────────────────
+
+    enum HintType { Translation, Text }            ← 只有两种
+
+    注册表字段(读取出):
+      static readonly ... HintReaderWriter.Hints    ← 类型标签 → 具体 Hint 的读/写委托
+
+    含义: 你可以自定义 TextHint 的【内容】, 但加不出第三种提示种类。
+          所有花样都必须在"文本 + 参数 + 效果"这个三件套里做完。
+
+  ────────────────────────────────────────────────────────────────────────────
+  4.2 参数类型(Utils.Networking.HintParameterReaderWriter)
+  ────────────────────────────────────────────────────────────────────────────
+
+    enum HintParameterType                        ← 19 种, 全表见第五部分
+
+  ────────────────────────────────────────────────────────────────────────────
+  4.3 效果类型(Utils.Networking.HintEffectReaderWriter)
+  ────────────────────────────────────────────────────────────────────────────
+
+    enum HintEffectType { Alpha, AlphaCurve, Outline }     ← 只有三种
+
+
+════════════════════════════════════════════════════════════════════════════════
+第五部分   参数体系 —— 19 种 HintParameter 全表
+════════════════════════════════════════════════════════════════════════════════
+
+  用法: 文本里写 {0} {1} ... , 参数数组按顺序填。插值由【客户端】执行。
+        这也是本底层检测到文本含 { 就放行原生、不接管的原因 ——
+        合并渲染只搬运纯文本, 硬接管会把 {0} 渲染成空串。
+
+  ┌────┬──────────────────┬──────────────────────────────┬──────────────────────┐
+  │ #  │ HintParameterType│ 具体类型                      │ 说明                 │
+  ├────┼──────────────────┼──────────────────────────────┼──────────────────────┤
+  │  1 │ Text             │ StringHintParameter           │ 字符串               │
+  │  2 │ Timespan         │ TimespanHintParameter         │ 时间, 基类为 Double… │
+  │  3 │ Ammo             │ AmmoHintParameter             │ 弹药(ID 类)          │
+  │  4 │ Item             │ ItemHintParameter             │ 物品(ID 类)          │
+  │  5 │ ItemCategory     │ ItemCategoryHintParameter     │ 物品类别(ID 类)      │
+  │  6 │ Byte             │ ByteHintParameter             │ 整数系列             │
+  │  7 │ SByte            │ SByteHintParameter            │                      │
+  │  8 │ Short            │ ShortHintParameter            │                      │
+  │  9 │ UShort           │ UShortHintParameter           │                      │
+  │ 10 │ Int              │ IntHintParameter              │                      │
+  │ 11 │ UInt             │ UIntHintParameter             │                      │
+  │ 12 │ Long             │ LongHintParameter             │                      │
+  │ 13 │ ULong            │ ULongHintParameter            │                      │
+  │ 14 │ Float            │ FloatHintParameter            │ 基类为 Formattable…  │
+  │ 15 │ Double           │ DoubleHintParameter           │ 基类为 Formattable…  │
+  │ 16 │ PackedLong       │ PackedLongHintParameter       │ 打包长整             │
+  │ 17 │ PackedULong      │ PackedULongHintParameter      │ 打包无符号长整       │
+  │ 18 │ Scp330Hint       │ Scp330HintParameter           │ 糖果颜色(ID 类)      │
+  │ 19 │ SSKeybind        │ SSKeybindHintParameter        │ 服务器设置按键       │
+  └────┴──────────────────┴──────────────────────────────┴──────────────────────┘
+
+  继承关系(决定了能不能自定义格式化):
+    HintParameter                          (abstract)
+     ├ PrimitiveHintParameter<T>           (泛型基类)
+     │   ├ StringHintParameter
+     │   ├ Byte/SByte/Short/UShort/Int/UInt/Long/ULong/PackedLong/PackedULong...
+     │   ├ FormattablePrimitiveHintParameter<T>     ← Float / Double 走这层
+     │   │   ├ FloatHintParameter
+     │   │   ├ DoubleHintParameter
+     │   │   └ SSKeybindHintParameter
+     │   └ (AnimationCurveHintParameter 直连 HintParameter)
+     └ IdHintParameter                     (带 ID 查找的基类)
+         ├ AmmoHintParameter
+         ├ ItemHintParameter
+         ├ ItemCategoryHintParameter
+         └ Scp330HintParameter
+
+  * 每个类型都有一个配套的 ...Functions 类(如 IntHintParameterFunctions),
+    那是 Mirror 的序列化委托容器, 不是给你用的。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第六部分   效果体系 —— HintEffect 与 HintEffectPresets
+════════════════════════════════════════════════════════════════════════════════
+
+  ────────────────────────────────────────────────────────────────────────────
+  6.1 三种效果类型
+  ────────────────────────────────────────────────────────────────────────────
+
+    HintEffect                     (abstract)  StartScalar : float, DurationScalar : float
+     ├ AlphaEffect                              纯透明度
+     ├ CurveHintEffect              (abstract)
+     │   └ AlphaCurveHintEffect                 曲线驱动的透明度(淡入淡出/脉冲都靠它)
+     └ OutlineEffect                            描边
+
+  ────────────────────────────────────────────────────────────────────────────
+  6.2 HintEffectPresets —— 官方预设工厂(全部为静态方法)
+  ────────────────────────────────────────────────────────────────────────────
+
+    Keyframe[]     CreateBumpKeyframes(float floorValue, float bumpValue, int count, float duration)
+    AnimationCurve CreateBumpCurve(float floorValue, float bumpValue, int count, float duration)
+    AnimationCurve CreateTrailingBumpCurve(float floorValue, float bumpValue, float startTrailPercent, float duration)
+
+    AlphaCurveHintEffect FadeIn(float durationScalar, float startScalar, float iterations)
+    AlphaCurveHintEffect FadeOut(float durationScalar, float startScalar, float iterations)
+    HintEffect[]         FadeInAndOut(float window, float durationScalar, float startScalar)
+    AlphaCurveHintEffect PulseAlpha(float floorValue, float peakValue, float iterationScalar, float startOffset)
+    AlphaCurveHintEffect TrailingPulseAlpha(float floorValue, float peakValue, float startTrailScalar,
+                                            float iterationScalar, float startScalar, int count)
+
+    典型用法:
+        player.SendHint("新回合开始", HintEffectPresets.FadeInAndOut(0.25f, 1f, 0f), 5f);
+
+  ────────────────────────────────────────────────────────────────────────────
+  6.3 本底层对效果的处理(如实说明)
+  ────────────────────────────────────────────────────────────────────────────
+
+    合并渲染把【多条】提示拼成一条复合 TextHint, 而效果是挂在【整条】上的。
+    因此:
+      · 被拦截进信口的插件提示, 它自己的 effects 不会被保留
+        (整条复合提示共用 HintBroker.GlobalEffects, 默认 null = 无动画, 避免刷新闪烁);
+      · 想保留动画的提示, 建议关掉拦截层, 或改用不参与合并的写法;
+      · 这是"合并渲染"的固有取舍, 不是缺陷 —— 一条提示只可能有一套动画。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第七部分   显示层 —— UI 位置到底谁决定
+════════════════════════════════════════════════════════════════════════════════
+
+  ────────────────────────────────────────────────────────────────────────────
+  7.1 事实
+  ────────────────────────────────────────────────────────────────────────────
+
+    把服务器运行时里命名空间含 HUD / Hud / Interface 的类型全部列出来, 结果是:
+
+      PlayerRoles.PlayableScps.HUDs.AbilityHud          / +GraphicColor
+      PlayerRoles.PlayableScps.HUDs.LoadingCircleHud
+      PlayerRoles.PlayableScps.HUDs.ScpHudBase
+      PlayerRoles.PlayableScps.HUDs.ScpHudController    / +<>O
+      PlayerRoles.PlayableScps.HUDs.ScpViewmodelBase
+      PlayerRoles.PlayableScps.HUDs.ScpWarningHud
+      PlayerRoles.PlayableScps.HUDs.ViewmodelScpHud
+      RemoteAdmin.Interfaces.*
+      UserSettings.UserInterfaceSettings.*
+
+    —— 全部是 SCP 角色专属 HUD 或编辑器设置界面, 【没有任何通用的提示条渲染类型】。
+
+    结论(可以自己复核): 提示条的控件的创建、锚点、字号、行距、淡出曲线,
+    都在客户端。服务器端里一行渲染代码都没有。
+
+  ────────────────────────────────────────────────────────────────────────────
+  7.2 因此服务器端能影响观感的只有三条
+  ────────────────────────────────────────────────────────────────────────────
+
+    (1) 文本内容本身 —— 换行 \n 决定行数
+    (2) TMP 富文本标签 —— 只能改文本内部的呈现
+    (3) HintEffect 动画 —— 只能改透明度/描边
+
+    常用富文本标签:
+        <color=#RRGGBB>文字</color>        已实机验证
+        <align=left|center|right>          已实机验证
+        <line-height=..>  <size=..>        未验证, 建议先小范围试
+        <b> <i> <u> <s>  <sprite=..>       常规 TMP 标签, 一般可用
+
+    ⚠ 重要: 这叫"改文本排版", 不叫"移动 UI 元素"。
+      服务器端【无法】把提示条从底部挪到顶部、也无法改它的锚点。
+      想要"另一个位置的 UI", 只能换一个 UI 表面(见 7.3)。
+
+  ────────────────────────────────────────────────────────────────────────────
+  7.3 想换位置 = 换表面(这是本底层"扩大口"的另一半)
+  ────────────────────────────────────────────────────────────────────────────
+
+    游戏提供的【互相独立】的 UI 表面, 各自有各自的客户端位置, 互不抢占:
+
+        表面              服务器端入口                          客户端位置
+        ────────────────────────────────────────────────────────────────────
+        提示条 Hint       HintDisplay.Show(Hint)                 底部(单槽, 替换式)
+        屏幕广播 Broadcast Broadcast.TargetAddElement / RpcAdd…    顶部(可多条)
+        控制台 Console     GameConsoleTransmission.SendToClient    控制台面板
+        CASSIE 语音        CassieAnnouncementDispatcher            音频
+        设置页 SSS         ServerSpecificSettingsSync.Send*       设置菜单(可交互控件)
+
+    => 所以"把 UI 的口扩大"有两条独立的路:
+         路一(本底层已做): 在同一个口内部做多路复用 —— 多信口 → 一条复合文本。
+         路二(本底层已做): 跨表面分配 —— 不同类型的内容走不同的表面, 天然互不干扰。
+       两条路可以同时用, 互不冲突。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第八部分   本底层的补丁点 —— 为什么 patch 在这里
+════════════════════════════════════════════════════════════════════════════════
+
+  ────────────────────────────────────────────────────────────────────────────
+  8.1 选点原则
+  ────────────────────────────────────────────────────────────────────────────
+
+    每个 UI 表面都存在一个"最窄的漏斗"——所有写法最终都必须穿过它。
+    补在漏斗上, 就能覆盖全部写法(包括以后新增的包装类), 且补丁数量最少。
+
+    提示条:   HintDisplay.Show(Hint)                     <- 唯一漏斗(IL 已证实)
+    屏幕广播: Broadcast.TargetAddElement / RpcAddElement  <- 添加
+              Broadcast.TargetClearElements / RpcClearElements <- 清除
+    SSS:      ServerSpecificSettingsSync.SendToAll / SendToPlayersConditionally / SendToPlayer
+
+  ────────────────────────────────────────────────────────────────────────────
+  8.2 现有 8 个补丁目标
+  ────────────────────────────────────────────────────────────────────────────
+
+    Hints.HintDisplay::Show                                   提示条 —— 拦截 + 归因 + 路由
+    Broadcast::TargetAddElement                               广播(单人) —— 拦截 + 路由
+    Broadcast::RpcAddElement                                  广播(全服) —— 拦截 + 路由
+    Broadcast::TargetClearElements                            广播(单人) 清除 —— 默认拦下
+    Broadcast::RpcClearElements                               广播(全服) 清除 —— 默认拦下
+    ServerSpecificSettingsSync::SendToAll                     设置页下发 —— 强力复写
+    ServerSpecificSettingsSync::SendToPlayersConditionally    设置页条件下发 —— 强力复写
+    ServerSpecificSettingsSync::SendToPlayer(ReferenceHub)    设置页单人下发 —— 强力复写
+
+    刻意【不补】的: ServerSpecificSettingsSync.SendToPlayer(hub, collection, versionOverride)
+      —— 官方分页示例靠它显式指定集合, 强改会破坏分页语义。
+
+  ────────────────────────────────────────────────────────────────────────────
+  8.3 补丁优先级
+  ────────────────────────────────────────────────────────────────────────────
+
+    全部前缀标注 [HarmonyPriority(Priority.First)] (=800, 最高档)。
+
+    理由: 如果有别的插件也补了同一个方法, Harmony 按优先级排序执行前缀,
+          最高优先级的先跑。我们返回 false 会短路后续前缀 ——
+          因此我们的路由结果不会被别人的补丁改写。
+
+    配合 0 前缀引导器(最先 Enable), 我们既抢到了"顺序上的第一",
+    也用 Harmony 优先级拿到了"与顺序无关的第一"。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第九部分   引擎直连接入 —— 绕开组件, 直接走网络层
+════════════════════════════════════════════════════════════════════════════════
+
+  ────────────────────────────────────────────────────────────────────────────
+  9.1 依据
+  ────────────────────────────────────────────────────────────────────────────
+
+    · HintMessage 的构造函数是 public: HintMessage(Hint content)
+    · Mirror.NetworkConnection.Send<T>(T message, int channelId) 是 public
+    · 二者合起来, 就是游戏自身提示下发的最后两步。
+
+    因此可以完全跳过 HintDisplay 这个 MonoBehaviour:
+
+        NetworkConnection conn = hub.netIdentity.connectionToClient;
+        conn.Send(new HintMessage(new TextHint(text, params, effects, duration)), 0);
+
+  ────────────────────────────────────────────────────────────────────────────
+  9.2 与游戏自身路径的等价性
+  ────────────────────────────────────────────────────────────────────────────
+
+    本底层 HintBroker.TrySendDirect 与游戏自身的下发路径逐步一致:
+
+        游戏: 取 netIdentity → 取 connectionToClient → 查 SuppressedReceivers
+              → 在表内则跳过 → 构造 HintMessage → NetworkConnection.Send(channel 0)
+        我们: 取 netIdentity → 取 connectionToClient → 查 SuppressedReceivers
+              → 在表内则跳过 → 构造 HintMessage → NetworkConnection.Send(channel 0)
+
+  ────────────────────────────────────────────────────────────────────────────
+  9.3 直连带来的三点好处
+  ────────────────────────────────────────────────────────────────────────────
+
+    (1) 抗破坏
+        不再依赖 hub.hints 这个组件。某个插件把它禁用/替换/挪走,
+        我们的合并结果照样能上屏 —— 而走组件路径的插件会一起失效。
+
+    (2) 天然无自环
+        不走 Show, 就不会触发我们自己的 Show 前缀, 少一层递归防护负担。
+        (自研标记 _ownHints 仍保留, 用于兼容回退路径。)
+
+    (3) 语义不越权
+        仍然先查 HintDisplay.SuppressedReceivers —— 游戏明确表示此刻不发的,
+        我们也不发。这是"接入"而不是"劫持"。
+
+  ────────────────────────────────────────────────────────────────────────────
+  9.4 失败回退
+  ────────────────────────────────────────────────────────────────────────────
+
+    connectionToClient 为空(例如不是服务端实例), 或 Send 抛异常时,
+    自动回退到 hub.hints.Show(hint) 组件路径, 并 Warn 一条日志。
+    两条路径语义等价, 保证任何情况下都不会"没反应"。
+
+
+════════════════════════════════════════════════════════════════════════════════
+第十部分   给插件作者的行动结论
+════════════════════════════════════════════════════════════════════════════════
+
+  1. 想改"提示长什么样" —— 只能改文本。位置/字号分两种:
+       可控: 行数(\n)、颜色、对齐、以及其它 TMP 标签
+       不可控: 提示条在屏幕上的锚点(客户端固定)
+
+  2. 想让两块内容同时存在 —— 必须走本底层(多信口 → 复合文本),
+     原版连发两条只有后一条能留下。
+
+  3. 想占据"另一个位置" —— 换表面: 广播(顶部)、控制台、SSS 设置页。
+
+  4. 需要动态数值({0}) —— 保持原版写法即可, 本底层会放行原生;
+     代价是这条不参与隔离。想同时隔离, 就自己先插值成纯文本再发。
+
+  5. 需要动画效果 —— 用 HintEffectPresets.*; 但若该提示参与合并,
+     动画会被复合体统一接管, 建议关掉拦截层或改用不合并的通道。
+
+  6. 不要自己去 patch HintDisplay.Show —— 本底层已经补在最高优先级,
+     并且返回 false 短路; 你的前缀不会被执行。需要定制请走本底层的契约接口。
+
+================================================================================
