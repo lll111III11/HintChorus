@@ -1,0 +1,6 @@
+<color=red>접근 거부됨</color>
+<color=yellow>[type] 탄약</color> 한도에 도달했습니다(<color=yellow>[max_type_count]발</color>).
+<color=yellow>[type] 탄약</color> 한도에 <b>이미</b> 도달했습니다(<color=yellow>[max_type_count]발</color>).
+<color=yellow>[type]</color> 보유 한도에 도달했습니다(<color=yellow>[max_type_count]개</color>).
+<color=yellow>[type]</color> 보유 한도에 <b>이미</b> 도달했습니다(<color=yellow>[max_type_count]개</color>).
+<color=yellow>[max_item_count]개</color>까지만 휴대할 수 있습니다.

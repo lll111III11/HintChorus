@@ -1,0 +1,6 @@
+<color=red>Prístup odmietnutý</color>
+Dosiahli ste limit <color=yellow>munície [type]</color> (<color=yellow>[max_type_count] nábojov</color>).
+<b>Už</b> ste dosiahli limit <color=yellow>munície [type]</color> (<color=yellow>[max_type_count] nábojov</color>).
+Dosiahli ste limit <color=yellow>[type]</color> (<color=yellow>[max_type_count] predmetov</color>).
+<b>Už</b> ste dosiahli limit <color=yellow>[type]</color> (<color=yellow>[max_type_count] predmetov</color>).
+Môžete nosiť iba <color=yellow>[max_item_count] predmetov</color>.

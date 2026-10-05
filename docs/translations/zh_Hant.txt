@@ -1,0 +1,6 @@
+<color=red>訪問被拒絕</color>
+已達到 <color=yellow>[type] 彈藥</color> 的上限（<color=yellow>[max_type_count] 發</color>）。
+已<b>達到</b> <color=yellow>[type] 彈藥</color> 的上限（<color=yellow>[max_type_count] 發</color>）。
+已達到 <color=yellow>[type]</color> 的可持有上限（<color=yellow>[max_type_count] 個</color>）。
+已<b>達到</b> <color=yellow>[type]</color> 的可持有上限（<color=yellow>[max_type_count] 個</color>）。
+最多只能攜帶 <color=yellow>[max_item_count] 個</color> 物品。

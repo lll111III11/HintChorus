@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -24,13 +24,13 @@ public static class PluginCallerResolver
 
 	static PluginCallerResolver()
 	{
-		TrustedNames = new string[41]
+		TrustedNames = new string[42]
 		{
 			"mscorlib", "netstandard", "System", "System.Core", "System.Runtime", "System.Private.CoreLib", "Microsoft.CSharp", "Assembly-CSharp", "Assembly-CSharp-firstpass", "Assembly-CSharp-Publicized",
 			"LabApi", "NorthwoodLib", "Pooling", "YamlDotNet", "Exiled", "Exiled.API", "Exiled.Loader", "Exiled.Events", "Exiled.CustomItems", "Newtonsoft.Json",
 			"Mono.Posix", "SemanticVersioning", "NAudio", "NLayer", "NVorbis", "Mirror", "Mirror.Components", "Mirror-Publicized", "CommandSystem.Core", "0Harmony",
 			"HarmonyLib", "Harmony", "UnityEngine", "UnityEngine.UI", "UnityEngine.UIElementsModule", "Unity.TextMeshPro", "Unity.Burst", "Unity.Collections", "Unity.Mathematics", "MEC",
-			"CustomEventHandler"
+			"CustomEventHandler", "RueI"
 		};
 		TrustedLookup = new HashSet<string>(TrustedNames, StringComparer.OrdinalIgnoreCase);
 		TrustedAssemblies = new HashSet<Assembly>();

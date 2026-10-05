@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using HarmonyLib;
 using HintIsolation.Core.Broker;
@@ -92,7 +92,10 @@ public sealed class HintSurfaceIsolation : IUiSurfaceInterceptor
 		{
 			TranslationHint val3 = (TranslationHint)(object)((hint is TranslationHint) ? hint : null);
 			if (val3 != null && NativePolicy == NativeHintPolicy.Isolate
-				&& TranslateNativeHints && NativeHintTranslator.TryTranslate(val3, NativeHintLanguage, out string text))
+				&& TranslateNativeHints && NativeHintTranslator.TryTranslate(
+					val3,
+					NativeHintTranslator.ResolvePlayerLanguage(val, NativeHintLanguage),
+					out string text))
 			{
 					UiSlotRegistry.GetOrCreate(UiIdRegistry.ResolveRoute(NativeId), "系统原生提示", 64, ShowLabels, MaxEntries, MaxDuration, HintOrigin.Native).Push(text, Time.time, ((DisplayableObject<SharedHintData>)(object)val3).DurationScalar);
 				HintBroker.Instance.MarkDirty(val);

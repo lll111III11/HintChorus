@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Cassie;
 using HarmonyLib;
@@ -11,6 +11,7 @@ using HintIsolation.Core.Transport;
 using Hints;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
+using Mirror;
 using UnityEngine;
 
 namespace HintIsolation.Core.Interception;
@@ -264,10 +265,9 @@ public sealed class UiInterception : IUiInterception
 		return HintSurfaceIsolation.Instance.OnHintShow(display, hint);
 	}
 
-	internal static bool OnBroadcastAdd(string data, ref ushort time, Broadcast.BroadcastFlags flags)
+	internal static bool OnBroadcastAdd(NetworkConnection? conn, string message, ushort duration, Broadcast.BroadcastFlags flags)
 	{
-		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		return BroadcastSurfaceIsolation.Instance.OnBroadcastAdd(data, ref time, flags);
+		return BroadcastSurfaceIsolation.Instance.OnBroadcastAdd(conn, message, duration, flags);
 	}
 
 	internal static bool OnBroadcastClear()

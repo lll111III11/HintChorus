@@ -1,0 +1,6 @@
+<color=red>Erişim reddedildi</color>
+<color=yellow>[type] mühimmat</color> sınırına ulaşıldı (<color=yellow>[max_type_count] mermi</color>).
+<color=yellow>[type] mühimmat</color> sınırına <b>zaten</b> ulaşıldı (<color=yellow>[max_type_count] mermi</color>).
+<color=yellow>[type]</color> sınırına ulaşıldı (<color=yellow>[max_type_count] eşya</color>).
+<color=yellow>[type]</color> sınırına <b>zaten</b> ulaşıldı (<color=yellow>[max_type_count] eşya</color>).
+Yalnızca <color=yellow>[max_item_count] eşya</color> taşınabilir.

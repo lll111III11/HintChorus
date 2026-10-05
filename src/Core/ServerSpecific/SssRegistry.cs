@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -78,6 +78,7 @@ public static class SssRegistry
 
 	public static void Terminate()
 	{
+		bool removed = false;
 		lock (Sync)
 		{
 			if (!IsInitialized)
@@ -88,14 +89,23 @@ public static class SssRegistry
 			ProtectFromOverwrites = false;
 			ServerSpecificSettingsSync.ServerOnSettingValueReceived -= OnNativeValueReceived;
 			ServerSpecificSettingsSync.ServerOnStatusReceived -= OnNativeStatusReceived;
-			RewriteArrayLocked();
+			// 必须先"剔除自己的项"再清空 Modules: Modules 里还登记着我们的实例,
+			// RemoveAllLocked 靠它识别"哪些是别人的、哪些是我们要剔除的"。
+			// (早期版本先 RewriteArrayLocked 再 Clear —— 而 RewriteArrayLocked 是
+			//  "剔除自己 + 加回自己" = 原样写回, 于是卸载后我们的设置项仍残留在
+			//   DefinedSettings 里, 热重载后变成孤儿项越攒越多。)
+			RemoveAllLocked();
+			removed = true;
 			Modules.Clear();
 			ValueHandlers.Clear();
 			StatusHandlers.Clear();
 			_currentArray = ServerSpecificSettingsSync.DefinedSettings;
 		}
-		// 还原后的面板也要在锁外下发一次, 否则客户端还挂着本核心的设置项
-		SendAllNow();
+		if (removed)
+		{
+			// 还原后的面板也要在锁外下发一次, 否则客户端还挂着本核心的设置项
+			SendAllNow();
+		}
 		StartupLog.Info("[HintIsolation] SSS 端口隔离核心已停止");
 	}
 
@@ -264,6 +274,26 @@ public static class SssRegistry
 	}
 
 	/// <summary>
+	/// 剔除本核心注册的<b>全部</b>设置项并下发(供 <see cref="Terminate"/> 使用)。
+	/// 与 <see cref="RewriteArrayLocked"/> 不同: 只剔除、<b>不</b>加回。
+	/// </summary>
+	private static void RemoveAllLocked()
+	{
+		ServerSpecificSettingBase[] array = ServerSpecificSettingsSync.DefinedSettings ?? Array.Empty<ServerSpecificSettingBase>();
+		List<ServerSpecificSettingBase> list = new List<ServerSpecificSettingBase>(array.Length);
+		ServerSpecificSettingBase[] array2 = array;
+		foreach (ServerSpecificSettingBase setting in array2)
+		{
+			if (!Modules.Values.Any((ModuleEntry m) => m.Instances.Contains(setting)))
+			{
+				list.Add(setting);
+			}
+		}
+		_currentArray = list.ToArray();
+		ServerSpecificSettingsSync.DefinedSettings = _currentArray;
+	}
+
+	/// <summary>
 	/// 把当前设置数组下发给全服。
 	/// <para><b>必须在没有持有 <see cref="Sync"/> 的时候调用。</b> <c>SendToAll</c> 会按连接逐个
 	/// 序列化下发, 玩家越多越慢; 持锁下发会把其它线程上的 SSS 操作(别的插件注册、3 秒守卫轮询、
@@ -327,6 +357,22 @@ public static class SssRegistry
 		}
 	}
 
+	/// <summary>
+	/// <b>供 <c>SendToPlayer(hub, collection, version)</c> 的 Transpiler 调用的幂等合并器</b>。
+	///
+	/// <para>该重载的 <c>collection</c> 是<b>非 ref 参数</b>, Harmony 前缀无法改写它,
+	/// 只能靠 Transpiler 把方法体内每一次"加载 collection"换成"加载合并结果"。
+	/// 本方法就是那个被注入的合并器。</para>
+	///
+	/// <para>幂等保证: 本核心设置项已全部在场时, <see cref="TryCoverCollection"/> 返回
+	/// 原数组实例(不分配、不改写), 因此对同一集合反复合并是安全的。</para>
+	/// </summary>
+	public static ServerSpecificSettingBase[] MergeCollectionForOverride(ServerSpecificSettingBase[] incoming)
+	{
+		TryCoverCollection(incoming, out ServerSpecificSettingBase[] merged);
+		return merged;
+	}
+
 	public static bool ForceMergeBeforeSend()
 	{
 		lock (Sync)
@@ -345,7 +391,10 @@ public static class SssRegistry
 					list.Add(setting);
 				}
 			}
-			if (list.Count == current.Length && Modules.Values.All((ModuleEntry m) => m.Settings.All((ServerSpecificSettingBase s) => current.Contains(s))))
+			// 本核心的设置项已全部在场 → 无需改写(短路条件只有这一个;
+			// 早期版本误加了 list.Count == current.Length, 与"全部在场"互斥, 导致恒为 false,
+			// 每次下发都触发整数组重建)。
+			if (Modules.Values.All((ModuleEntry m) => m.Settings.All((ServerSpecificSettingBase s) => current.Contains(s))))
 			{
 				return false;
 			}
@@ -406,6 +455,13 @@ public static class SssRegistry
 			var (arg, action) = array2[i];
 			try
 			{
+				// 端口隔离语义: 订阅者只收到"自己注册口"的设置变化。
+				// (早期版本把 setting 广播给所有订阅者, 插件 A 会收到插件 B 的 setting,
+				//  只能靠自己在回调里再按 SettingId 二次过滤。)
+				if (!IsSettingOwnedBy(arg, setting))
+				{
+					continue;
+				}
 				action(hub, setting);
 			}
 			catch (Exception arg2)
@@ -435,6 +491,15 @@ public static class SssRegistry
 			{
 				Logger.Error((object)$"[HintIsolation] 注册口 '{arg}' 的 SSS 状态回调异常(已隔离): {arg2}");
 			}
+		}
+	}
+
+	/// <summary>setting 是否属于指定注册口。</summary>
+	private static bool IsSettingOwnedBy(string moduleId, ServerSpecificSettingBase setting)
+	{
+		lock (Sync)
+		{
+			return Modules.TryGetValue(moduleId, out ModuleEntry? entry) && entry.Instances.Contains(setting);
 		}
 	}
 }

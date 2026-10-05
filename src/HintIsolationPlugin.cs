@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using HintIsolation.Core.Bootstrap;
@@ -84,7 +84,7 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 		[Description("原生提示翻译合并(默认开): 游戏自己的译文提示用内嵌全量模板翻成纯文本并入复合体, 与插件 UI 真共存; 关掉退回'让路'")]
 		public bool TranslateNativeHints { get; set; } = true;
 
-		[Description("原生提示译文语言: 支持游戏全部 22 种代码(ca cs de en es fr gl it ko pl pt_BR ru sk sr_CYRL-BA sr_LATN-BA tr uk vi zh_Flash_Hans zh_Hans zh_Hans-2 zh_Hant), 也接受 zh/cn/chs/cht/tw/pt/sr 等简写; 取值顺序: 服务器 Translations\\<语言>\\GameHints.txt → 插件内嵌官方译文 → 英文 → 内置兜底")]
+		[Description("原生提示译文兜底语言(默认 zh=内置中文; 可选 en/fr/ru/es=内置联合国常用语)。每个玩家会先按 playerPreferences.Language 自适应取自己的语言, 其余客户端语言从服务器 translations\\目录加载, 探测失败才回退本配置")]
 		public string NativeHintTranslationLanguage { get; set; } = "zh";
 
 		[Description("提示条: 每个信口最多同时保留几条(1 = 替换, 与原版一致; 内容每秒变化的 HUD 必须用 1, 否则会堆成多份)")]
@@ -260,6 +260,7 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 		HintBroker.Instance.Stop();
 		SssRegistry.Terminate();
 		UiSlotRegistry.Clear();
+		RuntimeHome.UninstallResolver();
 		StartupLog.Info("[HintIsolation] Disable 完成: 拦截层已卸载, 信口已释放, SSS 数组已还原");
 	}
 

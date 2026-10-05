@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
@@ -86,12 +86,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- 提示条文本度量表: 代码按这个 LogicalName 读取, 名字不能改 -->
-		<!-- 22 种游戏语言的官方提示译文(权利归 Northwood Studios, 见 THIRD-PARTY);
-		     资源名固定为 HintIsolation.lang.<语言代码>, 代码里按这个读 -->
-		<EmbeddedResource Include="Resources\lang\*.txt">
-			<LogicalName>HintIsolation.lang.%(Filename)</LogicalName>
-		</EmbeddedResource>
+		<!-- 提示条文本度量表: 代码按这个 LogicalName 读取, 名字不能改
+		     (原生提示的 5 种内嵌译文在 NativeHintTranslator 里, 其余语言走 translations\ 目录) -->
 		<EmbeddedResource Include="Resources\HintIsolation.textwidth.bin">
 			<LogicalName>HintIsolation.textwidth.bin</LogicalName>
 		</EmbeddedResource>
@@ -103,11 +99,11 @@
 		     运行时由 BootstrapInstaller 释放为
 		     plugins\global\0HintIsolation.Bootstrap.dll
 		     ══════════════════════════════════════════════════════════════ -->
-		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\HintIsolation.Bootstrap\bin\$(Configuration)\net48\HintIsolation.Bootstrap.dll">
+		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\bootstrap\bin\$(Configuration)\net48\HintIsolation.Bootstrap.dll">
 			<LogicalName>HintIsolation.Bootstrap.dll</LogicalName>
 		</EmbeddedResource>
 		<!-- 仅用于保证引导器先于本工程构建, 不作为程序集引用 -->
-		<ProjectReference Include="..\HintIsolation.Bootstrap\HintIsolation.Bootstrap.csproj"
+		<ProjectReference Include="..\bootstrap\HintIsolation.Bootstrap.csproj"
 		                  ReferenceOutputAssembly="false"
 		                  Private="false" />
 	</ItemGroup>

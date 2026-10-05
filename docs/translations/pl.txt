@@ -1,0 +1,6 @@
+<color=red>Odmowa dostępu</color>
+Osiągnięto limit <color=yellow>amunicji [type]</color> (<color=yellow>[max_type_count] nabojów</color>).
+<b>Już</b> osiągnięto limit <color=yellow>amunicji [type]</color> (<color=yellow>[max_type_count] nabojów</color>).
+Osiągnięto limit <color=yellow>[type]</color> (<color=yellow>[max_type_count] przedmiotów</color>).
+<b>Już</b> osiągnięto limit <color=yellow>[type]</color> (<color=yellow>[max_type_count] przedmiotów</color>).
+Można nosić tylko <color=yellow>[max_item_count] przedmiotów</color>.

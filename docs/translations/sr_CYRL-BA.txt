@@ -1,0 +1,6 @@
+<color=red>Приступ одбијен</color>
+Достигнута је граница <color=yellow>муниције [type]</color> (<color=yellow>[max_type_count] метака</color>).
+<b>Већ</b> је достигнута граница <color=yellow>муниције [type]</color> (<color=yellow>[max_type_count] метака</color>).
+Достигнута је граница <color=yellow>[type]</color> (<color=yellow>[max_type_count] предмета</color>).
+<b>Већ</b> је достигнута граница <color=yellow>[type]</color> (<color=yellow>[max_type_count] предмета</color>).
+Може се носити само <color=yellow>[max_item_count] предмета</color>.

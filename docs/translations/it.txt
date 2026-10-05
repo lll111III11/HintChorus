@@ -1,0 +1,6 @@
+<color=red>Accesso negato</color>
+Raggiunto il limite di <color=yellow>munizioni [type]</color> (<color=yellow>[max_type_count] colpi</color>).
+<b>Già</b> raggiunto il limite di <color=yellow>munizioni [type]</color> (<color=yellow>[max_type_count] colpi</color>).
+Raggiunto il limite di <color=yellow>[type]</color> (<color=yellow>[max_type_count] oggetti</color>).
+<b>Già</b> raggiunto il limite di <color=yellow>[type]</color> (<color=yellow>[max_type_count] oggetti</color>).
+Puoi trasportare solo <color=yellow>[max_item_count] oggetti</color>.

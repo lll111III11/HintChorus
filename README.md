@@ -5,6 +5,10 @@
 | --- | --- |
 | **中文（主）** | 本页即为中文说明 ｜ 完整技术文档：[docs/zh/](docs/zh/) |
 | English（辅） | [docs/en/README.md](docs/en/README.md) |
+| Français | [docs/fr/README.md](docs/fr/README.md) |
+| Русский | [docs/ru/README.md](docs/ru/README.md) |
+| Español | [docs/es/README.md](docs/es/README.md) |
+| **多语言 / Multilingual**（全部 22 种语言 + 翻译文件） | [docs/languages.md](docs/languages.md) |
 
 ---
 
@@ -106,6 +110,11 @@ offset_font_size: 20     # 量文本宽度用的字号
 | --- | --- |
 | [`docs/zh/`](docs/zh/) | 中文文档（主）：深度说明、API 写法大全 |
 | [`docs/en/README.md`](docs/en/README.md) | English summary |
+| [`docs/fr/README.md`](docs/fr/README.md) | Résumé en français |
+| [`docs/ru/README.md`](docs/ru/README.md) | Краткое описание на русском |
+| [`docs/es/README.md`](docs/es/README.md) | Resumen en español |
+| [`docs/languages.md`](docs/languages.md) | **多语言总入口**：全部 22 种客户端语言 + 翻译文件下载 |
+| [`docs/translations/`](docs/translations/) | 17 种外部语言翻译文件（放入服务器 `translations/` 目录即生效） |
 | [`docs/default-config.yml`](docs/default-config.yml) | **权威默认配置**（由编译产物实际序列化得到，61 项） |
 | [`docs/api-guide.zh.txt`](docs/api-guide.zh.txt) | 插件作者要看的 API 写法指南 |
 | [`docs/patch-target-report.txt`](docs/patch-target-report.txt) | 拦截目标逐条核验报告 |

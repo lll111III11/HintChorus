@@ -5,6 +5,10 @@
 | --- | --- |
 | **中文（主）** | [仓库首页中文说明](../../README.md) ｜ [完整技术文档](../zh/README.md) |
 | **English**（secondary） | this page |
+| **Français** | [docs/fr/README.md](../fr/README.md) |
+| **Русский** | [docs/ru/README.md](../ru/README.md) |
+| **Español** | [docs/es/README.md](../es/README.md) |
+| **Multilingual / 多语言** (all 22 client languages + translation files) | [docs/languages.md](../languages.md) |
 
 ---
 
@@ -89,6 +93,11 @@ offset_font_size: 20     # font size used to measure text width
 | Document | Contents |
 | --- | --- |
 | [`docs/zh/`](../docs/zh/) | 中文文档（主）— deep dive and API guide |
+| [`docs/fr/README.md`](../docs/fr/README.md) | Résumé en français |
+| [`docs/ru/README.md`](../docs/ru/README.md) | Краткое описание на русском |
+| [`docs/es/README.md`](../docs/es/README.md) | Resumen en español |
+| [`docs/languages.md`](../docs/languages.md) | **Multilingual hub** — all 22 client languages + translation files |
+| [`docs/translations/`](../docs/translations/) | 17 external translation files (drop into the server's `translations/` folder) |
 | [`docs/default-config.yml`](../docs/default-config.yml) | **Authoritative default config** (61 keys, generated from the built assembly) |
 | [`docs/api-guide.zh.txt`](../docs/api-guide.zh.txt) | API guide for plugin authors (Chinese) |
 | [`docs/patch-target-report.txt`](../docs/patch-target-report.txt) | Per-target verification report |

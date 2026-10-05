@@ -1,0 +1,6 @@
+<color=red>Přístup odepřen</color>
+Dosáhli jste limitu <color=yellow>munice [type]</color> (<color=yellow>[max_type_count] nábojů</color>).
+<b>Již</b> jste dosáhli limitu <color=yellow>munice [type]</color> (<color=yellow>[max_type_count] nábojů</color>).
+Dosáhli jste limitu <color=yellow>[type]</color> (<color=yellow>[max_type_count] předmětů</color>).
+<b>Již</b> jste dosáhli limitu <color=yellow>[type]</color> (<color=yellow>[max_type_count] předmětů</color>).
+Můžete nést pouze <color=yellow>[max_item_count] předmětů</color>.

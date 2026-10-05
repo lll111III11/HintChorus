@@ -1,24 +1,27 @@
-﻿using System;
+using System;
 using HarmonyLib;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
 namespace HintIsolation.Core.Interception;
 
-[HarmonyPatch(typeof(Broadcast), "RpcAddElement")]
+/// <summary>
+/// 广播表面补丁: 全服广播入队(<c>RpcAddElement</c>)。
+/// <para>签名与游戏一致: <c>RpcAddElement(string, ushort, BroadcastFlags)</c>, <c>duration</c> 非 ref。</para>
+/// </summary>
+[HarmonyPatch(typeof(Broadcast), nameof(Broadcast.RpcAddElement))]
 internal static class BroadcastRpcAddElementPatch
 {
-	[HarmonyPriority(800)]
-	private static bool Prefix(string data, ref ushort time, Broadcast.BroadcastFlags flags)
+	[HarmonyPriority(Priority.First)]
+	private static bool Prefix(string message, ushort duration, Broadcast.BroadcastFlags type)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
 		try
 		{
-			return UiInterception.OnBroadcastAdd(data, ref time, flags);
+			return UiInterception.OnBroadcastAdd(null, message, duration, type);
 		}
-		catch (Exception arg)
+		catch (Exception e)
 		{
-			Logger.Error((object)$"[HintIsolation] 拦截 Broadcast.RpcAddElement 异常(已放行原生): {arg}");
+			Logger.Error((object)$"[HintIsolation] 拦截 Broadcast.RpcAddElement 异常(已放行原生): {e}");
 			return true;
 		}
 	}

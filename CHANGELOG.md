@@ -2,6 +2,47 @@
 
 本项目处于 **alpha** 阶段，接口与行为仍可能调整。
 
+## alpha (2026-10-05)
+
+### 修复
+
+- **广播补丁签名错误（致命）**：`TargetAddElement(NetworkConnection, string, ushort, BroadcastFlags)` 首参是
+  连接、`duration` 是普通 `ushort`（非 ref）。早期补丁写成 `ref ushort time`，签名不匹配导致补丁**静默挂不上**、
+  广播拦截整体失效。现按真实签名重写；节流改为"间隔内纯抑制"（非 ref 参数无法压短时长）。
+- **SSS `SendToPlayer(hub, collection, version)` 补丁挂不上（致命）**：该重载的 `collection` 是**非 ref 参数**，
+  前缀即使声明成 `ref` 也会因签名不匹配静默失效。改为 **Transpiler**（`ldarg.1` → 合并结果），
+  EXILED 的 `UserSettings.SendToPlayer(player, settings)` 从此也被覆盖。
+- **瞬态提示过期不清理**：瞬态链表按插入顺序排列而 `Until` 由各自时长决定，"后插入更短命"完全可能；
+  只看队首剪枝会把短命提示压在长命提示后面一直留着。改为**整链扫描剔除**。
+- **`_leeway` 小于整轮刷新周期导致静态内容空屏**：`_leeway` 改为 `Max(_refresh, resendLeeway)`，
+  保证续期提前量至少覆盖一个整轮周期。
+- **折叠判死误用 `MinRemaining`**：取所有条目（含已过期）的最小值会把"部分过期"的信口误判成空信口
+  而退出折叠，让较新内容被同插件另一信口顶掉。改为按 `AliveCount` 判定。
+- **同帧归因污染**：归因结果按帧号缓存会把同帧第二个插件的 UI 并入第一个插件的信口（反向还把
+  游戏原生提示误判成插件提示）。改为**逐次调用独立解析**，Native 结果不缓存。
+- **SSS `Terminate` 残留孤儿设置项**：早期先 `RewriteArrayLocked`（剔除自己+加回自己=原样写回）再清空
+  Modules，卸载后设置项残留并越攒越多。改为**只剔除不加回**（`RemoveAllLocked`）。
+- **SSS 回调未按模块归属过滤**：插件 A 会收到插件 B 的 setting，只能靠自己在回调里二次过滤。
+  现按 `IsSettingOwnedBy` 过滤，订阅者只收到自己注册口的变化。
+- **SSS `ForceMergeBeforeSend` 短路恒为假**：`keep.Count == current.Length` 与"全部在场"互斥，
+  导致每次下发都触发整数组重建。短路条件只保留"全部在场"。
+- **信任名单漏 RueI**：RueI 的调用被当成未知插件归因。`TrustedNames` 补 `RueI`。
+- **`Disable()` 未卸载 AssemblyResolve**：热重载后残留解析器。补 `RuntimeHome.UninstallResolver()`。
+
+### 新增 / 变更
+
+- **原生提示多语言自适应（玩家级）**：内嵌 **5 种联合国常用语**（`en` / `zh` / `fr` / `ru` / `es`）——
+  开箱即用；其余客户端语言从自宿主 `translations\` 目录加载（GitHub 仓库
+  [`docs/translations/`](docs/translations/) 提供全部 **17 种**外部语言文件，下载放入服务器即生效）。
+  每个玩家按 `ReferenceHub.playerPreferences.Language` **自动取自己的语言**（反射探测一次并缓存委托，
+  失败回退配置默认 `native_hint_language`）；繁体回退简体、逐条回退英文，绝不输出半成品。
+- 语言归一化：`zh_Hans` / `zh_Hans-2` / `zh_Flash_Hans` → `zh`；`zh_Hant` 独立键（外部可精确提供繁体）。
+- 多语言文档入口：`docs/languages.md`（22 种语言总表 + 翻译文件下载），FR / RU / ES 全译 README。
+
+### 验证
+
+- 仓库工程 `src/` 0 警告 0 错误（含 layout 排版 `rows` / `offsets` / `compact`）。
+
 ## alpha (2026-10-04)
 
 ### 修复
@@ -41,17 +82,3 @@
 - 允许被放行的提示仍会短暂接管提示口（单通道的物理上限）；已把窗口压到约 40 毫秒。
 - 预留行/槽位的总量上限同时限制"位置稳定性"：归属数超过上限后，稳定性会退化。
 - 与自行接管提示显示的框架互斥（见 README）。
-
-## alpha (2026-10-05)
-
-### 新增
-
-- **原生提示支持游戏全部 22 种语言**：内嵌 22 份官方 `GameHints.txt` 译文（约 14 KB），
-  并按「服务器 `Translations/<语言>/GameHints.txt` → 内嵌译文 → 英文 → 内置兜底」的优先级取用；
-  缺失的条目逐条回退英文。语言代码接受全部 22 个，也接受 `zh`/`cn`/`chs`/`cht`/`tw`/`pt`/`sr` 等简写。
-- 修掉语言文件的路径错误（原先多退了一层 `..\..`，导致服务器译文永远读不到）。
-
-### 说明
-
-- 原生提示原本由**客户端按玩家自己的语言**渲染；一旦被本插件吸收进统一排版，只能统一成一种语言
-  （服务端并不逐玩家知道对方的客户端语言），因此用配置选项选定。
