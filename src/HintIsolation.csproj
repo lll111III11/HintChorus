@@ -7,8 +7,6 @@
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<AssemblyName>HintIsolation</AssemblyName>
-		<!-- 注意: 程序集名必须保持 HintIsolation —— 前置引导器是按"程序集名"找主 DLL 的,
-		     仓库里那个成品文件虽然叫 alpha-HintIsolation.dll, 但程序集标识不变, 所以不影响加载。 -->
 		<RootNamespace>HintIsolation</RootNamespace>
 		<Version>1.0.0</Version>
 		<PlatformTarget>x64</PlatformTarget>
@@ -20,33 +18,80 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<!-- SCP:SL 专用服务器 Managed 目录。改成你自己的路径, 或在命令行覆盖:
-		     dotnet build -c Release -p:ManagedDir="<你的服务器>/SCPSL_Data/Managed" -->
-		<ManagedDir Condition="'$(ManagedDir)' == ''">D:\SteamLibrary\steamapps\common\SCP Secret Laboratory Dedicated Server\SCPSL_Data\Managed</ManagedDir>
+		<!-- SCP:SL 专用服务器 Managed 目录(按需改成自己的服务器路径) -->
+		<ManagedDir>D:\SteamLibrary\steamapps\common\SCP Secret Laboratory Dedicated Server\SCPSL_Data\Managed</ManagedDir>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- 游戏与框架引用(Private=false 不随插件复制) -->
-		<Reference Include="LabApi"><HintPath>$(ManagedDir)\LabApi.dll</HintPath><Private>false</Private></Reference>
-		<Reference Include="Assembly-CSharp"><HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
-		<Reference Include="Assembly-CSharp-firstpass"><HintPath>$(ManagedDir)\Assembly-CSharp-firstpass.dll</HintPath><Private>false</Private></Reference>
-		<Reference Include="Mirror"><HintPath>$(ManagedDir)\Mirror.dll</HintPath><Private>false</Private></Reference>
-		<Reference Include="NorthwoodLib"><HintPath>$(ManagedDir)\NorthwoodLib.dll</HintPath><Private>false</Private></Reference>
-		<Reference Include="UnityEngine"><HintPath>$(ManagedDir)\UnityEngine.dll</HintPath><Private>false</Private></Reference>
-		<Reference Include="UnityEngine.CoreModule"><HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
-		<Reference Include="Unity.TextMeshPro"><HintPath>$(ManagedDir)\Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
-		<Reference Include="netstandard"><HintPath>$(ManagedDir)\netstandard.dll</HintPath><Private>false</Private></Reference>
-		<Reference Include="YamlDotNet"><HintPath>$(ManagedDir)\YamlDotNet.dll</HintPath><Private>false</Private></Reference>
-		<Reference Include="0Harmony"><HintPath>$(ManagedDir)\0Harmony.dll</HintPath><Private>false</Private></Reference>
+		<!-- 备份目录与还原参考件不进编译 -->
+		<Compile Remove="_backup_20261004\**" />
+		<Compile Remove="_ref_from_deploy\**" />
+		<None Remove="_backup_20261004\**" />
+		<None Remove="_ref_from_deploy\**" />
+		<EmbeddedResource Remove="_backup_20261004\**" />
+		<EmbeddedResource Remove="_ref_from_deploy\**" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- 在非 Windows 或缺少引用程序集的机器上构建 net48 所需(仅编译期) -->
+		<!-- 游戏与框架引用(Private=false 不随插件复制) -->
+		<Reference Include="LabApi">
+			<HintPath>$(ManagedDir)\LabApi.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="Assembly-CSharp">
+			<HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="Assembly-CSharp-firstpass">
+			<HintPath>$(ManagedDir)\Assembly-CSharp-firstpass.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="Mirror">
+			<HintPath>$(ManagedDir)\Mirror.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="NorthwoodLib">
+			<HintPath>$(ManagedDir)\NorthwoodLib.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine">
+			<HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="Unity.TextMeshPro">
+			<HintPath>$(ManagedDir)\Unity.TextMeshPro.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="netstandard">
+			<HintPath>$(ManagedDir)\netstandard.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="YamlDotNet">
+			<HintPath>$(ManagedDir)\YamlDotNet.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="0Harmony">
+			<HintPath>$(ManagedDir)\0Harmony.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- 在 Windows 上构建 net48 所需的引用程序集(仅编译期) -->
 		<PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- 文本度量表: 代码按这个 LogicalName 读取, 名字不能改 -->
+		<!-- 提示条文本度量表: 代码按这个 LogicalName 读取, 名字不能改 -->
+		<!-- 22 种游戏语言的官方提示译文(权利归 Northwood Studios, 见 THIRD-PARTY);
+		     资源名固定为 HintIsolation.lang.<语言代码>, 代码里按这个读 -->
+		<EmbeddedResource Include="Resources\lang\*.txt">
+			<LogicalName>HintIsolation.lang.%(Filename)</LogicalName>
+		</EmbeddedResource>
 		<EmbeddedResource Include="Resources\HintIsolation.textwidth.bin">
 			<LogicalName>HintIsolation.textwidth.bin</LogicalName>
 		</EmbeddedResource>
@@ -55,13 +100,14 @@
 	<ItemGroup>
 		<!-- ══════════════════════════════════════════════════════════════
 		     抢占最先头: 把 0 前缀引导器的构建产物作为嵌入资源打进本程序集,
-		     运行时释放为 plugins\global\0HintIsolation.Bootstrap.dll
+		     运行时由 BootstrapInstaller 释放为
+		     plugins\global\0HintIsolation.Bootstrap.dll
 		     ══════════════════════════════════════════════════════════════ -->
-		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\bootstrap\bin\$(Configuration)\net48\HintIsolation.Bootstrap.dll">
+		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\HintIsolation.Bootstrap\bin\$(Configuration)\net48\HintIsolation.Bootstrap.dll">
 			<LogicalName>HintIsolation.Bootstrap.dll</LogicalName>
 		</EmbeddedResource>
 		<!-- 仅用于保证引导器先于本工程构建, 不作为程序集引用 -->
-		<ProjectReference Include="..\bootstrap\HintIsolation.Bootstrap.csproj"
+		<ProjectReference Include="..\HintIsolation.Bootstrap\HintIsolation.Bootstrap.csproj"
 		                  ReferenceOutputAssembly="false"
 		                  Private="false" />
 	</ItemGroup>
