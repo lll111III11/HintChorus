@@ -105,6 +105,19 @@ released at runtime.
 
 ## License
 
+## Related projects
+
+Ecosystem neighbours — **not** dependencies of this project; linked so you can compare approaches:
+
+- [**RueI**](https://github.com/pawslee/RueI) — CC0 hint framework; this project took the *idea* of "compute an offset instead of using a grid or lines" for its `offsets` layout mode
+- [**HintServiceMeow**](https://github.com/MeowServer/HintServiceMeow) — MIT hint framework that places each hint by coordinates
+- [**LabAPI**](https://github.com/northwood-studios/LabAPI) — the server-side plugin API this project builds on
+
+> Use *either* this project *or* a framework that patches the hint display itself — both need to own the single hint channel.
+
+---
+
+
 **CC0-1.0** — public domain dedication, no conditions attached: see [`LICENSE`](../LICENSE).
 Third-party content and referenced ideas are excluded from that dedication and listed separately in
 [`THIRD-PARTY.md`](../THIRD-PARTY.md).

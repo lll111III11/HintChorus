@@ -1,0 +1,4 @@
+title: HintIsolation
+description: SCP:SL 动态 UI 隔离底层 —— 让互不相识的插件共用同一块屏幕，插件无需改写法 (CC0-1.0, alpha)
+theme: jekyll-theme-minimal
+lang: zh-CN

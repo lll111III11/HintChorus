@@ -126,6 +126,19 @@ dotnet build src/HintIsolation.csproj -c Release -p:ManagedDir="<你的服务器
 
 ## 许可 / License
 
+## 相关项目 / Related
+
+本项目与下列项目同处一个生态。它们**不是**本项目的依赖，链接在此仅为方便你对照不同思路：
+
+- [**RueI**](https://github.com/pawslee/RueI) —— CC0 的 hint 框架；本项目的 `offsets` 排版模式借鉴了它"不是行基、而是算偏移"的构思
+- [**HintServiceMeow**](https://github.com/MeowServer/HintServiceMeow) —— MIT 的 hint 框架，按坐标放置每个提示
+- [**LabAPI**](https://github.com/northwood-studios/LabAPI) —— 本项目所依托的服务端插件 API
+
+> 与自行接管提示显示的框架（上面这类）**二选一**：两者都要独占同一条提示通道。
+
+---
+
+
 本项目以 **CC0-1.0** 释出（公有领域献出，无任何附加条件）：见 [`LICENSE`](LICENSE)。
 
 涉及第三方内容与参考来源的部分**不在本项目的权利声明范围内**，单独列在 [`THIRD-PARTY.md`](THIRD-PARTY.md)。
