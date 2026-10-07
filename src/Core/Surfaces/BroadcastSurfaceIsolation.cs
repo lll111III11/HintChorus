@@ -1,13 +1,13 @@
-using HintIsolation.Core.Broker;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interfaces;
-using HintIsolation.Core.Interception;
-using HintIsolation.Core.Models;
+using HintChorus.Core.Broker;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interfaces;
+using HintChorus.Core.Interception;
+using HintChorus.Core.Models;
 using Mirror;
 using System;
 
-namespace HintIsolation.Core.Surfaces;
+namespace HintChorus.Core.Surfaces;
 
 /// <summary>
 /// <b>屏幕中央广播表面(Broadcast)隔离器</b>。

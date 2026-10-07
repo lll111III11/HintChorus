@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using HintIsolation.Core.Models;
+using HintChorus.Core.Models;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using UserSettings.ServerSpecific;
 
-namespace HintIsolation.Core.ServerSpecific;
+namespace HintChorus.Core.ServerSpecific;
 
 public static class SssRegistry
 {
@@ -73,7 +73,7 @@ public static class SssRegistry
 			ServerSpecificSettingsSync.ServerOnStatusReceived += OnNativeStatusReceived;
 			_currentArray = ServerSpecificSettingsSync.DefinedSettings;
 		}
-		StartupLog.Info("[HintIsolation] SSS 端口隔离核心已启动 (防劫持=" + ProtectFromOverwrites + ")");
+		StartupLog.Info("[HintChorus] SSS 端口隔离核心已启动 (防劫持=" + ProtectFromOverwrites + ")");
 	}
 
 	public static void Terminate()
@@ -106,7 +106,7 @@ public static class SssRegistry
 			// 还原后的面板也要在锁外下发一次, 否则客户端还挂着本核心的设置项
 			SendAllNow();
 		}
-		StartupLog.Info("[HintIsolation] SSS 端口隔离核心已停止");
+		StartupLog.Info("[HintChorus] SSS 端口隔离核心已停止");
 	}
 
 	public static RegisterResult RegisterModule(string moduleId, IEnumerable<ServerSpecificSettingBase> settings)
@@ -138,7 +138,7 @@ public static class SssRegistry
 			List<string> list = CheckConflictsLocked(array);
 			if (list.Count > 0)
 			{
-				Logger.Error((object)("[HintIsolation] 注册口 '" + moduleId + "' 与其它插件存在 SettingId 冲突, 已拒绝注册: " + string.Join("; ", list)));
+				Logger.Error((object)("[HintChorus] 注册口 '" + moduleId + "' 与其它插件存在 SettingId 冲突, 已拒绝注册: " + string.Join("; ", list)));
 				return RegisterResult.Fail(moduleId, "SettingId 冲突", list);
 			}
 			Modules.Add(moduleId, new ModuleEntry
@@ -151,7 +151,7 @@ public static class SssRegistry
 			registeredCount = array.Length;
 		}
 		SendAllNow();
-		StartupLog.Info($"[HintIsolation] 注册口 '{moduleId}' 已独立注册 {registeredCount} 个 SSS 设置项");
+		StartupLog.Info($"[HintChorus] 注册口 '{moduleId}' 已独立注册 {registeredCount} 个 SSS 设置项");
 		return RegisterResult.Ok(moduleId);
 	}
 
@@ -166,7 +166,7 @@ public static class SssRegistry
 			RewriteArrayLocked();
 		}
 		SendAllNow();
-		StartupLog.Info("[HintIsolation] 注册口 '" + moduleId + "' 的 SSS 设置项已卸载");
+		StartupLog.Info("[HintChorus] 注册口 '" + moduleId + "' 的 SSS 设置项已卸载");
 		return true;
 	}
 
@@ -225,7 +225,7 @@ public static class SssRegistry
 		{
 			if (IsInitialized && ProtectFromOverwrites && Modules.Count != 0 && ServerSpecificSettingsSync.DefinedSettings != _currentArray)
 			{
-				Logger.Error((object)"[HintIsolation] 检测到有插件整体覆盖了 ServerSpecificSettingsSync.DefinedSettings (这会导致其它插件 UI 失效), 已自动合并恢复本核心注册的所有设置项");
+				Logger.Error((object)"[HintChorus] 检测到有插件整体覆盖了 ServerSpecificSettingsSync.DefinedSettings (这会导致其它插件 UI 失效), 已自动合并恢复本核心注册的所有设置项");
 				RewriteArrayLocked();
 				repaired = true;
 			}
@@ -466,7 +466,7 @@ public static class SssRegistry
 			}
 			catch (Exception arg2)
 			{
-				Logger.Error((object)$"[HintIsolation] 注册口 '{arg}' 的 SSS 值回调异常(已隔离, 不影响其它模块): {arg2}");
+				Logger.Error((object)$"[HintChorus] 注册口 '{arg}' 的 SSS 值回调异常(已隔离, 不影响其它模块): {arg2}");
 			}
 		}
 	}
@@ -489,7 +489,7 @@ public static class SssRegistry
 			}
 			catch (Exception arg2)
 			{
-				Logger.Error((object)$"[HintIsolation] 注册口 '{arg}' 的 SSS 状态回调异常(已隔离): {arg2}");
+				Logger.Error((object)$"[HintChorus] 注册口 '{arg}' 的 SSS 状态回调异常(已隔离): {arg2}");
 			}
 		}
 	}

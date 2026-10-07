@@ -1,18 +1,26 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interfaces;
-using HintIsolation.Core.Models;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interfaces;
+using HintChorus.Core.Layout;
+using HintChorus.Core.Models;
 
-namespace HintIsolation.Core.Broker;
+namespace HintChorus.Core.Broker;
 
 public static class UiSlotRegistry
 {
 	private static readonly Dictionary<Guid, UiSlot> Slots = new Dictionary<Guid, UiSlot>();
 
 	private static readonly Dictionary<UiSurface, List<UiSlot>> SortedBySurface = new Dictionary<UiSurface, List<UiSlot>>();
+
+	/// <summary>
+	/// <b>插件级位置预设</b>(自有写法的编程通道)。
+	/// <para>插件调用 <c>SetHintPosition</c> 时可能<b>还没有信口</b>(信口是首次发 UI 才创建的),
+	/// 所以位置要按插件名先记住, 等信口创建时再套上去。</para>
+	/// </summary>
+	private static readonly Dictionary<string, HintPosition> PluginPositions = new Dictionary<string, HintPosition>(StringComparer.OrdinalIgnoreCase);
 
 	private static readonly object Sync = new object();
 
@@ -63,6 +71,11 @@ public static class UiSlotRegistry
 				return value;
 			}
 			UiSlot uiSlot = new UiSlot(id, displayName, priority, showLabel, maxEntries, maxDuration, origin);
+			// 套用插件级位置预设 —— 插件完全可能在"还没有信口"时就先声明过位置。
+			if (PluginPositions.TryGetValue(id.PluginId, out HintPosition preset))
+			{
+				uiSlot.ExplicitPosition = preset;
+			}
 			Slots.Add(id.Value, uiSlot);
 			SortedBySurface.Remove(id.Surface);
 			_version++;
@@ -120,7 +133,75 @@ public static class UiSlotRegistry
 		{
 			Slots.Clear();
 			SortedBySurface.Clear();
+			PluginPositions.Clear();
 			_version++;
+		}
+	}
+
+	/// <summary>
+	/// <b>给一个插件预设屏幕位置</b>(自有写法 · 编程通道)。
+	/// <para>对<b>已存在</b>的信口立即生效; 对<b>之后才创建</b>的信口, 在创建时自动套用。</para>
+	/// </summary>
+	/// <param name="pluginId">插件标识(与归因得到的 PluginId 一致, 通常是程序集名)。</param>
+	/// <param name="position">目标位置。</param>
+	/// <returns>被立即改写的已存在信口数。</returns>
+	public static int SetPluginPosition(string pluginId, HintPosition position)
+	{
+		if (string.IsNullOrWhiteSpace(pluginId))
+		{
+			return 0;
+		}
+
+		string key = pluginId.Trim();
+		lock (Sync)
+		{
+			PluginPositions[key] = position;
+
+			int affected = 0;
+			foreach (UiSlot slot in Slots.Values)
+			{
+				if (string.Equals(slot.PluginId, key, StringComparison.OrdinalIgnoreCase))
+				{
+					slot.ExplicitPosition = position;
+					affected++;
+				}
+			}
+			return affected;
+		}
+	}
+
+	/// <summary>撤销一个插件的预设位置(回到解析链推断)。返回是否确有预设被撤销。</summary>
+	public static bool ClearPluginPosition(string pluginId)
+	{
+		if (string.IsNullOrWhiteSpace(pluginId))
+		{
+			return false;
+		}
+
+		string key = pluginId.Trim();
+		lock (Sync)
+		{
+			bool removed = PluginPositions.Remove(key);
+			foreach (UiSlot slot in Slots.Values)
+			{
+				if (string.Equals(slot.PluginId, key, StringComparison.OrdinalIgnoreCase))
+				{
+					slot.ExplicitPosition = null;
+				}
+			}
+			return removed;
+		}
+	}
+
+	/// <summary>已预设位置的插件数(诊断用)。</summary>
+	public static int PluginPositionCount
+	{
+		get
+		{
+			lock (Sync)
+			{
+				return PluginPositions.Count;
+			}
 		}
 	}
 

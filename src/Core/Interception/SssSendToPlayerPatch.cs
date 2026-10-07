@@ -2,7 +2,7 @@
 using HarmonyLib;
 using UserSettings.ServerSpecific;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 [HarmonyPatch(typeof(ServerSpecificSettingsSync), "SendToPlayer", new Type[] { typeof(ReferenceHub) })]
 internal static class SssSendToPlayerPatch

@@ -2,17 +2,17 @@
 using System.Diagnostics;
 using Cassie;
 using HarmonyLib;
-using HintIsolation.Core.Broker;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interception;
+using HintChorus.Core.Broker;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interception;
 using Hints;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using Mirror;
 using UnityEngine;
 
-namespace HintIsolation.Core.Transport;
+namespace HintChorus.Core.Transport;
 
 public static class NetworkSentinel
 {
@@ -106,7 +106,7 @@ public static class NetworkSentinel
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] 网络哨兵处理 HintMessage 异常(已放行): " + ex.Message));
+			Logger.Error((object)("[HintChorus] 网络哨兵处理 HintMessage 异常(已放行): " + ex.Message));
 			return true;
 		}
 	}
@@ -127,7 +127,7 @@ public static class NetworkSentinel
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] 网络哨兵处理 CassieTtsPayload 异常(已放行): " + ex.Message));
+			Logger.Error((object)("[HintChorus] 网络哨兵处理 CassieTtsPayload 异常(已放行): " + ex.Message));
 		}
 		return true;
 	}
@@ -151,7 +151,7 @@ public static class NetworkSentinel
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] 网络哨兵处理 RpcMessage 异常(已放行): " + ex.Message));
+			Logger.Error((object)("[HintChorus] 网络哨兵处理 RpcMessage 异常(已放行): " + ex.Message));
 		}
 		return true;
 	}
@@ -169,7 +169,7 @@ public static class NetworkSentinel
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] 网络哨兵处理字节流异常(已放行): " + ex.Message));
+			Logger.Error((object)("[HintChorus] 网络哨兵处理字节流异常(已放行): " + ex.Message));
 		}
 		return true;
 	}

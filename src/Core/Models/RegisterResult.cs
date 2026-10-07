@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace HintIsolation.Core.Models;
+namespace HintChorus.Core.Models;
 
 public readonly struct RegisterResult
 {

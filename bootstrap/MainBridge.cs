@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Logger = LabApi.Features.Console.Logger;
 
-namespace HintIsolation.Bootstrap;
+namespace HintChorus.Bootstrap;
 
 /// <summary>
 /// 主 DLL 桥接器 —— <b>刻意用反射</b>, 不引用主程序集。
@@ -20,8 +20,8 @@ namespace HintIsolation.Bootstrap;
 /// </summary>
 internal static class MainBridge
 {
-    private const string MainAssemblyName = "HintIsolation";
-    private const string BridgeTypeName = "HintIsolation.Core.Bootstrap.BootstrapBridge";
+    private const string MainAssemblyName = "HintChorus";
+    private const string BridgeTypeName = "HintChorus.Core.Bootstrap.BootstrapBridge";
     private const string EntryMethodName = "EarlyInstall";
 
     /// <summary>主程序集是否已载入。</summary>

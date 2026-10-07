@@ -1,11 +1,11 @@
 ﻿using System;
 using HarmonyLib;
-using HintIsolation.Core.Compat;
+using HintChorus.Core.Compat;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using PlayerRoles.Voice;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 [HarmonyPatch(typeof(IntercomDisplay), "SerializeSyncVars")]
 internal static class IntercomDisplaySerializePatch
@@ -19,7 +19,7 @@ internal static class IntercomDisplaySerializePatch
 		}
 		catch (Exception arg)
 		{
-			Logger.Error((object)$"[HintIsolation] 对讲机显示屏守卫异常(已放行原生): {arg}");
+			Logger.Error((object)$"[HintChorus] 对讲机显示屏守卫异常(已放行原生): {arg}");
 		}
 	}
 }

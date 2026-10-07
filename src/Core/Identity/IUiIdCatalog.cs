@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace HintIsolation.Core.Identity;
+namespace HintChorus.Core.Identity;
 
 public interface IUiIdCatalog
 {

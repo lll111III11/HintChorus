@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Reflection;
 using UnityEngine;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 public static class PluginCallerResolver
 {

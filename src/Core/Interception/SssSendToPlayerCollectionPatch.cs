@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
-using HintIsolation.Core.ServerSpecific;
+using HintChorus.Core.ServerSpecific;
 using UserSettings.ServerSpecific;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 /// <summary>
 /// <c>SendToPlayer(hub, collection, versionOverride)</c> —— <b>盖掉式复写(Transpiler)</b>。

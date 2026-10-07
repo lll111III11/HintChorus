@@ -1,14 +1,14 @@
 ﻿using System;
-using HintIsolation.Core.Broker;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interception;
-using HintIsolation.Core.Transport;
+using HintChorus.Core.Broker;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interception;
+using HintChorus.Core.Transport;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using UnityEngine;
 
-namespace HintIsolation.Core.Surfaces;
+namespace HintChorus.Core.Surfaces;
 
 public sealed class HitMarkerSurfaceIsolation : IUiSurfaceInterceptor
 {
@@ -79,7 +79,7 @@ public sealed class HitMarkerSurfaceIsolation : IUiSurfaceInterceptor
 			long n = ++_errorCount;
 			if (n <= 3 || (n % 200) == 0)
 			{
-				Logger.Error($"[HintIsolation] 命中标记归因异常(第 {n} 次, 已放行原生): {e}");
+				Logger.Error($"[HintChorus] 命中标记归因异常(第 {n} 次, 已放行原生): {e}");
 			}
 		}
 		PassedThroughCount++;

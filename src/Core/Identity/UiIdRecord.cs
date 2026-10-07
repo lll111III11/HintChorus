@@ -1,4 +1,4 @@
-﻿namespace HintIsolation.Core.Identity;
+﻿namespace HintChorus.Core.Identity;
 
 public sealed class UiIdRecord
 {

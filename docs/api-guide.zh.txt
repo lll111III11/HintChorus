@@ -5,10 +5,10 @@
   3) 早期版本里 "Console / Cassie 预留" 的说法已过时：控制台、CASSIE、管理端聊天、
      命中标记、对讲机显示屏都已接管（见 README 第三节表）。
 ================================================================================
-HintIsolation —— API 调用写法指南 + 现有写法兼容对照
+HintChorus —— API 调用写法指南 + 现有写法兼容对照
 版本: 1.0.0     生成: 2026-09-30
 定位: 纯 API 底层。不含任何玩家玩法逻辑, 不提供任何命令。
-部署: <AppData>\SCP Secret Laboratory\LabAPI\plugins\global\HintIsolation.dll
+部署: <AppData>\SCP Secret Laboratory\LabAPI\plugins\global\HintChorus.dll
 ================================================================================
 
 【本文件怎么读】
@@ -44,11 +44,11 @@ HintIsolation —— API 调用写法指南 + 现有写法兼容对照
   第二部分里凡是标了 【需状态乙】的条目, 只在拦截层开启时才成立。
 
   引入命名空间:
-      using HintIsolation;                     // 门面 UiIsolation
-      using HintIsolation.Core.Interfaces;     // 契约接口
-      using HintIsolation.Core.Enums;          // 枚举
-      using HintIsolation.Core.Models;         // UiScope / RegisterResult
-      using HintIsolation.Core.Identity;       // UiId 目录
+      using HintChorus;                     // 门面 UiIsolation
+      using HintChorus.Core.Interfaces;     // 契约接口
+      using HintChorus.Core.Enums;          // 枚举
+      using HintChorus.Core.Models;         // UiScope / RegisterResult
+      using HintChorus.Core.Identity;       // UiId 目录
 
 
   ────────────────────────────────────────────────────────────────────────────
@@ -257,8 +257,8 @@ HintIsolation —— API 调用写法指南 + 现有写法兼容对照
   报告:
       UiIsolation.CreateDiagnosticsReport();           // 完整报告(多行富文本)
       UiIsolation.CaptureStatistics();                 // 统计快照
-      HintIsolationDiagnostics.CreateUiIdReport();     // 只要 UiId 明细
-      HintIsolationDiagnostics.CreateSurfaceReport();  // 只要表面覆盖
+      HintChorusDiagnostics.CreateUiIdReport();     // 只要 UiId 明细
+      HintChorusDiagnostics.CreateSurfaceReport();  // 只要表面覆盖
 
   UiId 管理(给信口起别名 / 合并两个信口):
       UiIsolation.UiIds.SetAlias("A1B2C3D4", "我的HUD");
@@ -592,3 +592,69 @@ HintIsolation —— API 调用写法指南 + 现有写法兼容对照
       3) 广播的"清除"类操作 + 自带 Show 补丁的框架  -> 见 2.5, 改配置或换写法。
 
 ================================================================================
+
+
+================================================================================
+【屏幕位置】三类写法(2026-10-07 新增)
+================================================================================
+
+游戏只给一条提示口, 所以"位置"最终都要折算成行级 <voffset>。本插件把三类来源
+统一到一套九宫格锚点上, 解析优先级为:
+    显式 API -> 文本标记 -> 自带位置标签 -> 名称目录 -> 默认(底部自然堆叠)
+
+锚点取值(英文或中文皆可):
+    top-left | top | top-right
+    middle-left | middle | middle-right
+    bottom-left | bottom | bottom-right
+    也接受缩写 tl / tr / mc 与 左上 / 中部 / 右下 等。
+
+--------------------------------------------------------------------------------
+1) 兼容原有写法 —— 插件什么都不用做
+--------------------------------------------------------------------------------
+若插件文本里已经自带位置标签(<voffset> / <pos> / <align> / <line-height> /
+<margin> / <indent>), 本插件判定为"插件自己摆了位", 原样放行、绝不重排。
+开关: honor_plugin_position_syntax (默认 true)
+
+--------------------------------------------------------------------------------
+2) 自有写法 · 文本标记(零依赖, 不引用本插件也能用)
+--------------------------------------------------------------------------------
+在提示文本里写 {{hc:...}}, 本插件解析后会把标记从文本里剥掉(玩家看不到):
+
+    "{{hc:top-right}} 本回合得分: 12"
+    "{{hc:pos=middle,offset=-90}} Lv.5  经验 320/500"
+
+    offset 以 voffset 为单位, 正数向上(参考: 整屏约 2140); 
+    "屏幕中间再往下 90" 即 offset=-90。
+开关: enable_position_markers (默认 true)
+
+--------------------------------------------------------------------------------
+3) 自有写法 · C# API(引用本插件的作者)
+--------------------------------------------------------------------------------
+    using HintChorus.Core.Layout;
+
+    // 在插件加载阶段声明一次即可(信口尚未创建也生效)
+    UiIsolation.SetHintPosition("MyPlugin", HintAnchor.MiddleCenter, -90f);
+    UiIsolation.ClearHintPosition("MyPlugin");   // 撤销, 回到自动推断
+
+--------------------------------------------------------------------------------
+4) 自动排版(保底)
+--------------------------------------------------------------------------------
+未声明位置、也没有自带位置标签的插件, 按名称查"已收录表 + 功能区关键词"推断:
+    exp / level / rank / 经验 / 等级   -> 中部居中, 下移 90
+    score / board / 排行 / 战绩        -> 右上
+    kill / feed / 击杀 / 淘汰          -> 左上
+    timer / countdown / 倒计时         -> 顶部居中
+    team / roster / 队伍 / 玩家列表     -> 中右
+    music / bgm / 点歌                 -> 右下
+    chat / 聊天                        -> 左下
+    hud / status / 状态 / 面板          -> 左下
+开关: auto_layout_by_plugin_name (默认 true)
+
+服主可在配置里覆盖任何插件的落点(无需改插件):
+    position_overrides:
+      MyPlugin: top-right
+      LevelSystem: middle,offset=-90
+
+--------------------------------------------------------------------------------
+保底不变: 所有插件都在默认位置时, 合成输出与旧版逐字一致; 定位只在真的用到时介入。
+--------------------------------------------------------------------------------

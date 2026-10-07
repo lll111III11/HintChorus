@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 public readonly struct CallerInfo
 {

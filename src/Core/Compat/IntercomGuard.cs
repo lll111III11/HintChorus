@@ -4,7 +4,7 @@ using Logger = LabApi.Features.Console.Logger;
 using PlayerRoles.Voice;
 using UnityEngine;
 
-namespace HintIsolation.Core.Compat;
+namespace HintChorus.Core.Compat;
 
 public static class IntercomGuard
 {
@@ -81,7 +81,7 @@ public static class IntercomGuard
 			long n = ++_errorCount;
 			if (n <= 3 || (n % 200) == 0)
 			{
-				Logger.Error($"[HintIsolation] 对讲机守卫异常(第 {n} 次, 已跳过本次处理): {e}");
+				Logger.Error($"[HintChorus] 对讲机守卫异常(第 {n} 次, 已跳过本次处理): {e}");
 			}
 		}
 	}

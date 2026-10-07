@@ -5,7 +5,7 @@ using Logger = LabApi.Features.Console.Logger;
 using Mirror;
 using UnityEngine;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 [HarmonyPatch(typeof(Hitmarker), "SendHitmarkerDirectly", new Type[]
 {
@@ -33,7 +33,7 @@ internal static class HitmarkerSendPatch
 		}
 		catch (Exception arg)
 		{
-			Logger.Error((object)$"[HintIsolation] 拦截 Hitmarker.SendHitmarkerDirectly 异常(已放行原生): {arg}");
+			Logger.Error((object)$"[HintChorus] 拦截 Hitmarker.SendHitmarkerDirectly 异常(已放行原生): {arg}");
 			return true;
 		}
 	}

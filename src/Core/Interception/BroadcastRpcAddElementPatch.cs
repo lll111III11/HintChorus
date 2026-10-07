@@ -3,7 +3,7 @@ using HarmonyLib;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 /// <summary>
 /// 广播表面补丁: 全服广播入队(<c>RpcAddElement</c>)。
@@ -21,7 +21,7 @@ internal static class BroadcastRpcAddElementPatch
 		}
 		catch (Exception e)
 		{
-			Logger.Error((object)$"[HintIsolation] 拦截 Broadcast.RpcAddElement 异常(已放行原生): {e}");
+			Logger.Error((object)$"[HintChorus] 拦截 Broadcast.RpcAddElement 异常(已放行原生): {e}");
 			return true;
 		}
 	}

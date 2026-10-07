@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace HintIsolation.Core.Models;
+namespace HintChorus.Core.Models;
 
 public sealed class HintStatistics
 {

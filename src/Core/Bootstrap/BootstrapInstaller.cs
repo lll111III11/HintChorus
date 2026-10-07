@@ -8,15 +8,15 @@ using Logger = LabApi.Features.Console.Logger;
 using LabApi.Features.Wrappers;
 using LabApi.Loader.Features.Paths;
 
-namespace HintIsolation.Core.Bootstrap;
+namespace HintChorus.Core.Bootstrap;
 
 internal static class BootstrapInstaller
 {
-	internal const string ResourceName = "HintIsolation.Bootstrap.dll";
+	internal const string ResourceName = "HintChorus.Bootstrap.dll";
 
-	internal const string FileName = "0HintIsolation.Bootstrap.dll";
+	internal const string FileName = "0HintChorus.Bootstrap.dll";
 
-	internal static string TargetPath => Path.Combine(PathManager.Plugins.FullName, "global", "0HintIsolation.Bootstrap.dll");
+	internal static string TargetPath => Path.Combine(PathManager.Plugins.FullName, "global", "0HintChorus.Bootstrap.dll");
 
 	internal static bool EnsureReleased(out string detail)
 	{
@@ -26,7 +26,7 @@ internal static class BootstrapInstaller
 			byte[] array = ReadResource();
 			if (array == null)
 			{
-				detail = "未找到内嵌资源 HintIsolation.Bootstrap.dll(构建时未嵌入引导器?)";
+				detail = "未找到内嵌资源 HintChorus.Bootstrap.dll(构建时未嵌入引导器?)";
 				return false;
 			}
 			string targetPath = TargetPath;
@@ -44,7 +44,7 @@ internal static class BootstrapInstaller
 		catch (Exception ex)
 		{
 			detail = "释放引导器失败: " + ex.Message;
-			Logger.Error((object)("[HintIsolation] " + detail));
+			Logger.Error((object)("[HintChorus] " + detail));
 			return false;
 		}
 	}
@@ -53,7 +53,7 @@ internal static class BootstrapInstaller
 	{
 		try
 		{
-			string path = Path.Combine(PathManager.Configs.FullName, Server.Port.ToString(CultureInfo.InvariantCulture), "HintIsolation", "bootstrap.state");
+			string path = Path.Combine(PathManager.Configs.FullName, Server.Port.ToString(CultureInfo.InvariantCulture), "HintChorus", "bootstrap.state");
 			if (!File.Exists(path))
 			{
 				return;
@@ -75,7 +75,7 @@ internal static class BootstrapInstaller
 
 	private static byte[]? ReadResource()
 	{
-		using Stream stream = typeof(BootstrapInstaller).Assembly.GetManifestResourceStream("HintIsolation.Bootstrap.dll");
+		using Stream stream = typeof(BootstrapInstaller).Assembly.GetManifestResourceStream("HintChorus.Bootstrap.dll");
 		if (stream == null)
 		{
 			return null;

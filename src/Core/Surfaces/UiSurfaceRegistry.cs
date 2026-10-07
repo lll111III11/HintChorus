@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using HintIsolation.Core.Enums;
+using HintChorus.Core.Enums;
 
-namespace HintIsolation.Core.Surfaces;
+namespace HintChorus.Core.Surfaces;
 
 public static class UiSurfaceRegistry
 {

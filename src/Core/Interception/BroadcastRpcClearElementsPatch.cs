@@ -3,7 +3,7 @@ using HarmonyLib;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 [HarmonyPatch(typeof(Broadcast), "RpcClearElements")]
 internal static class BroadcastRpcClearElementsPatch
@@ -17,7 +17,7 @@ internal static class BroadcastRpcClearElementsPatch
 		}
 		catch (Exception arg)
 		{
-			Logger.Error((object)$"[HintIsolation] 拦截 Broadcast.RpcClearElements 异常(已放行原生): {arg}");
+			Logger.Error((object)$"[HintChorus] 拦截 Broadcast.RpcClearElements 异常(已放行原生): {arg}");
 			return true;
 		}
 	}

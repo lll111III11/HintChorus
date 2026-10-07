@@ -1,17 +1,18 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using HintIsolation.Core.Broker;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interception;
-using HintIsolation.Core.Interfaces;
-using HintIsolation.Core.Models;
-using HintIsolation.Core.ServerSpecific;
-using HintIsolation.Core.Utilities;
+using HintChorus.Core.Broker;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interception;
+using HintChorus.Core.Interfaces;
+using HintChorus.Core.Layout;
+using HintChorus.Core.Models;
+using HintChorus.Core.ServerSpecific;
+using HintChorus.Core.Utilities;
 using UserSettings.ServerSpecific;
 
-namespace HintIsolation;
+namespace HintChorus;
 
 internal sealed class UiIsolationService : IUiIsolation
 {
@@ -157,5 +158,17 @@ internal sealed class UiIsolationService : IUiIsolation
 			source = source.Where((IUiSlot s) => string.Equals(s.PluginId, pluginId, StringComparison.OrdinalIgnoreCase));
 		}
 		return source.ToArray();
+	}
+
+	/// <inheritdoc/>
+	public int SetHintPosition(string pluginId, HintAnchor anchor, float offsetUnits = 0f)
+	{
+		return UiSlotRegistry.SetPluginPosition(pluginId, new HintPosition(anchor, offsetUnits, managed: true));
+	}
+
+	/// <inheritdoc/>
+	public bool ClearHintPosition(string pluginId)
+	{
+		return UiSlotRegistry.ClearPluginPosition(pluginId);
 	}
 }

@@ -1,15 +1,15 @@
 ﻿using System;
 using Cassie;
-using HintIsolation.Core.Broker;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interception;
-using HintIsolation.Core.Transport;
+using HintChorus.Core.Broker;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interception;
+using HintChorus.Core.Transport;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using UnityEngine;
 
-namespace HintIsolation.Core.Surfaces;
+namespace HintChorus.Core.Surfaces;
 
 public sealed class CassieSurfaceIsolation : IUiSurfaceInterceptor
 {
@@ -71,7 +71,7 @@ public sealed class CassieSurfaceIsolation : IUiSurfaceInterceptor
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] CASSIE 入队归因失败(已放行原生): " + ex.Message));
+			Logger.Error((object)("[HintChorus] CASSIE 入队归因失败(已放行原生): " + ex.Message));
 		}
 		PassedThroughCount++;
 		return true;

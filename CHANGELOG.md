@@ -2,6 +2,42 @@
 
 本项目处于 **alpha** 阶段，接口与行为仍可能调整。
 
+## alpha (2026-10-07)
+
+### 更名
+
+- **项目更名为 `HintChorus`**（原名 `HintIsolation` 过于通用、检索易与其它项目混淆）。
+  程序集名、根命名空间、引导器（`0HintChorus.Bootstrap.dll`）、配置目录
+  （`configs/<端口>/HintChorus/`）、资源逻辑名与 Harmony ID 全部随动。
+  **升级提示**：旧的 `HintIsolation.dll` / `0HintIsolation.Bootstrap.dll` 请从 `plugins/global/` 删除，
+  旧配置目录 `configs/<端口>/HintIsolation/` 可改名或按新默认重新生成。
+
+### 新增 — 屏幕位置体系（三类写法合一）
+
+- **① 兼容原有写法**：插件文本里已自带位置标签
+  （`<voffset>` / `<pos>` / `<align>` / `<line-height>` / `<margin>` / `<indent>`）时，
+  判定为「插件自己摆了位」→ **原样放行、不被本底层重排**。开关 `honor_plugin_position_syntax`。
+- **② 自有写法（双通道）**：
+  - **文本标记**：`{{hc:top-right}}` 或 `{{hc:pos=middle,offset=-90}}` —— 解析后从文本剥离，
+    玩家看不到；与其它框架的 `{0}` 模板不冲突。开关 `enable_position_markers`。
+  - **C# API**：`UiIsolation.SetHintPosition("MyPlugin", HintAnchor.MiddleCenter, -90f)` /
+    `UiIsolation.ClearHintPosition("MyPlugin")`。可在插件加载阶段先声明（信口尚未创建也生效）。
+- **③ 自动排版**：未声明位置的插件按**名称**查「已收录表 → 功能区关键词」推断落点，
+  例：`exp` / `level` / `rank` / `经验` / `等级` → **屏幕中部再往下 90**；
+  `score` / `board` / `排行` → 右上；`kill` / `feed` / `击杀` → 左上；
+  `timer` / `倒计时` → 顶部居中；`team` / `队伍` → 中右；`music` / `点歌` → 右下。
+  开关 `auto_layout_by_plugin_name`；可用 `position_overrides` 覆盖。
+
+### 实现要点
+
+- 新增 `HintPosition`（九宫格锚点 + 偏移 + 自定位标记）、`PositionSyntax`（标记与外来标签解析）、
+  `PluginPositionCatalog`（已收录表 + 功能区推断 + 服主覆盖表）。
+- `HintBroker` 改为**多锚点分区合成**：按「档位（底/中/顶）+ 偏移」分区，各自换算绝对位置，
+  逐行给 `<voffset>`；**底部区永远排在合成串末尾**，因此「全部默认位置」时的输出与旧版**逐字一致**。
+- 新增配置：`honor_plugin_position_syntax` / `auto_layout_by_plugin_name` / `enable_position_markers` /
+  `screen_height_units` / `position_overrides`。
+- 位置解析优先级：**显式 API → 文本标记 → 自带位置标签 → 名称目录 → 默认**。
+
 ## alpha (2026-10-05)
 
 ### 修复
@@ -75,7 +111,7 @@
 
 - 排版不变量：`rows` 模式 18 项、`offsets` 模式 11 项断言（离线可重跑）。
 - 拦截目标：16 个目标逐条核验通过（见 `docs/patch-target-report.txt`）。
-- 默认配置：61 项由编译产物实际序列化得到（`docs/default-config.yml`）。
+- 默认配置：66 项由编译产物实际序列化得到（`docs/default-config.yml`）。
 
 ### 已知限制
 

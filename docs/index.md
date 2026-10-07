@@ -1,8 +1,8 @@
 ---
-title: HintIsolation
+title: HintChorus
 ---
 
-# HintIsolation
+# HintChorus
 
 **SCP:SL 动态 UI 隔离底层** —— 让互不相识的插件共用同一块屏幕，插件无需改写法。
 
@@ -10,12 +10,12 @@ title: HintIsolation
 
 ## 语言 / Language
 
-- **中文（主）**：[完整技术文档](zh/) ｜ [仓库首页](https://github.com/lll111III11/HintIsolation)
-- **English**: [README](en/) ｜ [Repository](https://github.com/lll111III11/HintIsolation)
+- **中文（主）**：[完整技术文档](zh/) ｜ [仓库首页](https://github.com/lll111III11/HintChorus)
+- **English**: [README](en/) ｜ [Repository](https://github.com/lll111III11/HintChorus)
 
 ## 下载 / Download
 
-- [alpha-HintIsolation.dll](https://github.com/lll111III11/HintIsolation/releases/latest)
+- [alpha-HintChorus.dll](https://github.com/lll111III11/HintChorus/releases/latest)
 
 ## 文档 / Docs
 

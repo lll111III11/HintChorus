@@ -1,13 +1,13 @@
 ﻿using System;
 using Cassie;
-using HintIsolation.Core.Surfaces;
+using HintChorus.Core.Surfaces;
 using Hints;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using Mirror;
 using Utils.Networking;
 
-namespace HintIsolation.Core.Transport;
+namespace HintChorus.Core.Transport;
 
 public static class EngineDirect
 {
@@ -31,7 +31,7 @@ public static class EngineDirect
 		}
 		catch (Exception ex)
 		{
-			Logger.Warn((object)("[HintIsolation] 取玩家连接失败: " + ex.Message));
+			Logger.Warn((object)("[HintChorus] 取玩家连接失败: " + ex.Message));
 			return false;
 		}
 	}
@@ -54,7 +54,7 @@ public static class EngineDirect
 		}
 		catch (Exception ex)
 		{
-			Logger.Warn((object)("[HintIsolation] 提示条引擎直连失败: " + ex.Message));
+			Logger.Warn((object)("[HintChorus] 提示条引擎直连失败: " + ex.Message));
 			return false;
 		}
 	}
@@ -71,7 +71,7 @@ public static class EngineDirect
 		}
 		catch (Exception ex)
 		{
-			Logger.Warn((object)("[HintIsolation] 控制台引擎直连失败: " + ex.Message));
+			Logger.Warn((object)("[HintChorus] 控制台引擎直连失败: " + ex.Message));
 			return false;
 		}
 	}
@@ -90,7 +90,7 @@ public static class EngineDirect
 		}
 		catch (Exception ex)
 		{
-			Logger.Warn((object)("[HintIsolation] CASSIE 引擎直连失败: " + ex.Message));
+			Logger.Warn((object)("[HintChorus] CASSIE 引擎直连失败: " + ex.Message));
 			return false;
 		}
 	}
@@ -108,7 +108,7 @@ public static class EngineDirect
 		}
 		catch (Exception ex)
 		{
-			Logger.Warn((object)("[HintIsolation] 管理端聊天直连失败: " + ex.Message));
+			Logger.Warn((object)("[HintChorus] 管理端聊天直连失败: " + ex.Message));
 			return false;
 		}
 		finally
@@ -131,7 +131,7 @@ public static class EngineDirect
 		}
 		catch (Exception ex)
 		{
-			Logger.Warn((object)("[HintIsolation] 命中标记直连失败: " + ex.Message));
+			Logger.Warn((object)("[HintChorus] 命中标记直连失败: " + ex.Message));
 			return false;
 		}
 		finally
@@ -170,7 +170,7 @@ public static class EngineDirect
 		}
 		catch (Exception ex)
 		{
-			Logger.Warn((object)("[HintIsolation] 广播下发失败: " + ex.Message));
+			Logger.Warn((object)("[HintChorus] 广播下发失败: " + ex.Message));
 			return false;
 		}
 		finally

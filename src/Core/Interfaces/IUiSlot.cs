@@ -1,8 +1,8 @@
 ﻿using System;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
 
-namespace HintIsolation.Core.Interfaces;
+namespace HintChorus.Core.Interfaces;
 
 public interface IUiSlot
 {

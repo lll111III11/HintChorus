@@ -1,6 +1,6 @@
-﻿using HintIsolation.Core.Enums;
+﻿using HintChorus.Core.Enums;
 
-namespace HintIsolation.Core.Surfaces;
+namespace HintChorus.Core.Surfaces;
 
 public sealed class UiSurfaceDescriptor
 {

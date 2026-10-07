@@ -1,4 +1,4 @@
-﻿namespace HintIsolation.Core.Enums;
+﻿namespace HintChorus.Core.Enums;
 
 public enum HintOrigin : byte
 {

@@ -12,7 +12,7 @@
 
 ---
 
-# HintIsolation
+# HintChorus
 
 **SCP:SL 动态 UI 隔离底层** —— 让**互不相识的插件**在同一个屏幕上和平共处，谁也不用改写法。
 > **关键词 / Keywords**：SCP:SL ｜ SCP Secret Laboratory ｜ 秘密实验室 ｜ LabAPI ｜ EXILED ｜ Hint ｜ HUD ｜ 提示条 ｜ 屏幕文本 ｜ 多插件共存 ｜ 提示互相顶掉 ｜ 提示错位 ｜ UI 隔离 ｜ hint framework ｜ hint isolation ｜ UI isolation ｜ plugin compatibility ｜ zero code changes
@@ -32,17 +32,17 @@
 
 | 方式 | 链接 |
 | --- | --- |
-| 直接下载（仓库内，文件名带 `alpha` 前缀） | [`alpha-HintIsolation.dll`](alpha-HintIsolation.dll) |
-| 发行页（推荐，含版本说明） | [alpha-v1.0.0](https://github.com/lll111III111/HintIsolation/releases/latest) ｜ [全部发行](https://github.com/lll111III111/HintIsolation/releases) |
+| 直接下载（仓库内，文件名带 `alpha` 前缀） | [`alpha-HintChorus.dll`](alpha-HintChorus.dll) |
+| 发行页（推荐，含版本说明） | [alpha-v1.0.0](https://github.com/lll111III111/HintChorus/releases/latest) ｜ [全部发行](https://github.com/lll111III111/HintChorus/releases) |
 
-> 文件名前面的 `alpha-` 只是**标记这是 alpha 阶段的产物**；插件内部的程序集名始终是 `HintIsolation`，
+> 文件名前面的 `alpha-` 只是**标记这是 alpha 阶段的产物**；插件内部的程序集名始终是 `HintChorus`，
 > 所以改名不影响加载，也不影响引导器找它。
 
 安装：
 
-1. 把 `alpha-HintIsolation.dll` 放进 `plugins/global/`
-2. 启动服务器（首次会自动释放 `0HintIsolation.Bootstrap.dll` 并提示重启一次，这是引导器抢位的设计）
-3. 按需改 `configs/<端口>/HintIsolation/config.yml`（**键名是 snake_case**，见 [`docs/default-config.yml`](docs/default-config.yml)）
+1. 把 `alpha-HintChorus.dll` 放进 `plugins/global/`
+2. 启动服务器（首次会自动释放 `0HintChorus.Bootstrap.dll` 并提示重启一次，这是引导器抢位的设计）
+3. 按需改 `configs/<端口>/HintChorus/config.yml`（**键名是 snake_case**，见 [`docs/default-config.yml`](docs/default-config.yml)）
 
 ---
 
@@ -54,7 +54,7 @@
 - 谁每秒重发，谁就把别人的 UI 刷没；
 - 装得越多、越乱。
 
-HintIsolation 的做法：
+HintChorus 的做法：
 
 1. **按调用方归因**：拦截提示条 / 广播 / 控制台 / CASSIE / 管理端聊天 / 命中标记六条通道的入口，
    沿调用栈认出**是哪个插件、哪个调用点**在发；
@@ -92,6 +92,37 @@ offset_font_size: 20     # 量文本宽度用的字号
 
 ---
 
+## 位置：三类写法合一
+
+游戏只给一条提示口，所以「位置」最终都要折算成行级 `<voffset>`。本插件把来源统一到一套**九宫格锚点**上：
+
+| 来源 | 写法 | 开关 |
+| --- | --- | --- |
+| **① 兼容原有写法** | 插件文本里已自带 `<voffset>` / `<pos>` / `<align>` / `<line-height>` 等标签 → **原样放行**，本底层不重排 | `honor_plugin_position_syntax` |
+| **② 自有写法 · 文本标记** | `{{hc:top-right}}` 或 `{{hc:pos=middle,offset=-90}}`（解析后从文本剥离，玩家看不到） | `enable_position_markers` |
+| **③ 自有写法 · C# API** | `UiIsolation.SetHintPosition("MyPlugin", HintAnchor.MiddleCenter, -90f)` | — |
+| **④ 自动排版** | 都没写时按**插件名**推断：`exp`/`level`/`经验`/`等级` → 屏幕中部再往下 90；`score`/`排行` → 右上；`kill`/`击杀` → 左上；`timer`/`倒计时` → 顶部居中；`team`/`队伍` → 中右；`music`/`点歌` → 右下 | `auto_layout_by_plugin_name` |
+
+**解析优先级**：显式 API → 文本标记 → 自带位置标签 → 名称目录 → 默认（底部自然堆叠）。
+
+锚点可写英文或中文：`top-left` / `top` / `top-right` / `middle-left` / `middle` / `middle-right` /
+`bottom-left` / `bottom` / `bottom-right`，也接受 `tl` / `tr` / `mc` 等缩写与 `左上` / `中部` / `右下`。
+
+`offset` 以 **voffset 为单位、正数向上**（参考：整屏约 2140）。所以「屏幕中间再往下 90」就是
+`{{hc:pos=middle,offset=-90}}`。
+
+服主可用 `position_overrides` 覆盖任何插件的落点，**无需改插件**：
+
+```yaml
+position_overrides:
+  MyPlugin: top-right
+  LevelSystem: middle,offset=-90
+```
+
+> 保底不变：全部插件都在默认位置时，合成输出与旧版**逐字一致**；定位只在真的用到时介入。
+
+---
+
 ## 兼容
 
 - **LabAPI**（原生）与 **EXILED** 两套写法都能吃下，且不需要插件改写法；
@@ -115,7 +146,7 @@ offset_font_size: 20     # 量文本宽度用的字号
 | [`docs/es/README.md`](docs/es/README.md) | Resumen en español |
 | [`docs/languages.md`](docs/languages.md) | **多语言总入口**：全部 22 种客户端语言 + 翻译文件下载 |
 | [`docs/translations/`](docs/translations/) | 17 种外部语言翻译文件（放入服务器 `translations/` 目录即生效） |
-| [`docs/default-config.yml`](docs/default-config.yml) | **权威默认配置**（由编译产物实际序列化得到，61 项） |
+| [`docs/default-config.yml`](docs/default-config.yml) | **权威默认配置**（由编译产物实际序列化得到，66 项） |
 | [`docs/api-guide.zh.txt`](docs/api-guide.zh.txt) | 插件作者要看的 API 写法指南 |
 | [`docs/patch-target-report.txt`](docs/patch-target-report.txt) | 拦截目标逐条核验报告 |
 | [`CHANGELOG.md`](CHANGELOG.md) | 变更记录 |
@@ -126,7 +157,7 @@ offset_font_size: 20     # 量文本宽度用的字号
 
 ```bash
 # 需要 .NET SDK 与 SCP:SL 专用服务器的 Managed 目录
-dotnet build src/HintIsolation.csproj -c Release -p:ManagedDir="<你的服务器>/SCPSL_Data/Managed"
+dotnet build src/HintChorus.csproj -c Release -p:ManagedDir="<你的服务器>/SCPSL_Data/Managed"
 ```
 
 引导器是独立工程（`bootstrap/`），其产物会被主工程**内嵌**并在运行时释放。

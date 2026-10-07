@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using HintIsolation.Core.Enums;
+using HintChorus.Core.Enums;
 
-namespace HintIsolation.Core.Interfaces;
+namespace HintChorus.Core.Interfaces;
 
 public interface IUiInterception
 {

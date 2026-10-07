@@ -1,5 +1,5 @@
-﻿using HintIsolation.Core.Enums;
+﻿using HintChorus.Core.Enums;
 
-namespace HintIsolation.Core.Compat;
+namespace HintChorus.Core.Compat;
 
 public sealed record FrameworkRoute(UiFramework Framework, UiSurface Surface, string FrameworkCall, string GameTarget, bool Covered);

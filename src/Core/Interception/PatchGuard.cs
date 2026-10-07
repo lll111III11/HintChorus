@@ -6,7 +6,7 @@ using HarmonyLib;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 internal static class PatchGuard
 {
@@ -100,7 +100,7 @@ internal static class PatchGuard
 		if (unresolved.Count > 0 && _unresolvedLoggedFor != unresolved.Count)
 		{
 			_unresolvedLoggedFor = unresolved.Count;
-			Logger.Error("[HintIsolation] 有 " + unresolved.Count + " 个补丁落点已经找不到目标(这部分无法自愈, 请核对游戏版本): " + string.Join(", ", unresolved));
+			Logger.Error("[HintChorus] 有 " + unresolved.Count + " 个补丁落点已经找不到目标(这部分无法自愈, 请核对游戏版本): " + string.Join(", ", unresolved));
 		}
 
 		if (LastMissing.Count == 0)
@@ -118,7 +118,7 @@ internal static class PatchGuard
 			if (!_gaveUpLogged)
 			{
 				_gaveUpLogged = true;
-				Logger.Error("[HintIsolation] 已连续 " + MaxRepairAttempts + " 次自愈失败, 暂停自动重装以免反复打断补丁; 仍在缺失: " + string.Join(", ", LastMissing) + " (重载插件或重启服务器可重置)");
+				Logger.Error("[HintChorus] 已连续 " + MaxRepairAttempts + " 次自愈失败, 暂停自动重装以免反复打断补丁; 仍在缺失: " + string.Join(", ", LastMissing) + " (重载插件或重启服务器可重置)");
 			}
 			return false;
 		}
@@ -131,7 +131,7 @@ internal static class PatchGuard
 		}
 		catch (Exception e)
 		{
-			Logger.Error("[HintIsolation] 补丁自愈重装失败(仍缺失: " + string.Join(", ", LastMissing) + "): " + e);
+			Logger.Error("[HintChorus] 补丁自愈重装失败(仍缺失: " + string.Join(", ", LastMissing) + "): " + e);
 			return false;
 		}
 		return true;
@@ -168,7 +168,7 @@ internal static class PatchGuard
 			{
 				return false;
 			}
-			string owner = "com.labapi.hintisolation.interception";
+			string owner = "com.labapi.HintChorus.interception";
 			return patchInfo.Prefixes.Any((Patch p) => string.Equals(p.owner, owner, StringComparison.Ordinal)) || patchInfo.Postfixes.Any((Patch p) => string.Equals(p.owner, owner, StringComparison.Ordinal));
 		}
 		catch (Exception)

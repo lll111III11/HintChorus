@@ -2,23 +2,23 @@ using System;
 using System.Collections.Generic;
 using Cassie;
 using HarmonyLib;
-using HintIsolation.Core.Broker;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interfaces;
-using HintIsolation.Core.Surfaces;
-using HintIsolation.Core.Transport;
+using HintChorus.Core.Broker;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interfaces;
+using HintChorus.Core.Surfaces;
+using HintChorus.Core.Transport;
 using Hints;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using Mirror;
 using UnityEngine;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 public sealed class UiInterception : IUiInterception
 {
-	internal const string HarmonyId = "com.labapi.hintisolation.interception";
+	internal const string HarmonyId = "com.labapi.HintChorus.interception";
 
 	private Harmony? _harmony;
 
@@ -160,7 +160,7 @@ public sealed class UiInterception : IUiInterception
 		}
 		UiIdRegistry.Load();
 		ApplyConfig();
-		_harmony = new Harmony("com.labapi.hintisolation.interception");
+		_harmony = new Harmony("com.labapi.HintChorus.interception");
 		Type[] surfacePatchTypes = SurfacePatchTypes;
 		foreach (Type type in surfacePatchTypes)
 		{
@@ -170,7 +170,7 @@ public sealed class UiInterception : IUiInterception
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintIsolation] 安装表面补丁 " + type.Name + " 失败: " + ex.Message));
+				Logger.Error((object)("[HintChorus] 安装表面补丁 " + type.Name + " 失败: " + ex.Message));
 			}
 		}
 		NetworkSentinel.Enabled = NetworkSentinelEnabled;
@@ -180,7 +180,7 @@ public sealed class UiInterception : IUiInterception
 			NetworkPatches.Install(_harmony);
 		}
 		IsInstalled = true;
-		StartupLog.Info("[HintIsolation] 拦截层已安装 —— 提示条 + 屏幕广播 + 玩家控制台 + CASSIE + 管理端聊天 + 命中标记 六条 UI 通道被接管, LabAPI 与 EXILED 两套框架的写法均按【调用方 + 注册点】自动分配独立 UiId 信口");
+		StartupLog.Info("[HintChorus] 拦截层已安装 —— 提示条 + 屏幕广播 + 玩家控制台 + CASSIE + 管理端聊天 + 命中标记 六条 UI 通道被接管, LabAPI 与 EXILED 两套框架的写法均按【调用方 + 注册点】自动分配独立 UiId 信口");
 	}
 
 	public void Uninstall()
@@ -190,7 +190,7 @@ public sealed class UiInterception : IUiInterception
 			if (_harmony != null)
 			{
 				NetworkPatches.Uninstall(_harmony);
-				_harmony.UnpatchAll("com.labapi.hintisolation.interception");
+				_harmony.UnpatchAll("com.labapi.HintChorus.interception");
 			}
 			_harmony = null;
 			IsInstalled = false;
@@ -202,7 +202,7 @@ public sealed class UiInterception : IUiInterception
 			HitMarkerSurfaceIsolation.Instance.Uninstall();
 			PluginCallerResolver.ClearCache();
 			UiIdRegistry.Save();
-			StartupLog.Info("[HintIsolation] 拦截层已卸载, 恢复原生渲染");
+			StartupLog.Info("[HintChorus] 拦截层已卸载, 恢复原生渲染");
 		}
 	}
 
@@ -312,7 +312,7 @@ public sealed class UiInterception : IUiInterception
 		{
 			return;
 		}
-		_harmony.UnpatchAll("com.labapi.hintisolation.interception");
+		_harmony.UnpatchAll("com.labapi.HintChorus.interception");
 		Type[] surfacePatchTypes = SurfacePatchTypes;
 		foreach (Type type in surfacePatchTypes)
 		{
@@ -322,7 +322,7 @@ public sealed class UiInterception : IUiInterception
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintIsolation] 自愈重装补丁 " + type.Name + " 失败: " + ex.Message));
+				Logger.Error((object)("[HintChorus] 自愈重装补丁 " + type.Name + " 失败: " + ex.Message));
 			}
 		}
 		if (NetworkSentinelEnabled)
@@ -330,6 +330,6 @@ public sealed class UiInterception : IUiInterception
 			NetworkPatches.Uninstall(_harmony);
 			NetworkPatches.Install(_harmony);
 		}
-		Logger.Warn((object)"[HintIsolation] 检测到拦截补丁被外部摘掉, 已自动补回(自愈)");
+		Logger.Warn((object)"[HintChorus] 检测到拦截补丁被外部摘掉, 已自动补回(自愈)");
 	}
 }

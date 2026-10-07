@@ -1,13 +1,13 @@
 ﻿using System;
-using HintIsolation.Core.Broker;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interception;
-using HintIsolation.Core.Models;
-using HintIsolation.Core.Transport;
+using HintChorus.Core.Broker;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interception;
+using HintChorus.Core.Models;
+using HintChorus.Core.Transport;
 using UnityEngine;
 
-namespace HintIsolation.Core.Surfaces;
+namespace HintChorus.Core.Surfaces;
 
 public sealed class AdminChatSurfaceIsolation : IUiSurfaceInterceptor
 {

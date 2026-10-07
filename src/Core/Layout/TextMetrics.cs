@@ -5,11 +5,11 @@ using System.Text;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
-namespace HintIsolation.Core.Layout;
+namespace HintChorus.Core.Layout;
 
 public static class TextMetrics
 {
-	private const string ResourceName = "HintIsolation.textwidth.bin";
+	private const string ResourceName = "HintChorus.textwidth.bin";
 
 	public const float ReferenceFontSize = 100f;
 
@@ -41,10 +41,10 @@ public static class TextMetrics
 		}
 		try
 		{
-			using Stream stream = typeof(TextMetrics).Assembly.GetManifestResourceStream("HintIsolation.textwidth.bin");
+			using Stream stream = typeof(TextMetrics).Assembly.GetManifestResourceStream("HintChorus.textwidth.bin");
 			if (stream == null)
 			{
-				Logger.Error((object)"[HintIsolation] 未找到内嵌度量表 HintIsolation.textwidth.bin, 排版将退回估算模式");
+				Logger.Error((object)"[HintChorus] 未找到内嵌度量表 HintChorus.textwidth.bin, 排版将退回估算模式");
 				return false;
 			}
 			using MemoryStream memoryStream = new MemoryStream();
@@ -59,7 +59,7 @@ public static class TextMetrics
 			byte[] array = binaryReader.ReadBytes(4);
 			if (array.Length != 4 || array[0] != 72 || array[1] != 73 || array[2] != 84 || array[3] != 87)
 			{
-				Logger.Error((object)"[HintIsolation] 度量表魔数不匹配, 排版将退回估算模式");
+				Logger.Error((object)"[HintChorus] 度量表魔数不匹配, 排版将退回估算模式");
 				return false;
 			}
 			binaryReader.ReadByte();
@@ -102,12 +102,12 @@ public static class TextMetrics
 			FullWidthAdvance = DominantWidth();
 			MeanAdvance = ((num == 0) ? 0f : ((float)(num2 / (double)num)));
 			IsLoaded = true;
-			StartupLog.Info($"[HintIsolation] 文字度量表已载入: {EntryCount} 个字符, " + $"{PaletteSize} 色调色板, {(float)PackedBytes / 1024f:F1} KB(压缩)");
+			StartupLog.Info($"[HintChorus] 文字度量表已载入: {EntryCount} 个字符, " + $"{PaletteSize} 色调色板, {(float)PackedBytes / 1024f:F1} KB(压缩)");
 			return true;
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] 载入度量表失败, 排版将退回估算模式: " + ex.Message));
+			Logger.Error((object)("[HintChorus] 载入度量表失败, 排版将退回估算模式: " + ex.Message));
 			return false;
 		}
 	}

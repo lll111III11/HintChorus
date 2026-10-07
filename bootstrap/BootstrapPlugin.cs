@@ -5,13 +5,13 @@ using LabApi.Loader.Features.Plugins.Enums;
 using System;
 using Logger = LabApi.Features.Console.Logger;
 
-namespace HintIsolation.Bootstrap;
+namespace HintChorus.Bootstrap;
 
 /// <summary>
-/// <b>HintIsolation 抢先引导器(0 前缀)。</b>
+/// <b>HintChorus 抢先引导器(0 前缀)。</b>
 ///
-/// <para>本插件由主 DLL <c>HintIsolation.dll</c> 从内嵌资源释放为
-/// <c>plugins\global\0HintIsolation.Bootstrap.dll</c>。文件名以 <c>0</c> 开头,
+/// <para>本插件由主 DLL <c>HintChorus.dll</c> 从内嵌资源释放为
+/// <c>plugins\global\0HintChorus.Bootstrap.dll</c>。文件名以 <c>0</c> 开头,
 /// 在 LabAPI "同优先级按枚举顺序"的规则下排在前面, 加上
 /// <see cref="LoadPriority.Highest"/>, 从而<b>最先 Enable</b>。</para>
 ///
@@ -26,9 +26,9 @@ namespace HintIsolation.Bootstrap;
 /// </summary>
 public sealed class BootstrapPlugin : Plugin
 {
-    public override string Name => "HintIsolation.Bootstrap";
+    public override string Name => "HintChorus.Bootstrap";
 
-    public override string Description => "HintIsolation 抢先引导器: 0 前缀 + Highest 优先级, 抢在其它插件前装载 UI 拦截";
+    public override string Description => "HintChorus 抢先引导器: 0 前缀 + Highest 优先级, 抢在其它插件前装载 UI 拦截";
 
     public override string Author => "LabAPI-Docs";
 

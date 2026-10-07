@@ -6,14 +6,14 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using HintIsolation.Core.Enums;
+using HintChorus.Core.Enums;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using LabApi.Features.Wrappers;
 using LabApi.Loader.Features.Paths;
 using LabApi.Loader.Features.Yaml;
 
-namespace HintIsolation.Core.Identity;
+namespace HintChorus.Core.Identity;
 
 public static class UiIdRegistry
 {
@@ -51,7 +51,7 @@ public static class UiIdRegistry
 		}
 	}
 
-	private const string Namespace = "HintIsolation.UiId/v1";
+	private const string Namespace = "HintChorus.UiId/v1";
 
 	private const string FileName = "uiids.yml";
 
@@ -131,12 +131,12 @@ public static class UiIdRegistry
 				string mergeInto = value.MergeInto;
 				if (!RecordsByShortId.TryGetValue(mergeInto, out UiIdRecord value2))
 				{
-					Logger.Error((object)("[HintIsolation] UiId 合并链指向不存在的信口 '" + mergeInto + "', 已回退到原信口 '" + id.ShortId + "'"));
+					Logger.Error((object)("[HintChorus] UiId 合并链指向不存在的信口 '" + mergeInto + "', 已回退到原信口 '" + id.ShortId + "'"));
 					return id;
 				}
 				if (!hashSet.Add(value2.ShortId))
 				{
-					Logger.Error((object)("[HintIsolation] UiId 合并链成环于 '" + value2.ShortId + "', 已回退到原信口 '" + id.ShortId + "'"));
+					Logger.Error((object)("[HintChorus] UiId 合并链成环于 '" + value2.ShortId + "', 已回退到原信口 '" + id.ShortId + "'"));
 					return id;
 				}
 				value = value2;
@@ -145,7 +145,7 @@ public static class UiIdRegistry
 					return new UiId(Guid.Parse(value.Id), value.Plugin, value.Member, id.Surface, id.Granularity);
 				}
 			}
-			Logger.Error((object)$"[HintIsolation] UiId 合并链超过 {8} 跳(疑似成环), 起点 '{id.ShortId}', 已回退到原信口");
+			Logger.Error((object)$"[HintChorus] UiId 合并链超过 {8} 跳(疑似成环), 起点 '{id.ShortId}', 已回退到原信口");
 			return id;
 		}
 	}
@@ -257,11 +257,11 @@ public static class UiIdRegistry
 						RecordsById[result] = item;
 					}
 				}
-				StartupLog.Info($"[HintIsolation] UiId 注册表已载入 {RecordsById.Count} 条记录");
+				StartupLog.Info($"[HintChorus] UiId 注册表已载入 {RecordsById.Count} 条记录");
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintIsolation] UiId 注册表载入失败(将使用内存态): " + ex.Message));
+				Logger.Error((object)("[HintChorus] UiId 注册表载入失败(将使用内存态): " + ex.Message));
 			}
 		}
 	}
@@ -339,7 +339,7 @@ public static class UiIdRegistry
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] UiId 注册表落盘失败: " + ex.Message));
+			Logger.Error((object)("[HintChorus] UiId 注册表落盘失败: " + ex.Message));
 		}
 	}
 
@@ -358,7 +358,7 @@ public static class UiIdRegistry
 
 	public static string ResolvePath()
 	{
-		return Path.Combine(PathManager.Configs.FullName, Server.Port.ToString(CultureInfo.InvariantCulture), "HintIsolation", "uiids.yml");
+		return Path.Combine(PathManager.Configs.FullName, Server.Port.ToString(CultureInfo.InvariantCulture), "HintChorus", "uiids.yml");
 	}
 
 	private static string BuildCanonicalMember(MethodBase? method)
@@ -384,7 +384,7 @@ public static class UiIdRegistry
 	private static string BuildCanonicalName(UiSurface surface, string assembly, string member, int ilOffset)
 	{
 		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.Append("HintIsolation.UiId/v1").Append('|').Append(surface)
+		stringBuilder.Append("HintChorus.UiId/v1").Append('|').Append(surface)
 			.Append('|')
 			.Append(assembly)
 			.Append('|')

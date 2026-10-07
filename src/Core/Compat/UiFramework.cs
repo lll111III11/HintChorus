@@ -1,4 +1,4 @@
-﻿namespace HintIsolation.Core.Compat;
+﻿namespace HintChorus.Core.Compat;
 
 public enum UiFramework : byte
 {

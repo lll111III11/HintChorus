@@ -1,17 +1,17 @@
 using System;
 using System.Reflection;
 using HarmonyLib;
-using HintIsolation.Core.Broker;
-using HintIsolation.Core.Compat;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interception;
+using HintChorus.Core.Broker;
+using HintChorus.Core.Compat;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interception;
 using Hints;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using UnityEngine;
 
-namespace HintIsolation.Core.Surfaces;
+namespace HintChorus.Core.Surfaces;
 
 public sealed class HintSurfaceIsolation : IUiSurfaceInterceptor
 {
@@ -193,7 +193,7 @@ public sealed class HintSurfaceIsolation : IUiSurfaceInterceptor
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] 无法绑定 TextHint.Text 读取器, 提示条拦截将只放行: " + ex.Message));
+			Logger.Error((object)("[HintChorus] 无法绑定 TextHint.Text 读取器, 提示条拦截将只放行: " + ex.Message));
 			_textGetter = (TextHint _) => (string?)null;
 		}
 	}

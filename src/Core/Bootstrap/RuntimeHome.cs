@@ -10,11 +10,11 @@ using Logger = LabApi.Features.Console.Logger;
 using LabApi.Features.Wrappers;
 using LabApi.Loader.Features.Paths;
 
-namespace HintIsolation.Core.Bootstrap;
+namespace HintChorus.Core.Bootstrap;
 
 public static class RuntimeHome
 {
-	public const string HomeFolderName = "HintIsolation";
+	public const string HomeFolderName = "HintChorus";
 
 	public const string ModulesFolderName = "modules";
 
@@ -28,7 +28,7 @@ public static class RuntimeHome
 
 	public static bool ResolverInstalled { get; private set; }
 
-	public static string HomePath => Path.Combine(PathManager.Configs.FullName, Server.Port.ToString(CultureInfo.InvariantCulture), "HintIsolation");
+	public static string HomePath => Path.Combine(PathManager.Configs.FullName, Server.Port.ToString(CultureInfo.InvariantCulture), "HintChorus");
 
 	public static string ModulesPath => Path.Combine(HomePath, "modules");
 
@@ -53,7 +53,7 @@ public static class RuntimeHome
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] 创建自宿主目录失败: " + ex.Message));
+			Logger.Error((object)("[HintChorus] 创建自宿主目录失败: " + ex.Message));
 			return false;
 		}
 	}
@@ -71,7 +71,7 @@ public static class RuntimeHome
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] 挂装配解析器失败: " + ex.Message));
+			Logger.Error((object)("[HintChorus] 挂装配解析器失败: " + ex.Message));
 		}
 	}
 
@@ -106,7 +106,7 @@ public static class RuntimeHome
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] 扫描模块目录失败: " + ex.Message));
+			Logger.Error((object)("[HintChorus] 扫描模块目录失败: " + ex.Message));
 			DiscoveredModules = Array.Empty<string>();
 			return DiscoveredModules;
 		}
@@ -125,7 +125,7 @@ public static class RuntimeHome
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] 加载模块 " + fileName + " 失败: " + ex.Message));
+			Logger.Error((object)("[HintChorus] 加载模块 " + fileName + " 失败: " + ex.Message));
 			return null;
 		}
 	}
@@ -158,6 +158,6 @@ public static class RuntimeHome
 
 	private static string BuildManifest()
 	{
-		return string.Join("\n", "# ══════════════════════════════════════════════════════════", "# HintIsolation 自宿主目录清单", "#", "# 这个文件夹是本底层自己的加载根 —— 地位等同于 LabAPI 的 plugins\\global。", "# 它由前驱引导器在启动时创建, 由装配解析器从底层接管依赖查找。", "# ══════════════════════════════════════════════════════════", "", "layout:", "  home: .", "  modules: modules       # 本底层的模块; 引用到的依赖放这里就能被解析到", "  runtime: runtime       # 运行时文件(状态、清单、缓存)", "", "bootstrap:", "  # 前驱引导器名(带 0 前缀, 在 LabAPI 插件目录里抢最先加载)", "  precursor: 0HintIsolation.Bootstrap.dll", "", "assembly_resolution:", "  # 解析顺序: modules -> runtime -> home", "  search_order: [modules, runtime, home]", "", "created_by: HintIsolation", "home: " + HomePath, "");
+		return string.Join("\n", "# ══════════════════════════════════════════════════════════", "# HintChorus 自宿主目录清单", "#", "# 这个文件夹是本底层自己的加载根 —— 地位等同于 LabAPI 的 plugins\\global。", "# 它由前驱引导器在启动时创建, 由装配解析器从底层接管依赖查找。", "# ══════════════════════════════════════════════════════════", "", "layout:", "  home: .", "  modules: modules       # 本底层的模块; 引用到的依赖放这里就能被解析到", "  runtime: runtime       # 运行时文件(状态、清单、缓存)", "", "bootstrap:", "  # 前驱引导器名(带 0 前缀, 在 LabAPI 插件目录里抢最先加载)", "  precursor: 0HintChorus.Bootstrap.dll", "", "assembly_resolution:", "  # 解析顺序: modules -> runtime -> home", "  search_order: [modules, runtime, home]", "", "created_by: HintChorus", "home: " + HomePath, "");
 	}
 }

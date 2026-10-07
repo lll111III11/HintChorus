@@ -2,7 +2,7 @@
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
-namespace HintIsolation.Core.Utilities;
+namespace HintChorus.Core.Utilities;
 
 public static class SafeEvents
 {

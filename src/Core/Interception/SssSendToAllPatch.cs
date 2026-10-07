@@ -1,7 +1,7 @@
 ﻿using HarmonyLib;
 using UserSettings.ServerSpecific;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 [HarmonyPatch(typeof(ServerSpecificSettingsSync), "SendToAll")]
 internal static class SssSendToAllPatch

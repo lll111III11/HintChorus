@@ -1,7 +1,7 @@
 ﻿using System;
-using HintIsolation.Core.Enums;
+using HintChorus.Core.Enums;
 
-namespace HintIsolation.Core.Models;
+namespace HintChorus.Core.Models;
 
 public sealed class HintEntry
 {

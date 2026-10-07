@@ -1,11 +1,11 @@
 ﻿using System;
 using HarmonyLib;
-using HintIsolation.Core.Broker;
+using HintChorus.Core.Broker;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using Mirror;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 [HarmonyPatch(typeof(AspectRatioSync), "UserCode_CmdSetAspectRatio__Single")]
 internal static class AspectRatioSyncPatch
@@ -26,7 +26,7 @@ internal static class AspectRatioSyncPatch
 		}
 		catch (Exception arg)
 		{
-			Logger.Error((object)$"[HintIsolation] 宽高比变更标脏异常(已放行原生): {arg}");
+			Logger.Error((object)$"[HintChorus] 宽高比变更标脏异常(已放行原生): {arg}");
 		}
 	}
 }

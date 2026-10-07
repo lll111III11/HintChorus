@@ -6,8 +6,8 @@
 		<TargetFramework>net48</TargetFramework>
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>disable</ImplicitUsings>
-		<AssemblyName>HintIsolation</AssemblyName>
-		<RootNamespace>HintIsolation</RootNamespace>
+		<AssemblyName>HintChorus</AssemblyName>
+		<RootNamespace>HintChorus</RootNamespace>
 		<Version>1.0.0</Version>
 		<PlatformTarget>x64</PlatformTarget>
 		<!-- 只允许可空注解, 不因历史代码触发成百条空引用告警 -->
@@ -88,8 +88,8 @@
 	<ItemGroup>
 		<!-- 提示条文本度量表: 代码按这个 LogicalName 读取, 名字不能改
 		     (原生提示的 5 种内嵌译文在 NativeHintTranslator 里, 其余语言走 translations\ 目录) -->
-		<EmbeddedResource Include="Resources\HintIsolation.textwidth.bin">
-			<LogicalName>HintIsolation.textwidth.bin</LogicalName>
+		<EmbeddedResource Include="Resources\HintChorus.textwidth.bin">
+			<LogicalName>HintChorus.textwidth.bin</LogicalName>
 		</EmbeddedResource>
 	</ItemGroup>
 
@@ -97,13 +97,13 @@
 		<!-- ══════════════════════════════════════════════════════════════
 		     抢占最先头: 把 0 前缀引导器的构建产物作为嵌入资源打进本程序集,
 		     运行时由 BootstrapInstaller 释放为
-		     plugins\global\0HintIsolation.Bootstrap.dll
+		     plugins\global\0HintChorus.Bootstrap.dll
 		     ══════════════════════════════════════════════════════════════ -->
-		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\bootstrap\bin\$(Configuration)\net48\HintIsolation.Bootstrap.dll">
-			<LogicalName>HintIsolation.Bootstrap.dll</LogicalName>
+		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\bootstrap\bin\$(Configuration)\net48\HintChorus.Bootstrap.dll">
+			<LogicalName>HintChorus.Bootstrap.dll</LogicalName>
 		</EmbeddedResource>
 		<!-- 仅用于保证引导器先于本工程构建, 不作为程序集引用 -->
-		<ProjectReference Include="..\bootstrap\HintIsolation.Bootstrap.csproj"
+		<ProjectReference Include="..\bootstrap\HintChorus.Bootstrap.csproj"
 		                  ReferenceOutputAssembly="false"
 		                  Private="false" />
 	</ItemGroup>

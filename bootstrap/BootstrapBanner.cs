@@ -1,7 +1,7 @@
 using LabApi.Features.Console;
 using System;
 
-namespace HintIsolation.Bootstrap;
+namespace HintChorus.Bootstrap;
 
 /// <summary>
 /// 引导提示横幅 —— 需求要求的"弹出提示"。

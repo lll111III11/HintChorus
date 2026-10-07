@@ -4,11 +4,11 @@ title: 多语言 / Multilingual
 
 # 多语言 / Multilingual
 
-**HintIsolation** 的界面文本语言覆盖策略：
+**HintChorus** 的界面文本语言覆盖策略：
 
 - **DLL 内嵌 5 种联合国常用语**：`en` / `zh` / `fr` / `ru` / `es` —— 开箱即用，永远可用；
 - **其余语言走外部文件**：从本仓库 [`docs/translations/`](translations/) 下载对应 `<语言代码>.txt`，
-  放进服务器的 `configs/<端口>/HintIsolation/translations/` 目录即生效；
+  放进服务器的 `configs/<端口>/HintChorus/translations/` 目录即生效；
 - **按玩家自适应**：每个玩家按其客户端语言（`playerPreferences.Language`）自动取对应译文，
   探测不到时回退配置默认（`native_hint_language`，默认 `zh`）；
 - **逐条回退**：某语言缺某一行时，按「该语言 → 英文」的顺序逐条回退，绝不输出半成品。

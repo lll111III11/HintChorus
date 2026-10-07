@@ -1,4 +1,4 @@
-HintIsolation 补丁目标核验报告
+HintChorus 补丁目标核验报告
 生成日期: 2026-10-04
 核验方式: 把本项目里每一处 Harmony 目标, 用**与运行时完全相同**的解析方式
           (Harmony 的 AccessTools.TypeByName / AccessTools.Method) 对着**真实游戏服务器程序集**逐条解析。

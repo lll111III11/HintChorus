@@ -1,10 +1,10 @@
 ﻿using System;
-using HintIsolation.Core.Interception;
-using HintIsolation.Core.Layout;
+using HintChorus.Core.Interception;
+using HintChorus.Core.Layout;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
-namespace HintIsolation.Core.Bootstrap;
+namespace HintChorus.Core.Bootstrap;
 
 public static class BootstrapBridge
 {
@@ -25,7 +25,7 @@ public static class BootstrapBridge
 			StartupLog.Detect();
 			string text = EnsureHome();
 			TextMetrics.Load();
-			HintIsolationPlugin.PluginConfig pluginConfig = BootstrapConfigurator.TryLoadFromDisk();
+			HintChorusPlugin.PluginConfig pluginConfig = BootstrapConfigurator.TryLoadFromDisk();
 			if (pluginConfig == null)
 			{
 				EarlyInstalled = true;
@@ -45,7 +45,7 @@ public static class BootstrapBridge
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintIsolation] 抢先安装失败(主插件随后仍会正常安装): " + ex));
+			Logger.Error((object)("[HintChorus] 抢先安装失败(主插件随后仍会正常安装): " + ex));
 			return "抢先安装异常: " + ex.Message;
 		}
 	}
@@ -53,7 +53,7 @@ public static class BootstrapBridge
 	private static string Finish(string detail)
 	{
 		StartupLog.MarkStarted();
-		StartupLog.PrintSummary("[HintIsolation] UI 通道已就绪 —— 提示条 / 广播 / 控制台 / CASSIE / 管理端聊天 / 命中标记 + 设置页");
+		StartupLog.PrintSummary("[HintChorus] UI 通道已就绪 —— 提示条 / 广播 / 控制台 / CASSIE / 管理端聊天 / 命中标记 + 设置页");
 		return detail;
 	}
 
@@ -70,7 +70,7 @@ public static class BootstrapBridge
 		{
 			return "自宿主目录创建失败";
 		}
-		StartupLog.Info("[HintIsolation] 自宿主目录" + (flag ? "已创建" : "已就绪") + ": " + RuntimeHome.HomePath + $" (模块 {count} 个, 装配解析已挂载)");
+		StartupLog.Info("[HintChorus] 自宿主目录" + (flag ? "已创建" : "已就绪") + ": " + RuntimeHome.HomePath + $" (模块 {count} 个, 装配解析已挂载)");
 		if (!flag)
 		{
 			return $"自宿主目录已就绪(模块 {count} 个)";

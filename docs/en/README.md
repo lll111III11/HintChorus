@@ -12,13 +12,13 @@
 
 ---
 
-# HintIsolation — dynamic UI isolation layer for SCP:SL
+# HintChorus — dynamic UI isolation layer for SCP:SL
 
 **Let unrelated plugins share one screen without any of them changing a line of code.**
 > **Keywords**: SCP:SL ｜ SCP Secret Laboratory ｜ LabAPI ｜ EXILED ｜ hint ｜ HUD ｜ hint framework ｜ hint isolation ｜ UI isolation ｜ multiple plugins ｜ hints overwriting each other ｜ hint position ｜ plugin compatibility ｜ zero code changes ｜ CC0
 
 
-> The game exposes exactly **one** hint channel, and the last writer wins. HintIsolation turns that single
+> The game exposes exactly **one** hint channel, and the last writer wins. HintChorus turns that single
 > channel into **independent slots**, one per caller, attributed automatically from the call stack —
 > so a plugin that just calls `SendHint` / `SendBroadcast` works as-is, and stops clobbering everyone else.
 
@@ -31,17 +31,17 @@
 
 | | |
 | --- | --- |
-| Direct download (file carries the `alpha-` prefix) | [`alpha-HintIsolation.dll`](../alpha-HintIsolation.dll) |
-| Release page (recommended) | [Releases](https://github.com/lll111III111/HintIsolation/releases) |
+| Direct download (file carries the `alpha-` prefix) | [`alpha-HintChorus.dll`](../alpha-HintChorus.dll) |
+| Release page (recommended) | [Releases](https://github.com/lll111III111/HintChorus/releases) |
 
-The `alpha-` prefix only marks the build stage — the **assembly name stays `HintIsolation`**, so renaming the
+The `alpha-` prefix only marks the build stage — the **assembly name stays `HintChorus`**, so renaming the
 file changes nothing about loading, nor about how the bootstrap locates it.
 
 Install:
 
-1. Drop `alpha-HintIsolation.dll` into `plugins/global/`
-2. Start the server (the first run writes `0HintIsolation.Bootstrap.dll` and asks you to restart once — by design)
-3. Optionally edit `configs/<port>/HintIsolation/config.yml` (**keys are snake_case**; see [`docs/default-config.yml`](../docs/default-config.yml))
+1. Drop `alpha-HintChorus.dll` into `plugins/global/`
+2. Start the server (the first run writes `0HintChorus.Bootstrap.dll` and asks you to restart once — by design)
+3. Optionally edit `configs/<port>/HintChorus/config.yml` (**keys are snake_case**; see [`docs/default-config.yml`](../docs/default-config.yml))
 
 ## What it does
 
@@ -98,7 +98,7 @@ offset_font_size: 20     # font size used to measure text width
 | [`docs/es/README.md`](../docs/es/README.md) | Resumen en español |
 | [`docs/languages.md`](../docs/languages.md) | **Multilingual hub** — all 22 client languages + translation files |
 | [`docs/translations/`](../docs/translations/) | 17 external translation files (drop into the server's `translations/` folder) |
-| [`docs/default-config.yml`](../docs/default-config.yml) | **Authoritative default config** (61 keys, generated from the built assembly) |
+| [`docs/default-config.yml`](../docs/default-config.yml) | **Authoritative default config** (66 keys, generated from the built assembly) |
 | [`docs/api-guide.zh.txt`](../docs/api-guide.zh.txt) | API guide for plugin authors (Chinese) |
 | [`docs/patch-target-report.txt`](../docs/patch-target-report.txt) | Per-target verification report |
 | [`CHANGELOG.md`](../CHANGELOG.md) | Changes |
@@ -106,7 +106,7 @@ offset_font_size: 20     # font size used to measure text width
 ## Build
 
 ```bash
-dotnet build src/HintIsolation.csproj -c Release -p:ManagedDir="<your server>/SCPSL_Data/Managed"
+dotnet build src/HintChorus.csproj -c Release -p:ManagedDir="<your server>/SCPSL_Data/Managed"
 ```
 
 The bootstrap is a separate project (`bootstrap/`); its output is **embedded** into the main assembly and

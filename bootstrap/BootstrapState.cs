@@ -4,7 +4,7 @@ using System;
 using System.Globalization;
 using System.IO;
 
-namespace HintIsolation.Bootstrap;
+namespace HintChorus.Bootstrap;
 
 /// <summary>
 /// 引导器状态文件 —— 即需求里的"参数"。
@@ -12,7 +12,7 @@ namespace HintIsolation.Bootstrap;
 /// <para><see cref="Prompted"/> = 0 表示还没提示过(首次引导后需要提示重启);
 /// 提示过一次就改写为 1, 此后不再提醒。</para>
 ///
-/// <para>落盘位置: <c>configs\&lt;端口&gt;\HintIsolation\bootstrap.state</c>,
+/// <para>落盘位置: <c>configs\&lt;端口&gt;\HintChorus\bootstrap.state</c>,
 /// 纯键值文本, 刻意不依赖任何 YAML 库, 保证引导阶段零负担。</para>
 /// </summary>
 internal sealed class BootstrapState
@@ -34,7 +34,7 @@ internal sealed class BootstrapState
     /// <summary>状态文件路径。</summary>
     public static string FilePath =>
         Path.Combine(PathManager.Configs.FullName, Server.Port.ToString(CultureInfo.InvariantCulture),
-            "HintIsolation", FileName);
+            "HintChorus", FileName);
 
     /// <summary>读取状态(不存在则返回全新状态)。</summary>
     public static BootstrapState Load()
@@ -107,7 +107,7 @@ internal sealed class BootstrapState
 
             File.WriteAllLines(path, new[]
             {
-                "# HintIsolation 引导器状态 —— Prompted: 0=下次仍提示, 1=不再提醒",
+                "# HintChorus 引导器状态 —— Prompted: 0=下次仍提示, 1=不再提醒",
                 $"Prompted: {Prompted}",
                 $"Runs: {Runs}",
                 $"LastRunUtc: \"{LastRunUtc}\"",

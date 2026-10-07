@@ -1,12 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interfaces;
-using HintIsolation.Core.Utilities;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interfaces;
+using HintChorus.Core.Layout;
+using HintChorus.Core.Utilities;
 using UnityEngine;
 
-namespace HintIsolation.Core.Models;
+namespace HintChorus.Core.Models;
 
 public sealed class UiSlot : IUiSlot
 {
@@ -35,6 +36,16 @@ public sealed class UiSlot : IUiSlot
 	public byte Priority { get; set; }
 
 	public bool ShowLabel { get; set; }
+
+	/// <summary>
+	/// <b>显式位置</b>(由 C# API <c>SetHintPosition</c> 写入, 属「自有写法」的编程通道)。
+	/// <para><c>null</c> = 该信口未声明位置, 交由解析链推断:
+	/// 文本标记 → 自带位置标签 → 名称目录(已收录/功能区) → 默认(底部自然堆叠)。</para>
+	/// </summary>
+	public HintPosition? ExplicitPosition { get; set; }
+
+	/// <summary>上一次实际生效的位置(诊断用; 由合成器每帧写回)。</summary>
+	public HintPosition ResolvedPosition { get; internal set; } = HintPosition.Default;
 
 	public DateTime LastActivityUtc { get; private set; } = DateTime.UtcNow;
 

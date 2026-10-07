@@ -4,7 +4,7 @@ using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using Mirror;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 /// <summary>
 /// 广播表面补丁: 单人广播入队(<c>TargetAddElement</c>)。
@@ -24,7 +24,7 @@ internal static class BroadcastTargetAddElementPatch
 		}
 		catch (Exception e)
 		{
-			Logger.Error((object)$"[HintIsolation] 拦截 Broadcast.TargetAddElement 异常(已放行原生): {e}");
+			Logger.Error((object)$"[HintChorus] 拦截 Broadcast.TargetAddElement 异常(已放行原生): {e}");
 			return true;
 		}
 	}

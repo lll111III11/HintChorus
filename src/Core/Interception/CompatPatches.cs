@@ -4,7 +4,7 @@ using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using UnityEngine;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 [HarmonyPatch]
 internal static class CompatPatches
@@ -29,7 +29,7 @@ internal static class CompatPatches
 		}
 		catch (Exception arg)
 		{
-			Logger.Error((object)$"[HintIsolation] 拦截 EncryptedChannelManager.TrySendMessageToClient 异常(已放行原生): {arg}");
+			Logger.Error((object)$"[HintChorus] 拦截 EncryptedChannelManager.TrySendMessageToClient 异常(已放行原生): {arg}");
 			return true;
 		}
 	}

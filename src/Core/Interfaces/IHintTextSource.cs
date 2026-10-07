@@ -1,4 +1,4 @@
-﻿namespace HintIsolation.Core.Interfaces;
+﻿namespace HintChorus.Core.Interfaces;
 
 public interface IHintTextSource
 {

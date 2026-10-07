@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
-using HintIsolation.Core.Bootstrap;
+using HintChorus.Core.Bootstrap;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
-namespace HintIsolation;
+namespace HintChorus;
 
 internal static class StartupLog
 {

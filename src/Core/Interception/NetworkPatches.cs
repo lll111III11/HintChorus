@@ -4,13 +4,13 @@ using System.Linq;
 using System.Reflection;
 using Cassie;
 using HarmonyLib;
-using HintIsolation.Core.Transport;
+using HintChorus.Core.Transport;
 using Hints;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using Mirror;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 internal static class NetworkPatches
 {
@@ -32,7 +32,7 @@ internal static class NetworkPatches
 		MethodInfo methodInfo = ResolveOpenSend();
 		if ((object)methodInfo == null)
 		{
-			Logger.Error((object)"[HintIsolation] 未找到 Mirror.NetworkConnection.Send<T>, 网络哨兵未安装(功能降级, 不影响其它层)");
+			Logger.Error((object)"[HintChorus] 未找到 Mirror.NetworkConnection.Send<T>, 网络哨兵未安装(功能降级, 不影响其它层)");
 			return;
 		}
 		Type typeFromHandle = typeof(NetworkPatches);
@@ -52,7 +52,7 @@ internal static class NetworkPatches
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintIsolation] 安装网络层补丁 Send<" + type.Name + "> 失败: " + ex.Message));
+				Logger.Error((object)("[HintChorus] 安装网络层补丁 Send<" + type.Name + "> 失败: " + ex.Message));
 			}
 		}
 		try
@@ -67,9 +67,9 @@ internal static class NetworkPatches
 		}
 		catch (Exception ex2)
 		{
-			Logger.Error((object)("[HintIsolation] 安装网络层补丁 Send(ArraySegment<byte>) 失败: " + ex2.Message));
+			Logger.Error((object)("[HintChorus] 安装网络层补丁 Send(ArraySegment<byte>) 失败: " + ex2.Message));
 		}
-		StartupLog.Info("[HintIsolation] 网络哨兵已安装 —— 已挂上 Mirror 消息汇流点 NetworkConnection.Send<T> " + $"({Targets.Length} 个闭合类型) + 字节流重载 Send(ArraySegment<byte>), 可看住绕过语义层的直发与伪造包");
+		StartupLog.Info("[HintChorus] 网络哨兵已安装 —— 已挂上 Mirror 消息汇流点 NetworkConnection.Send<T> " + $"({Targets.Length} 个闭合类型) + 字节流重载 Send(ArraySegment<byte>), 可看住绕过语义层的直发与伪造包");
 	}
 
 	internal static void Uninstall(Harmony harmony)
@@ -82,12 +82,12 @@ internal static class NetworkPatches
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintIsolation] 卸载网络层补丁失败: " + ex.Message));
+				Logger.Error((object)("[HintChorus] 卸载网络层补丁失败: " + ex.Message));
 			}
 		}
 		Patched.Clear();
 		NetworkSentinel.Reset();
-		StartupLog.Info("[HintIsolation] 网络哨兵已卸载");
+		StartupLog.Info("[HintChorus] 网络哨兵已卸载");
 	}
 
 	private static MethodInfo? ResolveOpenSend()

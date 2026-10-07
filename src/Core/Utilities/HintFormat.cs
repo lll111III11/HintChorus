@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Text;
-using HintIsolation.Core.Enums;
+using HintChorus.Core.Enums;
 
-namespace HintIsolation.Core.Utilities;
+namespace HintChorus.Core.Utilities;
 
 public static class HintFormat
 {

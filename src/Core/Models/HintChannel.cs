@@ -1,8 +1,8 @@
 ﻿using System;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Interfaces;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Interfaces;
 
-namespace HintIsolation.Core.Models;
+namespace HintChorus.Core.Models;
 
 public sealed class HintChannel : IHintChannel
 {

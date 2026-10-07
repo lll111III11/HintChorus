@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using HintIsolation.Core.Broker;
-using HintIsolation.Core.Interfaces;
-using HintIsolation.Core.ServerSpecific;
+using HintChorus.Core.Broker;
+using HintChorus.Core.Interfaces;
+using HintChorus.Core.ServerSpecific;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using UserSettings.ServerSpecific;
 
-namespace HintIsolation.Core.Models;
+namespace HintChorus.Core.Models;
 
 public sealed class UiScope : IDisposable
 {
@@ -124,7 +124,7 @@ public sealed class UiScope : IDisposable
 		}
 		catch (Exception arg)
 		{
-			Logger.Error((object)$"[HintIsolation] 作用域注销动作异常(已隔离): {arg}");
+			Logger.Error((object)$"[HintChorus] 作用域注销动作异常(已隔离): {arg}");
 		}
 	}
 }

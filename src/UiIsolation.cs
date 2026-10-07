@@ -1,17 +1,18 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using HintIsolation.Core.Diagnostics;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interfaces;
-using HintIsolation.Core.Models;
-using HintIsolation.Core.Surfaces;
-using HintIsolation.Core.Transport;
+using HintChorus.Core.Diagnostics;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interfaces;
+using HintChorus.Core.Layout;
+using HintChorus.Core.Models;
+using HintChorus.Core.Surfaces;
+using HintChorus.Core.Transport;
 using Hints;
 using LabApi.Features.Wrappers;
 using UserSettings.ServerSpecific;
 
-namespace HintIsolation;
+namespace HintChorus;
 
 public static class UiIsolation
 {
@@ -215,16 +216,37 @@ public static class UiIsolation
 
 	public static string CreateDiagnosticsReport()
 	{
-		return HintIsolationDiagnostics.CreateReport();
+		return HintChorusDiagnostics.CreateReport();
 	}
 
 	public static HintStatistics CaptureStatistics()
 	{
-		return HintIsolationDiagnostics.Capture();
+		return HintChorusDiagnostics.Capture();
 	}
 
 	public static IReadOnlyList<IUiSlot> GetSlots(UiSurface? surface = null, string? pluginId = null)
 	{
 		return Service.GetSlots(surface, pluginId);
+	}
+
+	/// <summary>
+	/// <b>给一个插件预设屏幕位置</b>(「自有写法」的编程通道)。
+	/// <para>插件可以完全不写位置标记, 直接声明自己的落点。对<b>已存在</b>的信口立即生效,
+	/// 对<b>之后才创建</b>的信口在创建时自动套用 —— 所以在插件加载阶段先调用一次即可。</para>
+	/// <para>典型用法: <c>UiIsolation.SetHintPosition("MyPlugin", HintAnchor.MiddleCenter, -90f);</c></para>
+	/// </summary>
+	/// <param name="pluginId">插件标识(与归因得到的 PluginId 一致, 通常是程序集名)。</param>
+	/// <param name="anchor">九宫格锚点。</param>
+	/// <param name="offsetUnits">附加偏移(voffset 单位, <b>正 = 上移</b>; 参考: 整屏约 2140)。</param>
+	/// <returns>被立即改写的已存在信口数。</returns>
+	public static int SetHintPosition(string pluginId, HintAnchor anchor, float offsetUnits = 0f)
+	{
+		return Service.SetHintPosition(pluginId, anchor, offsetUnits);
+	}
+
+	/// <summary>撤销一个插件的预设位置, 回到「已收录表 / 功能区推断 / 默认」的自动链路。</summary>
+	public static bool ClearHintPosition(string pluginId)
+	{
+		return Service.ClearHintPosition(pluginId);
 	}
 }

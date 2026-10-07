@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace HintIsolation.Core.Interfaces;
+namespace HintChorus.Core.Interfaces;
 
 public interface IHintBroker
 {

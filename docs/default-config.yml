@@ -1,20 +1,20 @@
 # ══════════════════════════════════════════════════════════════════════════
-# HintIsolation 默认配置（权威版）
+# HintChorus 默认配置（权威版）
 #
 # 键名与默认值**一字未改**，直接取自 用 LabAPI 自己的 YamlConfigParser.Serializer
-# 序列化编译好的 HintIsolation.dll 里 HintIsolationPlugin.PluginConfig 的输出；
+# 序列化编译好的 HintChorus.dll 里 HintChorusPlugin.PluginConfig 的输出；
 # 本文件只做了重新分组与补小标题（便于阅读），所以它是 config.yml 的可靠对照。
 # 共 61 个配置项。
 #
-# 真实路径： %APPDATA%\SCP Secret Laboratory\LabAPI\configs\<端口>\HintIsolation\config.yml
-#   （注意是 configs\<端口>\ 这一层，例如 configs\7777\HintIsolation\config.yml）
+# 真实路径： %APPDATA%\SCP Secret Laboratory\LabAPI\configs\<端口>\HintChorus\config.yml
+#   （注意是 configs\<端口>\ 这一层，例如 configs\7777\HintChorus\config.yml）
 #
 # 键名风格： 全小写下划线（YamlDotNet 的 UnderscoredNamingConvention），
-#           不是 PascalCase。写成 EnableHintIsolation 会被当成"未知键"而被忽略。
+#           不是 PascalCase。写成 EnableHintChorus 会被当成"未知键"而被忽略。
 #
 # 重新生成的方法（游戏版本升级 / 新增配置项后）：
-#   1) dotnet build HintIsolation.csproj -c Release
-#   2) 用 %TEMP%\ConfigDump 里那个小程序加载 HintIsolation.dll 并序列化 PluginConfig
+#   1) dotnet build HintChorus.csproj -c Release
+#   2) 用 %TEMP%\ConfigDump 里那个小程序加载 HintChorus.dll 并序列化 PluginConfig
 # ══════════════════════════════════════════════════════════════════════════
 
 # ── 合并渲染核心 ──────────────────────────────────────────────────────────
@@ -50,6 +50,26 @@ rows_per_plugin: 1
 # 常驻区最多补几行空位(只限制空行数量, 有内容的行永远不会丢)
 persistent_rows_max: 8
 
+# ── 位置(兼容原有写法 / 自有写法 / 自动排版) ───────────────────────────────
+# 兼容原有写法(默认开): 插件文本里已自带位置标签(<voffset>/<pos>/<align>/<line-height> 等)时,
+#   判为"插件自己摆了位" —— 原样放行、本底层不重排; 关掉则一律并入底部自然堆叠
+honor_plugin_position_syntax: true
+# 自动排版(默认开): 未声明位置、也没有自带位置标签的插件, 按名称查"已收录表 + 功能区关键词"
+#   推断落点(如 exp/level/rank -> 屏幕中部再往下 90; score/board -> 右上; kill/feed -> 左上)
+auto_layout_by_plugin_name: true
+# 自有写法标记(默认开): 识别并剥离文本里的 {{hc:...}} 标记
+#   可写 {{hc:top-right}} 或 {{hc:pos=middle,offset=-90}}(offset 正=上移, 单位同 voffset)
+enable_position_markers: true
+# 屏幕高度(voffset 单位; 参考 2140): 决定"中部/顶部"锚点换算成多大的 voffset
+screen_height_units: 2140
+# 位置覆盖表(默认空): 插件关键词 -> 位置; 命中优先于内置目录
+#   值可写 'top-right' 或 'middle,offset=-90'
+# 例:
+#   position_overrides:
+#     MyPlugin: top-right
+#     LevelSystem: middle,offset=-90
+position_overrides: {}
+
 # ── 动态 UIID 系统 / 拦截层 ───────────────────────────────────────────────
 # 安装拦截层: 把各 UI 通道按调用方自动分配独立 UiId 信口(默认关)
 intercept_third_party_ui: false
@@ -57,7 +77,7 @@ intercept_third_party_ui: false
 auto_attribute_third_party_ui: true
 # UiId 派生粒度: Assembly=每插件一份 | Type=每类 | Method=每方法(推荐) | CallSite=每调用点(最细)
 ui_id_granularity: Method
-# 是否把 UiId 明细落盘到 configs/<端口>/HintIsolation/uiids.yml
+# 是否把 UiId 明细落盘到 configs/<端口>/HintChorus/uiids.yml
 persist_ui_ids: true
 # 游戏自身 UI 的处理: Isolate=也并入隔离信口(默认) | PassThrough=放行原生(会与合并结果交替, 表现为闪烁)
 native_hint_policy: Isolate
@@ -143,7 +163,7 @@ enable_intercom_guard: true
 intercom_throttle_interval: 0
 
 # ── 抢占最先头(引导器) / SSS 端口隔离 ────────────────────────────────────
-# 释放并启用 0 前缀抢先引导器(0HintIsolation.Bootstrap.dll)
+# 释放并启用 0 前缀抢先引导器(0HintChorus.Bootstrap.dll)
 enable_bootstrap_first_loader: true
 # 启用 SSS 端口隔离核心
 enable_sss_registry: true

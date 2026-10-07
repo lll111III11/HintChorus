@@ -1,14 +1,14 @@
 ﻿using System;
 using HarmonyLib;
-using HintIsolation.Core.ServerSpecific;
+using HintChorus.Core.ServerSpecific;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
-namespace HintIsolation.Core.Interception;
+namespace HintChorus.Core.Interception;
 
 public static class SssForceRewrite
 {
-	private const string HarmonyId = "com.labapi.hintisolation.sssforcerewrite";
+	private const string HarmonyId = "com.labapi.HintChorus.sssforcerewrite";
 
 	private static Harmony? _harmony;
 
@@ -32,7 +32,7 @@ public static class SssForceRewrite
 		{
 			return;
 		}
-		_harmony = new Harmony("com.labapi.hintisolation.sssforcerewrite");
+		_harmony = new Harmony("com.labapi.HintChorus.sssforcerewrite");
 		Type[] patchTypes = PatchTypes;
 		foreach (Type type in patchTypes)
 		{
@@ -42,21 +42,21 @@ public static class SssForceRewrite
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintIsolation] 安装 SSS 强力复写补丁 " + type.Name + " 失败: " + ex.Message));
+				Logger.Error((object)("[HintChorus] 安装 SSS 强力复写补丁 " + type.Name + " 失败: " + ex.Message));
 			}
 		}
 		IsInstalled = true;
-		StartupLog.Info("[HintIsolation] 已安装 SSS 强力复写补丁: 下发前强制拼回本核心的设置项(即使被整体覆盖也会补回来)");
+		StartupLog.Info("[HintChorus] 已安装 SSS 强力复写补丁: 下发前强制拼回本核心的设置项(即使被整体覆盖也会补回来)");
 	}
 
 	public static void Uninstall()
 	{
 		if (IsInstalled)
 		{
-			_harmony?.UnpatchAll("com.labapi.hintisolation.sssforcerewrite");
+			_harmony?.UnpatchAll("com.labapi.HintChorus.sssforcerewrite");
 			_harmony = null;
 			IsInstalled = false;
-			StartupLog.Info("[HintIsolation] 已卸载 SSS 强力复写补丁");
+			StartupLog.Info("[HintChorus] 已卸载 SSS 强力复写补丁");
 		}
 	}
 
@@ -75,7 +75,7 @@ public static class SssForceRewrite
 		}
 		catch (Exception arg)
 		{
-			Logger.Error((object)$"[HintIsolation] SSS 强力复写异常(已放行原生下发): {arg}");
+			Logger.Error((object)$"[HintChorus] SSS 强力复写异常(已放行原生下发): {arg}");
 		}
 	}
 }

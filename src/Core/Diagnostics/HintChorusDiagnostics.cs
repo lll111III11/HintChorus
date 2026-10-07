@@ -2,20 +2,20 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using HintIsolation.Core.Bootstrap;
-using HintIsolation.Core.Broker;
-using HintIsolation.Core.Compat;
-using HintIsolation.Core.Identity;
-using HintIsolation.Core.Interception;
-using HintIsolation.Core.Interfaces;
-using HintIsolation.Core.Models;
-using HintIsolation.Core.ServerSpecific;
-using HintIsolation.Core.Surfaces;
-using HintIsolation.Core.Transport;
+using HintChorus.Core.Bootstrap;
+using HintChorus.Core.Broker;
+using HintChorus.Core.Compat;
+using HintChorus.Core.Identity;
+using HintChorus.Core.Interception;
+using HintChorus.Core.Interfaces;
+using HintChorus.Core.Models;
+using HintChorus.Core.ServerSpecific;
+using HintChorus.Core.Surfaces;
+using HintChorus.Core.Transport;
 
-namespace HintIsolation.Core.Diagnostics;
+namespace HintChorus.Core.Diagnostics;
 
-public static class HintIsolationDiagnostics
+public static class HintChorusDiagnostics
 {
 	public static HintStatistics Capture()
 	{
@@ -45,7 +45,7 @@ public static class HintIsolationDiagnostics
 		UiInterception instance2 = UiInterception.Instance;
 		HintStatistics hintStatistics = Capture();
 		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.AppendLine("<color=#00B7EB>════════ HintIsolation 诊断报告 ════════</color>");
+		stringBuilder.AppendLine("<color=#00B7EB>════════ HintChorus 诊断报告 ════════</color>");
 		stringBuilder.AppendLine("<b>[合并渲染核心]</b>");
 		stringBuilder.AppendLine($"  运行中: {instance.IsRunning}   总开关: {instance.Enabled}");
 		stringBuilder.AppendLine($"  刷新轮次: {hintStatistics.RenderTicks}   下发次数: {hintStatistics.HintsSent}   跟踪玩家: {hintStatistics.TrackedPlayers}");

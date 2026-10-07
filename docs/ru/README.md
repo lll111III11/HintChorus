@@ -3,12 +3,12 @@
 
 ---
 
-# HintIsolation — слой изоляции интерфейса для SCP:SL
+# HintChorus — слой изоляции интерфейса для SCP:SL
 
 **Позволяет незнакомым друг с другом плагинам делить один экран, не меняя ни строчки кода.**
 
 > В игре есть ровно **один** канал подсказок, и побеждает тот, кто написал последним.
-> HintIsolation превращает этот единственный канал в **независимые слоты** — по одному на каждого
+> HintChorus превращает этот единственный канал в **независимые слоты** — по одному на каждого
 > вызывающего, — определяя вызывающего автоматически по стеку. Плагин, который просто вызывает
 > `SendHint` / `SendBroadcast`, работает как есть и перестаёт затирать остальных.
 
@@ -20,17 +20,17 @@
 
 | | |
 | --- | --- |
-| Прямая загрузка (имя файла содержит префикс `alpha-`) | [`alpha-HintIsolation.dll`](../../alpha-HintIsolation.dll) |
-| Страница релизов (рекомендуется) | [Releases](https://github.com/lll111III11/HintIsolation/releases/latest) |
+| Прямая загрузка (имя файла содержит префикс `alpha-`) | [`alpha-HintChorus.dll`](../../alpha-HintChorus.dll) |
+| Страница релизов (рекомендуется) | [Releases](https://github.com/lll111III11/HintChorus/releases/latest) |
 
-Префикс `alpha-` обозначает лишь этап разработки: **имя сборки остаётся `HintIsolation`**,
+Префикс `alpha-` обозначает лишь этап разработки: **имя сборки остаётся `HintChorus`**,
 поэтому переименование файла ничего не ломает.
 
 Установка:
 
-1. Положите `alpha-HintIsolation.dll` в `plugins/global/`
-2. Запустите сервер (при первом запуске появится `0HintIsolation.Bootstrap.dll` и потребуется один перезапуск — так задумано)
-3. При необходимости измените `configs/<порт>/HintIsolation/config.yml` (**ключи в snake_case**; см. [`docs/default-config.yml`](../default-config.yml))
+1. Положите `alpha-HintChorus.dll` в `plugins/global/`
+2. Запустите сервер (при первом запуске появится `0HintChorus.Bootstrap.dll` и потребуется один перезапуск — так задумано)
+3. При необходимости измените `configs/<порт>/HintChorus/config.yml` (**ключи в snake_case**; см. [`docs/default-config.yml`](../default-config.yml))
 
 ## Что делает плагин
 
@@ -91,7 +91,7 @@ offset_font_size: 20     # размер шрифта для измерения �
 ## Сборка
 
 ```bash
-dotnet build src/HintIsolation.csproj -c Release -p:ManagedDir="<ваш сервер>/SCPSL_Data/Managed"
+dotnet build src/HintChorus.csproj -c Release -p:ManagedDir="<ваш сервер>/SCPSL_Data/Managed"
 ```
 
 ## Лицензия

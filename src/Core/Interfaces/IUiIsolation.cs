@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Models;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Layout;
+using HintChorus.Core.Models;
 using UserSettings.ServerSpecific;
 
-namespace HintIsolation.Core.Interfaces;
+namespace HintChorus.Core.Interfaces;
 
 public interface IUiIsolation
 {
@@ -73,4 +74,18 @@ public interface IUiIsolation
 	UiScope CreateScope(string moduleId);
 
 	IReadOnlyList<IUiSlot> GetSlots(UiSurface? surface = null, string? pluginId = null);
+
+	/// <summary>
+	/// <b>给一个插件预设屏幕位置</b>(「自有写法」的编程通道)。
+	/// <para>插件无需在文本里写标记, 直接声明自己的落点即可。对已存在的信口立即生效,
+	/// 对之后才创建的信口在创建时自动套用 —— 因此可以在插件加载时先调用一次。</para>
+	/// </summary>
+	/// <param name="pluginId">插件标识(与归因得到的 PluginId 一致, 通常是程序集名)。</param>
+	/// <param name="anchor">九宫格锚点。</param>
+	/// <param name="offsetUnits">附加偏移(voffset 单位, <b>正 = 上移</b>; 参考: 整屏约 2140)。</param>
+	/// <returns>被立即改写的已存在信口数(之后新建的会另行套用)。</returns>
+	int SetHintPosition(string pluginId, HintAnchor anchor, float offsetUnits = 0f);
+
+	/// <summary>撤销一个插件的预设位置, 回到自动推断。</summary>
+	bool ClearHintPosition(string pluginId);
 }

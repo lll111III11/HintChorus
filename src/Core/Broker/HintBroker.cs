@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Interfaces;
-using HintIsolation.Core.Layout;
-using HintIsolation.Core.Models;
-using HintIsolation.Core.Transport;
-using HintIsolation.Core.Utilities;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Interfaces;
+using HintChorus.Core.Layout;
+using HintChorus.Core.Models;
+using HintChorus.Core.Transport;
+using HintChorus.Core.Utilities;
 using Hints;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
@@ -16,7 +16,7 @@ using MEC;
 using Mirror;
 using UnityEngine;
 
-namespace HintIsolation.Core.Broker;
+namespace HintChorus.Core.Broker;
 
 public sealed class HintBroker : IHintBroker
 {
@@ -193,7 +193,7 @@ public sealed class HintBroker : IHintBroker
 		default:
 			if (System.Threading.Interlocked.Increment(ref _layoutModeWarned) == 1)
 			{
-				Logger.Warn("[HintIsolation] layout_mode 取值无法识别, 已改用默认值 rows; 可选 rows / offsets / compact; 收到: " + value);
+				Logger.Warn("[HintChorus] layout_mode 取值无法识别, 已改用默认值 rows; 可选 rows / offsets / compact; 收到: " + value);
 			}
 			return LayoutMode.Rows;
 		}
@@ -216,6 +216,36 @@ public sealed class HintBroker : IHintBroker
 
 	/// <summary>常驻区最多预留几行空位(只限制"补空行"的数量, 有内容的行永远不丢)。</summary>
 	public int PersistentRowsMax { get; set; } = 8;
+
+	// ── 位置(功能区 ①②③: 兼容原有写法 / 自有写法 / 自动排版) ─────────────────────
+
+	/// <summary>
+	/// <b>兼容原有写法</b>(默认开): 插件文本里已自带位置标签
+	/// (<c>&lt;voffset&gt;</c> / <c>&lt;pos&gt;</c> / <c>&lt;align&gt;</c> / <c>&lt;line-height&gt;</c> 等)时,
+	/// 判定为「插件自己摆了位」—— 原样放行, 本底层<b>不</b>再加 voffset、不重排。
+	/// <para>关掉则一律并入底部自然堆叠(与旧行为一致)。</para>
+	/// </summary>
+	public bool HonorPluginPositionSyntax { get; set; } = true;
+
+	/// <summary>
+	/// <b>自动排版</b>(默认开): 未显式声明位置、也没有自带位置标签的插件,
+	/// 按<b>插件名</b>查「已收录表」与「功能区关键词」推断落点
+	/// (例: <c>exp</c> / <c>level</c> / <c>rank</c> → 屏幕中部、再往下 90)。
+	/// <para>关掉则一律留在默认底部区。</para>
+	/// </summary>
+	public bool AutoLayoutByPluginName { get; set; } = true;
+
+	/// <summary>
+	/// <b>自有写法标记</b>(默认开): 识别并从文本里剥离 <c>{{hc:pos=...}}</c> 标记。
+	/// 关掉时标记会原样显示(仅用于排障对照)。
+	/// </summary>
+	public bool EnablePositionMarkers { get; set; } = true;
+
+	/// <summary>
+	/// <b>屏幕高度</b>(voffset 单位; 参考: 整屏约 2140)。
+	/// <para>决定"中部 / 顶部"锚点换算成多大的 voffset; 不同分辨率与宽高比下可微调。</para>
+	/// </summary>
+	public float ScreenHeightUnits { get; set; } = 2140f;
 
 	public int TrackedPlayers
 	{
@@ -277,7 +307,7 @@ public sealed class HintBroker : IHintBroker
 			_leeway = Mathf.Max(0f, resendLeeway);
 		}
 		_loop = Timing.RunCoroutine(LoopRoutine(), (Segment)0);
-		StartupLog.Info($"[HintIsolation] 合并渲染核心已启动 (刷新间隔 {_refresh}s)");
+		StartupLog.Info($"[HintChorus] 合并渲染核心已启动 (刷新间隔 {_refresh}s)");
 	}
 
 	public void Stop()
@@ -304,7 +334,7 @@ public sealed class HintBroker : IHintBroker
 			_channelRevision = 0L;
 			_slotRevision = -1L;
 		}
-		StartupLog.Info("[HintIsolation] 合并渲染核心已停止");
+		StartupLog.Info("[HintChorus] 合并渲染核心已停止");
 	}
 
 	public void ReSort()
@@ -380,14 +410,14 @@ public sealed class HintBroker : IHintBroker
 		{
 			if (_channels.ContainsKey(channel.ModuleId) || _sources.ContainsKey(channel.ModuleId))
 			{
-				Logger.Warn((object)("[HintIsolation] 通道 '" + channel.ModuleId + "' 已存在, 拒绝重复注册(绝不抢占)"));
+				Logger.Warn((object)("[HintChorus] 通道 '" + channel.ModuleId + "' 已存在, 拒绝重复注册(绝不抢占)"));
 				return false;
 			}
 			_channels.Add(channel.ModuleId, channel);
 			_channelRevision++;
 		}
 		MarkDirty();
-		StartupLog.Info("[HintIsolation] 通道 '" + channel.ModuleId + "' 已独立注册");
+		StartupLog.Info("[HintChorus] 通道 '" + channel.ModuleId + "' 已独立注册");
 		return true;
 	}
 
@@ -412,7 +442,7 @@ public sealed class HintBroker : IHintBroker
 			_channelRevision++;
 		}
 		MarkDirty();
-		StartupLog.Info("[HintIsolation] 通道 '" + moduleId + "' 已卸载");
+		StartupLog.Info("[HintChorus] 通道 '" + moduleId + "' 已卸载");
 		return true;
 	}
 
@@ -434,14 +464,14 @@ public sealed class HintBroker : IHintBroker
 		{
 			if (_channels.ContainsKey(source.ModuleId) || _sources.ContainsKey(source.ModuleId))
 			{
-				Logger.Warn((object)("[HintIsolation] 文本源 '" + source.ModuleId + "' 已存在, 拒绝重复注册(绝不抢占)"));
+				Logger.Warn((object)("[HintChorus] 文本源 '" + source.ModuleId + "' 已存在, 拒绝重复注册(绝不抢占)"));
 				return false;
 			}
 			_sources.Add(source.ModuleId, source);
 			_channelRevision++;
 		}
 		MarkDirty();
-		StartupLog.Info("[HintIsolation] 文本源 '" + source.ModuleId + "' 已独立注册");
+		StartupLog.Info("[HintChorus] 文本源 '" + source.ModuleId + "' 已独立注册");
 		return true;
 	}
 
@@ -456,7 +486,7 @@ public sealed class HintBroker : IHintBroker
 			_channelRevision++;
 		}
 		MarkDirty();
-		StartupLog.Info("[HintIsolation] 文本源 '" + moduleId + "' 已卸载");
+		StartupLog.Info("[HintChorus] 文本源 '" + moduleId + "' 已卸载");
 		return true;
 	}
 
@@ -589,7 +619,7 @@ public sealed class HintBroker : IHintBroker
 				}
 				catch (Exception ex)
 				{
-					Logger.Error((object)("[HintIsolation] 单个玩家渲染异常(已隔离, 不影响其它玩家): " + ex));
+					Logger.Error((object)("[HintChorus] 单个玩家渲染异常(已隔离, 不影响其它玩家): " + ex));
 				}
 			}
 		}
@@ -603,7 +633,7 @@ public sealed class HintBroker : IHintBroker
 		}
 		catch (Exception arg)
 		{
-			Logger.Error((object)$"[HintIsolation] 刷新步骤 {name} 异常(已跳过本轮该步): {arg}");
+			Logger.Error((object)$"[HintChorus] 刷新步骤 {name} 异常(已跳过本轮该步): {arg}");
 		}
 	}
 
@@ -680,7 +710,7 @@ public sealed class HintBroker : IHintBroker
 			}
 			if (DebugLog)
 			{
-				Logger.Debug((object)string.Format("[HintIsolation→#{0}] {1}", ((NetworkBehaviour)hub).netId, composite.Replace("\n", " | ")), true);
+				Logger.Debug((object)string.Format("[HintChorus→#{0}] {1}", ((NetworkBehaviour)hub).netId, composite.Replace("\n", " | ")), true);
 			}
 		}
 		ShowMerged(hub, composite, duration);
@@ -777,6 +807,9 @@ public sealed class HintBroker : IHintBroker
 		public int Units;
 
 		public readonly List<string> Lines = new List<string>();
+
+		/// <summary>该归属解析出的屏幕位置(默认 = 底部中央自然堆叠)。</summary>
+		public HintPosition Position = HintPosition.Default;
 	}
 
 	/// <summary>
@@ -884,7 +917,7 @@ public sealed class HintBroker : IHintBroker
 				}
 				catch (Exception arg)
 				{
-					Logger.Error($"[HintIsolation] 文本源 '{source.ModuleId}' 抛异常(已隔离): {arg}");
+					Logger.Error($"[HintChorus] 文本源 '{source.ModuleId}' 抛异常(已隔离): {arg}");
 					break;
 				}
 				AddLine(bucket, HintFormat.Line(source.DisplayName, showLabel: true, text, HintAlignment.Left), 2f);
@@ -909,11 +942,20 @@ public sealed class HintBroker : IHintBroker
 				{
 					break;
 				}
+
+				// 位置解析: 自有标记 → 自带标签 → 名称目录 → 默认; 并据此决定水平对齐。
+				// (解析只在本帧发生一次, 且 Catalog 命中即返回, 不构成热路径负担。)
+				HintPosition position = ResolveSlotPosition(slot, scratch);
+				bucket.Position = position;
+				slot.ResolvedPosition = position;
+				HintAlignment alignment = position.IsDefault ? HintAlignment.Left : HintPosition.AlignOf(position.Anchor);
+
 				if (slot.Origin == HintOrigin.Native)
 				{
 					// 原生提示是"会来会去"的, 归入易变区(否则一条弹药上限提示就会把常驻区顶得上下跳)
-					foreach (string line in scratch)
+					foreach (string raw in scratch)
 					{
+						string line = NormalizeLine(raw);
 						if (!string.IsNullOrEmpty(line))
 						{
 							anyContent = true;
@@ -926,11 +968,12 @@ public sealed class HintBroker : IHintBroker
 					}
 					break;
 				}
-				foreach (string line in scratch)
+				foreach (string raw in scratch)
 				{
+					string line = NormalizeLine(raw);
 					if (!string.IsNullOrEmpty(line))
 					{
-						AddLine(bucket, HintFormat.Line(slot.DisplayName, slot.ShowLabel, line, HintAlignment.Left), remaining);
+						AddLine(bucket, HintFormat.Line(slot.DisplayName, slot.ShowLabel, line, alignment), remaining);
 					}
 				}
 				break;
@@ -955,27 +998,21 @@ public sealed class HintBroker : IHintBroker
 			anyContent = true;
 		}
 		// ── 装配最终行列表(行装配是纯函数, 可离线验证"块高恒定") ──
-		List<int> ownerUnits = new List<int>(owners.Count);
-		List<List<string>> ownerLines = new List<List<string>>(owners.Count);
-		foreach (OwnerBucket bucket in owners)
-		{
-			ownerUnits.Add(bucket.Units);
-			ownerLines.Add(bucket.Lines);
-		}
-
-		// 紧凑模式才是"什么都不补"。
-		// rows 与 offsets 都需要完整槽位空间: rows 用空行把位置顶住;
-		// offsets 靠槽位算目标位置、再让 ComposeOffsetBlock 把空槽位<b>跳过不写入文本</b> ——
-		// 所以它一样不占屏, 但每个在线 UI 的落点仍是固定的。
+		// 位置分区: 底部档必须最后输出(提示块底部锚定 —— 只有最后的行才贴着屏幕底),
+		// 其余档位先输出, 靠行级 <voffset> 被"拉"到各自的绝对位置。
 		bool padRows = (Layout != LayoutMode.Compact);
-		List<LayoutRow> rows = BuildRows(padRows, VolatileRows, RowsPerPlugin, PersistentRowsMax,
-			nativeLines, ownerUnits, ownerLines, transientLines, out anyContent);
+		List<LayoutRow> rows = BuildRowsByPosition(owners, nativeLines, transientLines, padRows, out bool groupAny);
+		anyContent |= groupAny;
 		if (!anyContent)
 		{
 			return false;
 		}
 
-		if (Layout == LayoutMode.Offsets)
+		if (HasPositionedRows(rows))
+		{
+			composite = ComposePositionedBlock(rows, ScreenHeightUnits, OffsetRowHeight, OffsetSign, MeasureVisualRows);
+		}
+		else if (Layout == LayoutMode.Offsets)
 		{
 			composite = ComposeOffsetBlock(rows, OffsetRowHeight, OffsetSign, MeasureVisualRows);
 		}
@@ -990,6 +1027,288 @@ public sealed class HintBroker : IHintBroker
 		}
 		duration = ((minRemaining == float.MaxValue) ? 2f : Mathf.Max(minRemaining, 2.5f));
 		return true;
+	}
+
+	/// <summary>空调色板: <see cref="BuildRows"/> 在无易变区时用它占位(不会被修改)。</summary>
+	private static readonly List<string> EmptyLines = new List<string>();
+
+	/// <summary>
+	/// <b>解析一个信口的屏幕位置</b>。优先级(高 → 低):
+	/// <list type="number">
+	///   <item><b>显式</b>: C# API 写入的 <see cref="UiSlot.ExplicitPosition"/>;</item>
+	///   <item><b>自有写法标记</b>: 文本里的 <c>{{hc:pos=...}}</c>(<see cref="EnablePositionMarkers"/>);</item>
+	///   <item><b>兼容原有写法</b>: 插件自带位置标签 → <see cref="HintPosition.SelfPositioned"/> 原样放行
+	///     (<see cref="HonorPluginPositionSyntax"/>);</item>
+	///   <item><b>自动排版</b>: 按插件名查目录(<see cref="AutoLayoutByPluginName"/>);</item>
+	///   <item><b>默认</b>: 底部中央自然堆叠。</item>
+	/// </list>
+	/// </summary>
+	private HintPosition ResolveSlotPosition(UiSlot slot, List<string> lines)
+	{
+		if (slot.ExplicitPosition.HasValue)
+		{
+			return slot.ExplicitPosition.Value;
+		}
+
+		if (EnablePositionMarkers)
+		{
+			HintPosition? marked = null;
+			for (int i = 0; i < lines.Count; i++)
+			{
+				string line = lines[i];
+				if (!string.IsNullOrEmpty(line) && PositionSyntax.HasMarker(line))
+				{
+					PositionSyntax.StripMarkers(line, out HintPosition? parsed);
+					if (parsed.HasValue)
+					{
+						marked = parsed;
+					}
+				}
+			}
+			if (marked.HasValue)
+			{
+				return marked.Value;
+			}
+		}
+
+		if (HonorPluginPositionSyntax)
+		{
+			for (int i = 0; i < lines.Count; i++)
+			{
+				if (PositionSyntax.HasForeignPositionTags(lines[i]))
+				{
+					// 插件已经自己摆好位 → 原样放行, 本底层绝不叠加 voffset
+					return HintPosition.SelfPositioned;
+				}
+			}
+		}
+
+		if (AutoLayoutByPluginName
+			&& PluginPositionCatalog.TryResolve(slot.PluginId, slot.DisplayName, out HintPosition inferred))
+		{
+			return inferred;
+		}
+
+		return HintPosition.Default;
+	}
+
+	/// <summary>剥掉自有写法标记(可在配置里关闭, 便于排障时看到标记本身)。</summary>
+	private string NormalizeLine(string? raw)
+	{
+		if (string.IsNullOrEmpty(raw))
+		{
+			return raw ?? string.Empty;
+		}
+		return EnablePositionMarkers ? PositionSyntax.StripMarkers(raw, out _) : raw;
+	}
+
+	/// <summary>
+	/// <b>按位置分区装配行</b>。
+	/// <para>先输出 中 / 顶 区(各区独立换算绝对位置), 最后输出<b>底部区</b>
+	/// (易变区 + 所有底部锚定与自定位归属)。底部区排在末尾, 其自然堆叠与旧版逐一对应 ——
+	/// 因此"全部默认位置"时输出与旧版<b>完全一致</b>。</para>
+	/// </summary>
+	private List<LayoutRow> BuildRowsByPosition(
+		List<OwnerBucket> owners, List<string> nativeLines, List<string> transientLines,
+		bool padRows, out bool anyContent)
+	{
+		anyContent = false;
+		List<LayoutRow> rows = new List<LayoutRow>();
+
+		List<OwnerBucket> bottomOwners = new List<OwnerBucket>();
+		Dictionary<HintPosition, List<OwnerBucket>> regions = new Dictionary<HintPosition, List<OwnerBucket>>();
+
+		foreach (OwnerBucket bucket in owners)
+		{
+			HintPosition position = bucket.Position;
+			if (position.IsBottomAnchored || position.IsSelfPositioned)
+			{
+				bottomOwners.Add(bucket);
+				continue;
+			}
+
+			if (!regions.TryGetValue(position, out List<OwnerBucket> list))
+			{
+				list = new List<OwnerBucket>();
+				regions[position] = list;
+			}
+			list.Add(bucket);
+		}
+
+		if (regions.Count > 0)
+		{
+			List<KeyValuePair<HintPosition, List<OwnerBucket>>> ordered =
+				new List<KeyValuePair<HintPosition, List<OwnerBucket>>>(regions);
+			ordered.Sort(static (KeyValuePair<HintPosition, List<OwnerBucket>> x, KeyValuePair<HintPosition, List<OwnerBucket>> y) =>
+			{
+				int compare = x.Key.Tier.CompareTo(y.Key.Tier);
+				if (compare != 0)
+				{
+					return compare;
+				}
+				compare = x.Key.Anchor.CompareTo(y.Key.Anchor);
+				return (compare != 0) ? compare : x.Key.OffsetUnits.CompareTo(y.Key.OffsetUnits);
+			});
+
+			foreach (KeyValuePair<HintPosition, List<OwnerBucket>> pair in ordered)
+			{
+				AppendGroupRows(rows, pair.Value, pair.Key, padRows, null, null, ref anyContent);
+			}
+		}
+
+		if (bottomOwners.Count > 0 || nativeLines.Count > 0 || transientLines.Count > 0)
+		{
+			AppendGroupRows(rows, bottomOwners, HintPosition.Default, padRows, nativeLines, transientLines, ref anyContent);
+		}
+
+		return rows;
+	}
+
+	/// <summary>把一个"区"编译成若干 <see cref="LayoutRow"/>(复用既有行装配, 保证不变量不变)。</summary>
+	private void AppendGroupRows(
+		List<LayoutRow> rows, List<OwnerBucket> group, HintPosition position, bool padRows,
+		List<string>? nativeLines, List<string>? transientLines, ref bool anyContent)
+	{
+		List<int> units = new List<int>(group.Count);
+		List<List<string>> lines = new List<List<string>>(group.Count);
+		foreach (OwnerBucket bucket in group)
+		{
+			units.Add(bucket.Units);
+			lines.Add(bucket.Lines);
+		}
+
+		List<LayoutRow> part = BuildRows(
+			padRows,
+			(nativeLines is null) ? 0 : VolatileRows,
+			RowsPerPlugin,
+			PersistentRowsMax,
+			nativeLines ?? EmptyLines,
+			units,
+			lines,
+			transientLines ?? EmptyLines,
+			out bool partAny);
+
+		anyContent |= partAny;
+		foreach (LayoutRow row in part)
+		{
+			row.Position = position;
+			rows.Add(row);
+		}
+	}
+
+	/// <summary>是否存在"非默认位置"的行 —— 决定走分区定位合成还是沿用旧合成路径。</summary>
+	internal static bool HasPositionedRows(List<LayoutRow> rows)
+	{
+		for (int i = 0; i < rows.Count; i++)
+		{
+			if (!rows[i].Position.IsDefault)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// <b>分区定位合成</b> —— 每个位置区各自摆到绝对位置, 逐行给 <c>&lt;voffset&gt;</c> 修正。
+	///
+	/// <para>目标位置(距屏幕底): 底档 = 0(自然堆叠); 中档 = 区垂直居中于 屏高/2;
+	/// 顶档 = 区顶贴屏高。再叠加该区的 <c>OffsetUnits</c>(正 = 上移)。</para>
+	///
+	/// <para>最后减去该行的"自然距底"(它下面所有行的高度和)即为所需 voffset ——
+	/// 因为提示块是底部锚定的, 自然堆叠下每行都有确定的初始位置。</para>
+	/// </summary>
+	internal static string ComposePositionedBlock(
+		List<LayoutRow> rows, float screenHeight, float rowHeight, float sign, Func<string, int> measureRows)
+	{
+		if (rows == null || rows.Count == 0)
+		{
+			return string.Empty;
+		}
+
+		int count = rows.Count;
+		float unit = ((rowHeight > 0f) ? rowHeight : 30f);
+		float screen = ((screenHeight > 0f) ? screenHeight : 2140f);
+
+		float[] natural = new float[count];
+		float[] heights = new float[count];
+		float accumulated = 0f;
+		for (int i = count - 1; i >= 0; i--)
+		{
+			int visual = 0;
+			if (rows[i].Text.Length > 0)
+			{
+				visual = ((measureRows == null) ? 1 : Math.Max(1, measureRows(rows[i].Text)));
+			}
+			heights[i] = visual * unit;
+			natural[i] = accumulated;
+			accumulated += heights[i];
+		}
+
+		Dictionary<HintPosition, List<int>> regions = new Dictionary<HintPosition, List<int>>();
+		List<HintPosition> order = new List<HintPosition>();
+		for (int i = 0; i < count; i++)
+		{
+			HintPosition position = rows[i].Position;
+			if (!regions.TryGetValue(position, out List<int> list))
+			{
+				list = new List<int>();
+				regions[position] = list;
+				order.Add(position);
+			}
+			list.Add(i);
+		}
+
+		List<string> outLines = new List<string>(count);
+		foreach (HintPosition position in order)
+		{
+			List<int> members = regions[position];
+			float regionHeight = 0f;
+			foreach (int index in members)
+			{
+				regionHeight += heights[index];
+			}
+
+			float basePosition = position.Tier switch
+			{
+				1 => (screen * 0.5f) - (regionHeight * 0.5f),
+				2 => screen - regionHeight,
+				_ => 0f,
+			};
+			basePosition += position.OffsetUnits;
+
+			// 区内"距区底"的高度(只算有内容的行)
+			float[] within = new float[members.Count];
+			float running = 0f;
+			for (int k = members.Count - 1; k >= 0; k--)
+			{
+				within[k] = running;
+				running += heights[members[k]];
+			}
+
+			for (int k = 0; k < members.Count; k++)
+			{
+				int index = members[k];
+				if (rows[index].Text.Length == 0)
+				{
+					continue;
+				}
+
+				float desired = basePosition + within[k];
+				float delta = desired - natural[index];
+				if (Math.Abs(delta) < 0.5f)
+				{
+					outLines.Add(rows[index].Text);
+				}
+				else
+				{
+					float voffset = delta * ((sign < 0f) ? -1f : 1f);
+					outLines.Add("<voffset=" + voffset.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + ">" + rows[index].Text);
+				}
+			}
+		}
+
+		return HintFormat.JoinLines(outLines);
 	}
 
 	/// <summary>提示区可用宽度(与 RueI 用的显示区同一量级: 参考屏 1200 × 1080)。</summary>
@@ -1033,6 +1352,9 @@ public sealed class HintBroker : IHintBroker
 	{
 		public int Slot;
 		public string Text = string.Empty;
+
+		/// <summary>该行的屏幕位置(默认 = 底部中央自然堆叠)。</summary>
+		public HintPosition Position = HintPosition.Default;
 	}
 
 	/// <summary>
@@ -1284,7 +1606,7 @@ public sealed class HintBroker : IHintBroker
 		}
 		catch (Exception arg)
 		{
-			Logger.Error((object)$"[HintIsolation] 通道 '{moduleId}' 的接收过滤抛异常(已隔离): {arg}");
+			Logger.Error((object)$"[HintChorus] 通道 '{moduleId}' 的接收过滤抛异常(已隔离): {arg}");
 			return false;
 		}
 	}
@@ -1307,7 +1629,7 @@ public sealed class HintBroker : IHintBroker
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintIsolation] Hint 刷新异常: " + ex));
+				Logger.Error((object)("[HintChorus] Hint 刷新异常: " + ex));
 			}
 		}
 	}

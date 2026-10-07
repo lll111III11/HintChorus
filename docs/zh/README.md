@@ -4,15 +4,15 @@
 > 本页是完整的中文技术文档（含 API 写法大全）。仓库入口见 [根目录 README](../../README.md)。
 
 ---
-# HintIsolation —— SCP:SL 动态 UI 隔离底层（LabAPI）
+# HintChorus —— SCP:SL 动态 UI 隔离底层（LabAPI）
 
 | 位置 | 路径 |
 | --- | --- |
-| 源码（桌面） | `<HintIsolation>` + `<HintIsolation.Bootstrap>` |
-| 源码（工作区） | `...\work-mode-projects\<项目>\HintIsolation` + `HintIsolation.Bootstrap` |
-| 部署 | `<AppData>\SCP Secret Laboratory\LabAPI\plugins\global\HintIsolation.dll` |
-| UiId 明细 | `...\LabAPI\configs\<端口>\HintIsolation\uiids.yml` |
-| 引导器状态 | `...\LabAPI\configs\<端口>\HintIsolation\bootstrap.state` |
+| 源码（桌面） | `<HintChorus>` + `<HintChorus.Bootstrap>` |
+| 源码（工作区） | `...\work-mode-projects\<项目>\HintChorus` + `HintChorus.Bootstrap` |
+| 部署 | `<AppData>\SCP Secret Laboratory\LabAPI\plugins\global\HintChorus.dll` |
+| UiId 明细 | `...\LabAPI\configs\<端口>\HintChorus\uiids.yml` |
+| 引导器状态 | `...\LabAPI\configs\<端口>\HintChorus\bootstrap.state` |
 
 > `plugins\global\` 对 7400 / 7777 等**所有端口**生效，一次部署全端口覆盖。
 
@@ -34,7 +34,7 @@
 ```
 
 ```
-UiId = UUIDv5( "HintIsolation.UiId/v1" | UI表面 | 程序集 | 注册点 | [IL偏移] )
+UiId = UUIDv5( "HintChorus.UiId/v1" | UI表面 | 程序集 | 注册点 | [IL偏移] )
 ```
 
 - **确定性**：同一份 DLL 服务器重启后重新注册，得到**完全相同的 UUID**（可持久化、可人工固定）。
@@ -56,7 +56,7 @@ UiId = UUIDv5( "HintIsolation.UiId/v1" | UI表面 | 程序集 | 注册点 | [IL�
 
 | 步骤 | 实现 |
 | --- | --- |
-| **1. 优先加载** | 主 DLL 内**嵌套**引导器 DLL（嵌入资源），首次加载释放为 `plugins\global\`<br>`0HintIsolation.Bootstrap.dll` —— **文件名以 0 开头** |
+| **1. 优先加载** | 主 DLL 内**嵌套**引导器 DLL（嵌入资源），首次加载释放为 `plugins\global\`<br>`0HintChorus.Bootstrap.dll` —— **文件名以 0 开头** |
 | **2. 提示与改写** | 引导器首次运行弹大号控制台横幅（正文：<br>「请重启服务器, 以便让底层启动」），参数 `Prompted` 由 **0 改写为 1**（此后不再提醒） |
 | **3. 驱动辅助** | 下次重启后，引导器以 `0` 前缀 + `LoadPriority.Highest` **最先 Enable**，反射调用主 DLL 抢先安装入口 |
 
@@ -220,9 +220,9 @@ Harmony.Unpatch(typeof(HintDisplay).GetMethod("Show"), HarmonyPatchType.All, "*"
 ## 四、分层架构
 
 ```
-HintIsolation/                      主工程
+HintChorus/                      主工程
 ├── UiIsolation.cs                  统一门面(静态 + Service 单例)
-├── HintIsolationPlugin.cs          纯生命周期(Highest 优先级)
+├── HintChorusPlugin.cs          纯生命周期(Highest 优先级)
 └── Core/
     ├── Identity/    UiId / UiIdRegistry / UiIdRecord / UiIdCatalog
     ├── Enums/       UiSurface / UiIdGranularity / HintChannelPriority /
@@ -239,17 +239,17 @@ HintIsolation/                      主工程
     ├── Bootstrap/   BootstrapBridge / BootstrapInstaller / BootstrapConfigurator
     ├── ServerSpecific/ SssRegistry(端口隔离 + 防劫持 + 强力复写)
     ├── Utilities/   SafeEvents / HintFormat
-    └── Diagnostics/ HintIsolationDiagnostics
+    └── Diagnostics/ HintChorusDiagnostics
 
-HintIsolation.Bootstrap/            0 前缀引导器工程(被主工程嵌入并释放)
+HintChorus.Bootstrap/            0 前缀引导器工程(被主工程嵌入并释放)
 ```
 
 ---
 
-## 五、配置（`configs\<端口>\HintIsolation\config.yml`）
+## 五、配置（`configs\<端口>\HintChorus\config.yml`）
 
 > **键名是 snake_case，不是 PascalCase。** 插件用 YamlDotNet 的 UnderscoredNamingConvention，
-> 所以 `EnableHintIsolation` 这种写法会被当成"未知键"静默忽略。完整 61 项见同目录
+> 所以 `EnableHintChorus` 这种写法会被当成"未知键"静默忽略。完整 66 项见同目录
 > **`参考_默认config.yml`**（由编译产物实际序列化得到，键名与默认值可直接信赖）。
 
 ```yaml
@@ -323,7 +323,7 @@ protect_sss_from_overwrites: true  # 3 秒轮询守卫
 ---
 ## 六、完整 API 写法大全
 
-统一入口：`using HintIsolation;`（契约在 `using HintIsolation.Core.Interfaces;`）
+统一入口：`using HintChorus;`（契约在 `using HintChorus.Core.Interfaces;`）
 
 ### 6.1 拦截层控制
 
@@ -526,8 +526,8 @@ UiSurfaceRegistry.Pending;       // 未接管的盲区
 ```csharp
 UiIsolation.CreateDiagnosticsReport();   // 多行富文本完整报告
 UiIsolation.CaptureStatistics();         // HintStatistics 快照
-HintIsolationDiagnostics.CreateUiIdReport();     // 只要 UiId 明细
-HintIsolationDiagnostics.CreateSurfaceReport();  // 只要表面覆盖
+HintChorusDiagnostics.CreateUiIdReport();     // 只要 UiId 明细
+HintChorusDiagnostics.CreateSurfaceReport();  // 只要表面覆盖
 ```
 
 ### 6.12 接口单例（依赖注入风格）
@@ -566,7 +566,7 @@ AutoAttributeThirdPartyUi: true
 所以即使某个插件把对应的包装组件禁用 / 替换了，这条路径依旧能上屏。
 
 ```csharp
-using HintIsolation;
+using HintChorus;
 
 // 提示条：绕开 HintDisplay 组件（仍尊重游戏的抑制表）
 UiIsolation.SendHintDirect(hub, "文本", 3f);

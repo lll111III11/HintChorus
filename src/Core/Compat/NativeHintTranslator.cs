@@ -7,7 +7,7 @@ using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace HintIsolation.Core.Compat;
+namespace HintChorus.Core.Compat;
 
 /// <summary>
 /// <b>原生提示翻译器(多语言)</b> —— 把游戏自己的 <c>TranslationHint</c> 在服务端翻成纯文本,
@@ -21,7 +21,7 @@ namespace HintIsolation.Core.Compat;
 /// <para><b>语言覆盖策略:</b></para>
 /// <list type="bullet">
 ///   <item><b>内嵌 5 种联合国常用语</b>(DLL 自带, 永远可用): <c>en / zh / fr / ru / es</c>;</item>
-///   <item><b>外部语言目录</b>(可选, 其余语言都从这里来): <c>configs\&lt;端口&gt;\HintIsolation\translations\&lt;lang&gt;.txt</c>,
+///   <item><b>外部语言目录</b>(可选, 其余语言都从这里来): <c>configs\&lt;端口&gt;\HintChorus\translations\&lt;lang&gt;.txt</c>,
 ///     每行一条模板(行号 = 枚举下标 + 1, 忽略空行)。GitHub 仓库的
 ///     <c>docs/translations/</c> 下提供全部分支语言文件, 服主下载放进该目录即生效;</item>
 ///   <item><b>运行时自动兜底</b>: 加载游戏自带 <c>Translations\en\GameHints.txt</c> 作为英文的运行时刷新;
@@ -401,7 +401,7 @@ public static class NativeHintTranslator
     {
         try
         {
-            string folder = Path.Combine(HintIsolation.Core.Bootstrap.RuntimeHome.HomePath, TranslationsFolderName);
+            string folder = Path.Combine(HintChorus.Core.Bootstrap.RuntimeHome.HomePath, TranslationsFolderName);
             if (!Directory.Exists(folder))
             {
                 return;

@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using HintIsolation.Core.Bootstrap;
-using HintIsolation.Core.Broker;
-using HintIsolation.Core.Enums;
-using HintIsolation.Core.Interception;
-using HintIsolation.Core.ServerSpecific;
+using HintChorus.Core.Bootstrap;
+using HintChorus.Core.Broker;
+using HintChorus.Core.Enums;
+using HintChorus.Core.Interception;
+using HintChorus.Core.ServerSpecific;
 using LabApi.Features;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
@@ -13,14 +13,14 @@ using LabApi.Loader.Features.Plugins;
 using LabApi.Loader.Features.Plugins.Enums;
 using MEC;
 
-namespace HintIsolation;
+namespace HintChorus;
 
-public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfig>
+public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 {
 	public class PluginConfig
 	{
 		[Description("启用 Hint 合并渲染核心(唯一写者)")]
-		public bool EnableHintIsolation { get; set; } = true;
+		public bool EnableHintChorus { get; set; } = true;
 
 		[Description("合并刷新间隔(秒), 越小越及时、网络包越多")]
 		public float HintRefreshInterval { get; set; } = 0.75f;
@@ -57,6 +57,23 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 		[Description("常驻区最多补几行空位(只限制空行数量, 有内容的行永远不会丢)")]
 		public int PersistentRowsMax { get; set; } = 8;
 
+		// ── 位置(功能区 ①②③: 兼容原有写法 / 自有写法 / 自动排版) ─────────────────
+
+		[Description("兼容原有写法(默认开): 插件文本里已自带位置标签(<voffset>/<pos>/<align>/<line-height> 等)时, 判为'插件自己摆了位', 原样放行不重排; 关掉则一律并入底部自然堆叠")]
+		public bool HonorPluginPositionSyntax { get; set; } = true;
+
+		[Description("自动排版(默认开): 未声明位置的插件按名称查'已收录表 + 功能区关键词'推断落点(如 exp/level/rank -> 屏幕中部再往下 90); 关掉则一律留在默认底部区")]
+		public bool AutoLayoutByPluginName { get; set; } = true;
+
+		[Description("自有写法标记(默认开): 识别并剥离文本里的 {{hc:pos=top-right,offset=-90}} 标记; 关掉时标记会原样显示(仅排障)")]
+		public bool EnablePositionMarkers { get; set; } = true;
+
+		[Description("屏幕高度(voffset 单位; 参考 2140): 决定'中部/顶部'锚点换算成多大的 voffset, 不同分辨率与宽高比下可微调")]
+		public float ScreenHeightUnits { get; set; } = 2140f;
+
+		[Description("位置覆盖表(默认空): 插件关键词 -> 位置。值可写 'top-right' 或 'middle,offset=-90'(正=上移, 单位同 voffset); 命中优先于内置目录")]
+		public Dictionary<string, string> PositionOverrides { get; set; } = new Dictionary<string, string>();
+
 		[Description("安装拦截层: 把各 UI 通道按调用方自动分配独立 UiId 信口(默认关)")]
 		public bool InterceptThirdPartyUi { get; set; }
 
@@ -66,7 +83,7 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 		[Description("UiId 派生粒度: Assembly=每插件一份 | Type=每类 | Method=每方法(推荐) | CallSite=每调用点(最细)")]
 		public UiIdGranularity UiIdGranularity { get; set; } = UiIdGranularity.Method;
 
-		[Description("是否把 UiId 明细落盘到 configs/<端口>/HintIsolation/uiids.yml")]
+		[Description("是否把 UiId 明细落盘到 configs/<端口>/HintChorus/uiids.yml")]
 		public bool PersistUiIds { get; set; } = true;
 
 		[Description("游戏自身 UI 的处理: Isolate=也并入隔离信口(默认, 消除互相顶掉) | PassThrough=放行原生(会与合并结果交替, 表现为闪烁)")]
@@ -174,7 +191,7 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 		[Description("对讲机显示屏: 间隔内被反复改写时的回滚阈值(秒)。0 = 只观测不改写(默认); 大于 0 才会真的回滚")]
 		public float IntercomThrottleInterval { get; set; }
 
-		[Description("释放并启用 0 前缀抢先引导器(0HintIsolation.Bootstrap.dll): 让底层抢在其它插件前加载")]
+		[Description("释放并启用 0 前缀抢先引导器(0HintChorus.Bootstrap.dll): 让底层抢在其它插件前加载")]
 		public bool EnableBootstrapFirstLoader { get; set; } = true;
 
 		[Description("启用 SSS 端口隔离核心")]
@@ -191,7 +208,7 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 
 	private CoroutineHandle _maintenanceLoop;
 
-	public override string Name => "HintIsolation";
+	public override string Name => "HintChorus";
 
 	public override string Description => "动态 UI 隔离底层: 拦截并归因第三方 UI 调用, 按 UiId 分配独立信口, 支持多 UI 表面";
 
@@ -226,7 +243,7 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 			UiInterception.Instance.Install();
 		}
 		_maintenanceLoop = Timing.RunCoroutine(MaintenanceRoutine(), Segment.Update);
-		StartupLog.Info("[HintIsolation] Enable 完成 → 外部插件可经 UiIsolation / IUiIsolation 注册通道、文本源、SSS 端口");
+		StartupLog.Info("[HintChorus] Enable 完成 → 外部插件可经 UiIsolation / IUiIsolation 注册通道、文本源、SSS 端口");
 	}
 
 	private void ReleaseBootstrapIfNeeded()
@@ -235,14 +252,14 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 		{
 			if (BootstrapInstaller.EnsureReleased(out string detail))
 			{
-				Logger.Warn((object)("[HintIsolation] " + detail));
-				Logger.Warn((object)"[HintIsolation] ┌────────────────────────────────────────────────────┐");
-				Logger.Warn((object)"[HintIsolation] │  引导器已释放, 请重启服务器以便它抢占最先加载位  │");
-				Logger.Warn((object)"[HintIsolation] └────────────────────────────────────────────────────┘");
+				Logger.Warn((object)("[HintChorus] " + detail));
+				Logger.Warn((object)"[HintChorus] ┌────────────────────────────────────────────────────┐");
+				Logger.Warn((object)"[HintChorus] │  引导器已释放, 请重启服务器以便它抢占最先加载位  │");
+				Logger.Warn((object)"[HintChorus] └────────────────────────────────────────────────────┘");
 			}
 			else
 			{
-				StartupLog.Info("[HintIsolation] " + detail);
+				StartupLog.Info("[HintChorus] " + detail);
 			}
 		}
 	}
@@ -261,7 +278,7 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 		SssRegistry.Terminate();
 		UiSlotRegistry.Clear();
 		RuntimeHome.UninstallResolver();
-		StartupLog.Info("[HintIsolation] Disable 完成: 拦截层已卸载, 信口已释放, SSS 数组已还原");
+		StartupLog.Info("[HintChorus] Disable 完成: 拦截层已卸载, 信口已释放, SSS 数组已还原");
 	}
 
 	private static IEnumerator<float> GuardianRoutine()
@@ -275,7 +292,7 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintIsolation] SSS 守卫检查异常: " + ex));
+				Logger.Error((object)("[HintChorus] SSS 守卫检查异常: " + ex));
 			}
 		}
 	}
@@ -292,7 +309,7 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintIsolation] 维护循环异常: " + ex));
+				Logger.Error((object)("[HintChorus] 维护循环异常: " + ex));
 			}
 			int num = sinceGuard + 1;
 			sinceGuard = num;
@@ -310,7 +327,7 @@ public sealed class HintIsolationPlugin : Plugin<HintIsolationPlugin.PluginConfi
 			}
 			catch (Exception ex2)
 			{
-				Logger.Error((object)("[HintIsolation] 补丁自愈检查异常: " + ex2));
+				Logger.Error((object)("[HintChorus] 补丁自愈检查异常: " + ex2));
 			}
 		}
 	}

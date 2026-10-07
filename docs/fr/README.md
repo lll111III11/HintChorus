@@ -3,12 +3,12 @@
 
 ---
 
-# HintIsolation — couche d'isolation d'interface pour SCP:SL
+# HintChorus — couche d'isolation d'interface pour SCP:SL
 
 **Permet à des plugins qui ne se connaissent pas de partager le même écran sans qu'aucun n'ait à modifier son code.**
 
 > Le jeu n'expose qu'**un seul** canal d'indication (« hint »), et le dernier qui écrit gagne.
-> HintIsolation transforme ce canal unique en **emplacements indépendants**, un par appelant, attribués
+> HintChorus transforme ce canal unique en **emplacements indépendants**, un par appelant, attribués
 > automatiquement depuis la pile d'appels — un plugin qui appelle simplement `SendHint` / `SendBroadcast`
 > fonctionne tel quel et cesse d'écraser les autres.
 
@@ -20,17 +20,17 @@
 
 | | |
 | --- | --- |
-| Téléchargement direct (le fichier porte le préfixe `alpha-`) | [`alpha-HintIsolation.dll`](../../alpha-HintIsolation.dll) |
-| Page des versions (recommandé) | [Releases](https://github.com/lll111III11/HintIsolation/releases/latest) |
+| Téléchargement direct (le fichier porte le préfixe `alpha-`) | [`alpha-HintChorus.dll`](../../alpha-HintChorus.dll) |
+| Page des versions (recommandé) | [Releases](https://github.com/lll111III11/HintChorus/releases/latest) |
 
-Le préfixe `alpha-` n'indique que le stade de développement : le **nom d'assembly reste `HintIsolation`**,
+Le préfixe `alpha-` n'indique que le stade de développement : le **nom d'assembly reste `HintChorus`**,
 renommer le fichier ne change donc rien au chargement.
 
 Installation :
 
-1. Placez `alpha-HintIsolation.dll` dans `plugins/global/`
-2. Démarrez le serveur (le premier lancement écrit `0HintIsolation.Bootstrap.dll` et demande un redémarrage — c'est voulu)
-3. Modifiez si besoin `configs/<port>/HintIsolation/config.yml` (**les clés sont en snake_case** ; voir [`docs/default-config.yml`](../default-config.yml))
+1. Placez `alpha-HintChorus.dll` dans `plugins/global/`
+2. Démarrez le serveur (le premier lancement écrit `0HintChorus.Bootstrap.dll` et demande un redémarrage — c'est voulu)
+3. Modifiez si besoin `configs/<port>/HintChorus/config.yml` (**les clés sont en snake_case** ; voir [`docs/default-config.yml`](../default-config.yml))
 
 ## Ce que fait le plugin
 
@@ -91,7 +91,7 @@ offset_font_size: 20     # taille utilisée pour mesurer la largeur du texte
 ## Compilation
 
 ```bash
-dotnet build src/HintIsolation.csproj -c Release -p:ManagedDir="<votre serveur>/SCPSL_Data/Managed"
+dotnet build src/HintChorus.csproj -c Release -p:ManagedDir="<votre serveur>/SCPSL_Data/Managed"
 ```
 
 ## Licence
