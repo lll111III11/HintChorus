@@ -58,6 +58,16 @@
 - **新增规范文档 [`docs/position-spec.zh.txt`](docs/position-spec.zh.txt)**：
   语法表、别名表、示例、解析优先级、配置项、与 RueI / HSM 的对应关系、常见问题。
 
+### 文档 UN-5 语言适配
+
+- **位置写法规范 v1 一次出齐 5 份（UN-5 语言）**：`docs/position-spec.{zh,en,fr,ru,es}.txt`
+  —— 语法表、两个通道、示例、解析优先级、配置项、生态对应、FAQ。
+- 各语言 README 增补「位置」章节，并链到**对应语言**的规范：
+  `docs/en` / `docs/fr` / `docs/ru` / `docs/es`（中文主 README 已有）。
+- [`docs/languages.md`](docs/languages.md) 增加「位置写法规范」索引（5 语言）。
+- **修复**：`docs/es/README.md` 自加入仓库起一直是 **0 字节**（当初目录嵌套失误，内容落在了
+  `docs/es/es/`）。本次补全西班牙语 README。
+
 ### 实现要点
 
 - 新增 `HintPosition`（九宫格锚点 + 偏移 + 自定位标记）、`PositionSyntax`（标记与外来标签解析）、

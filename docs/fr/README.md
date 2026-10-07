@@ -64,6 +64,23 @@ offset_sign: 1           # mettez -1 si le bloc part dans le mauvais sens
 offset_font_size: 20     # taille utilisée pour mesurer la largeur du texte
 ```
 
+## Positions : trois syntaxes en une
+
+Le jeu ne donne qu'un canal d'indication ; « position » finit donc par être un `<voffset>` par ligne.
+HintChorus unifie les sources sur une **grille d'ancrage 3×3** plus une **échelle verticale 0–1000** :
+
+| Source | Comment l'écrire | Interrupteur |
+| --- | --- | --- |
+| **① Compatibilité avec l'existant** | le texte porte déjà `<voffset>` / `<pos>` / `<align>` / `<line-height>` / `<indent>` / `<margin>` → **laissé tel quel** (ni réordonné, ni réaligné) | `honor_plugin_position_syntax` |
+| **② Syntaxe propre · marqueur** | `{{hc:top-right}}` ou `{{hc:pos=750,align=left,offset=-90}}` — retiré du texte, le joueur ne le voit jamais | `enable_position_markers` |
+| **③ Syntaxe propre · API C#** | `UiIsolation.SetHintPosition("MyPlugin", "pos=750,align=left")` — **la même grammaire** que le marqueur | — |
+| **④ Placement automatique** | si rien de tout cela, d'après le nom — `exp` / `level` / `经验` → milieu puis 90 plus bas ; `score` / `排行` → haut-droite ; `kill` / `击杀` → haut-gauche ; `timer` → haut-centre ; `music` → bas-droite | `auto_layout_by_plugin_name` |
+
+**Priorité de résolution** : API explicite → marqueur → balises du plugin → table / nom → défaut (bas-centre, empilement naturel).
+
+> **Spécification complète de la syntaxe propre** (trois dimensions, grammaire, alias, exemples, FAQ) :
+> [`docs/position-spec.fr.txt`](../position-spec.fr.txt).
+
 ## Compatibilité
 
 - Les deux styles d'appel **LabAPI** et **EXILED** sont pris en charge, sans modification côté plugin.
@@ -85,7 +102,7 @@ offset_font_size: 20     # taille utilisée pour mesurer la largeur du texte
 | [`docs/languages.md`](../languages.md) | Toutes les langues (22) et leur état |
 | [`docs/zh/`](../zh/) | Documentation chinoise (principale) |
 | [`docs/en/README.md`](../en/README.md) | English documentation |
-| [`docs/default-config.yml`](../default-config.yml) | Configuration par défaut (61 clés) |
+| [`docs/default-config.yml`](../default-config.yml) | Configuration par défaut (66 clés) |
 | [`CHANGELOG.md`](../../CHANGELOG.md) | Journal des modifications |
 
 ## Compilation

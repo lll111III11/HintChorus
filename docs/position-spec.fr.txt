@@ -1,0 +1,151 @@
+================================================================================
+HintChorus — Spécification de la syntaxe de position v1
+================================================================================
+Public   : auteurs de plugins qui veulent placer leur texte à un endroit précis
+Fichiers : docs/api-guide.zh.txt | README.md « Positions : trois syntaxes en une »
+
+En une phrase : écrivez un court marqueur, ou appelez une méthode, et votre texte
+est épinglé là où vous le souhaitez à l'écran.
+
+--------------------------------------------------------------------------------
+0. Pourquoi une syntaxe
+--------------------------------------------------------------------------------
+Le jeu n'expose qu'un seul canal d'indication : le texte de tous les plugins est
+concaténé en un unique message. Qui passe en premier et sur quelle ligne était
+totalement incontrôlable — c'est la cause racine du « les interfaces s'écrasent /
+sautent dès qu'on installe beaucoup de plugins ».
+HintChorus transforme cela en quelque chose que l'on peut *déclarer* : vous
+indiquez seulement « où je veux être », la couche s'occupe du reste.
+
+--------------------------------------------------------------------------------
+1. Trois dimensions
+--------------------------------------------------------------------------------
+Une position est décrite par trois dimensions (les deux dernières sont optionnelles) :
+
+  Verticale        <- obligatoire, choisir l'une des deux
+      (1) ancre 3x3 :  top-left | top | top-right
+                       middle-left | middle | middle-right
+                       bottom-left | bottom | bottom-right
+      (2) échelle 0-1000 : 0 = bas de l'écran, 500 = milieu, 1000 = haut
+
+  Horizontale      <- optionnelle ; déduite de la colonne de l'ancre sinon
+      align = left | center | right
+
+  Réglage fin      <- optionnel
+      offset = <nombre>   (unités voffset, positif = vers le HAUT ; écran ~ 2140)
+
+--------------------------------------------------------------------------------
+2. Deux canaux, une seule grammaire
+--------------------------------------------------------------------------------
+Canal A - marqueur texte (aucune dépendance, sans référencer ce plugin)
+    Placez {{hc:...}} n'importe où dans le texte. La couche retire tout le
+    marqueur avant l'envoi : le joueur ne le voit jamais.
+
+        player.ShowHint("{{hc:top-right}} Score 12");
+        player.ShowHint("{{hc:pos=750,align=left,offset=-90}} objectif");
+
+Canal B - API C# (pour les auteurs qui référencent ce plugin)
+    using HintChorus.Core.Layout;
+
+    UiIsolation.SetHintPosition("MyPlugin", HintAnchor.MiddleCenter, -90f);
+    UiIsolation.SetHintPosition("MyPlugin", "pos=750,align=left");  // même grammaire
+    UiIsolation.ClearHintPosition("MyPlugin");                      // retour à l'auto
+
+Les deux canaux analysent la *même* chaîne : la valeur de configuration d'un
+plugin peut donc simplement stocker cette chaîne — marqueur, config et code
+partagent une seule grammaire.
+
+--------------------------------------------------------------------------------
+3. Grammaire complète
+--------------------------------------------------------------------------------
+    {{hc:<corps>}}     corps = éléments séparés par ',' ou ';', ordre libre, casse ignorée
+
+  Élément                  Signification               Valeur
+  -----------------------  --------------------------  ---------------------------------
+  <nom d'ancre>            (nu) ancre 3x3              top-right / middle / tr ...
+  <nombre>                 (nu) échelle 0-1000         750
+  pos=<ancre | nombre>     ancre ou échelle            pos=top-right | pos=750
+  anchor=<nom d'ancre>     ancre                       anchor=middle
+  y=<nombre>               échelle                     y=500
+  scale=<nombre>           échelle                     scale=1000
+  offset=<nombre>          réglage fin (positif = haut) offset=-90
+  voffset=<nombre>         identique à offset          voffset=40
+  align=<left/center/right> alignement horizontal      align=left
+
+  Alias d'ancres (extrait) :
+      tl / tr / tc      ml / mr / mc      bl / br / bc
+      top / bottom / middle
+      (les alias chinois sont aussi acceptés : 左上 / 右上 / 中部 / 右下 ...)
+  Alias d'alignement :
+      left | l | start          center | c | middle          right | r | end
+
+--------------------------------------------------------------------------------
+4. Exemples
+--------------------------------------------------------------------------------
+    {{hc:top-right}}                          coin haut-droit (aligné à droite)
+    {{hc:750}}                                hauteur 750 sur l'échelle 0-1000
+    {{hc:pos=750,align=left}}                 même hauteur, mais aligné à gauche
+    {{hc:middle,offset=-90}}                  milieu de l'écran, puis 90 plus bas
+    {{hc:pos=500,offset=-90,align=center}}    échelle + réglage + alignement explicite
+    {{hc:bc}}                                 bas-centre (identique au défaut)
+
+    UiIsolation.SetHintPosition("LevelHUD", "pos=500,offset=-90");
+
+--------------------------------------------------------------------------------
+5. Priorité de résolution
+--------------------------------------------------------------------------------
+    (1) API explicite  (SetHintPosition)
+    (2) Marqueur texte propre  ({{hc:...}})
+    (3) Balises de position du plugin  (<voffset> / <pos> / <align> /
+        <line-height> / <line-indent> / <indent> / <margin>) -> laissées telles quelles
+    (4) Table recensée / déduction fonctionnelle d'après le nom du plugin
+    (5) Défaut : bas-centre, empilement naturel
+
+  Note : dès que (3) correspond, la couche lâche complètement cette indication —
+        elle ne touche même pas à l'alignement horizontal. C'est ce qui laisse les
+        interfaces venant de RueI / HintServiceMeow / TMP brut exactement en place.
+
+--------------------------------------------------------------------------------
+6. Configuration
+--------------------------------------------------------------------------------
+  honor_plugin_position_syntax  (défaut true)   active (3)
+  auto_layout_by_plugin_name    (défaut true)   active (4)
+  enable_position_markers       (défaut true)   reconnaît et retire {{hc:...}}
+  screen_height_units           (défaut 2140)   unités voffset pour un écran complet
+  position_overrides            (défaut vide)   table d'écrasement, même grammaire :
+
+        position_overrides:
+          LevelSystem: middle,offset=-90
+          MyPlugin: pos=750,align=left
+
+--------------------------------------------------------------------------------
+7. Correspondance avec l'écosystème
+--------------------------------------------------------------------------------
+  « Scaled position » de RueI / ruei-cm-lab (0-1000)  ->  notre pos=<0-1000>, valeur à copier
+      source : baseline = 755 - 2.14 * pos ;  2.14 * 1000 = 2140 = notre défaut
+  XCoordinate / YCoordinate de HintServiceMeow       ->  sa sortie porte des balises
+                                                          de position, traitées par (3)
+  TMP brut <voffset> / <pos> / <align> / ...          ->  traité par (3)
+
+--------------------------------------------------------------------------------
+8. FAQ
+--------------------------------------------------------------------------------
+  Q : Le marqueur est-il visible par les joueurs ?
+  R : Non. Il est retiré après analyse ; il n'apparaît que si vous désactivez
+      enable_position_markers (pour le diagnostic).
+
+  Q : Conflit avec les gabarits {0} d'autres frameworks ?
+  R : Non. Notre marqueur utilise des doubles accolades {{ }} et il est résolu
+      avant les gabarits.
+
+  Q : Ma position haut / milieu est légèrement décalée.
+  R : Ajustez screen_height_units (le facteur d'écran complet) ; ou réglez au cas
+      par cas avec offset.
+
+  Q : Plusieurs plugins partagent la même position ?
+  R : Les indications d'une même position sont triées de façon stable par priorité
+      puis empilées verticalement ; elles ne s'écrasent jamais.
+
+  Q : Déplacer un plugin sans toucher à son code ?
+  R : Utilisez position_overrides — exactement la même grammaire.
+================================================================================

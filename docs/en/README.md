@@ -77,6 +77,23 @@ offset_sign: 1           # set to -1 if the whole block drifts the wrong way
 offset_font_size: 20     # font size used to measure text width
 ```
 
+## Positions: three syntaxes in one
+
+The game gives a single hint channel, so "position" ultimately becomes a per-line `<voffset>`.
+HintChorus unifies the sources onto a **3×3 anchor grid** plus a **0–1000 vertical scale**:
+
+| Source | How it is written | Switch |
+| --- | --- | --- |
+| **① Existing-syntax compatibility** | the text already carries `<voffset>` / `<pos>` / `<align>` / `<line-height>` / `<indent>` / `<margin>` → **passed through untouched** (not re-ordered, not re-aligned) | `honor_plugin_position_syntax` |
+| **② Own syntax · marker** | `{{hc:top-right}}` or `{{hc:pos=750,align=left,offset=-90}}` — stripped from the text, players never see it | `enable_position_markers` |
+| **③ Own syntax · C# API** | `UiIsolation.SetHintPosition("MyPlugin", "pos=750,align=left")` — **the same grammar** as the marker | — |
+| **④ Automatic layout** | if none of the above, by name — `exp` / `level` / `经验` → middle then 90 down; `score` / `排行` → top-right; `kill` / `击杀` → top-left; `timer` → top-centre; `music` → bottom-right | `auto_layout_by_plugin_name` |
+
+**Resolution priority**: explicit API → marker → the plugin's own tags → curated table / name → default (bottom-centre, natural stacking).
+
+> **Full specification of the own syntax** (three dimensions, grammar, aliases, examples, FAQ):
+> [`docs/position-spec.en.txt`](../position-spec.en.txt).
+
 ## Compatibility
 
 - Both **LabAPI** and **EXILED** call styles are handled, with no changes required on the plugin side.

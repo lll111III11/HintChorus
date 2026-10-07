@@ -1,0 +1,150 @@
+================================================================================
+HintChorus — Especificación de la sintaxis propia de posición, v1
+================================================================================
+Dirigido a: autores de plugins que quieren colocar su texto en un punto concreto
+Junto a   : docs/api-guide.zh.txt | README.md «Posiciones: tres sintaxis en una»
+
+En una frase: escribe un marcador corto, o llama a un método, y tu texto queda
+fijado donde quieras en la pantalla.
+
+--------------------------------------------------------------------------------
+0. Por qué hace falta una sintaxis
+--------------------------------------------------------------------------------
+El juego expone un único canal de avisos, así que el texto de todos los plugins se
+concatena en un solo mensaje. Quién iba primero y en qué línea era del todo
+incontrolable: esa es la causa raíz de «las interfaces se pisan / saltan arriba y
+abajo en cuanto instalas muchos plugins».
+HintChorus convierte esto en algo que se puede *declarar*: tú solo indicas «dónde
+quiero estar» y la capa se encarga del resto.
+
+--------------------------------------------------------------------------------
+1. Tres dimensiones
+--------------------------------------------------------------------------------
+Una posición se describe con tres dimensiones (las dos últimas son opcionales):
+
+  Vertical        <- obligatoria, elegir una de dos
+      (1) ancla 3x3:   top-left | top | top-right
+                       middle-left | middle | middle-right
+                       bottom-left | bottom | bottom-right
+      (2) escala 0-1000: 0 = abajo del todo, 500 = centro, 1000 = arriba
+
+  Horizontal      <- opcional; si se omite, se deduce de la columna del ancla
+      align = left | center | right
+
+  Ajuste fino     <- opcional
+      offset = <número>   (unidades voffset, positivo = hacia ARRIBA; pantalla ~ 2140)
+
+--------------------------------------------------------------------------------
+2. Dos canales, una sola gramática
+--------------------------------------------------------------------------------
+Canal A - marcador de texto (sin dependencias, sin referenciar este plugin)
+    Escribe {{hc:...}} en cualquier parte del texto. La capa elimina todo el
+    marcador antes de enviar, así que el jugador nunca lo ve.
+
+        player.ShowHint("{{hc:top-right}} Puntos 12");
+        player.ShowHint("{{hc:pos=750,align=left,offset=-90}} objetivo");
+
+Canal B - API de C# (para quienes referencian este plugin)
+    using HintChorus.Core.Layout;
+
+    UiIsolation.SetHintPosition("MyPlugin", HintAnchor.MiddleCenter, -90f);
+    UiIsolation.SetHintPosition("MyPlugin", "pos=750,align=left");  // misma gramática
+    UiIsolation.ClearHintPosition("MyPlugin");                      // vuelve a lo automático
+
+Ambos canales analizan la *misma* cadena, así que el valor de configuración de un
+plugin puede simplemente guardar esa cadena: marcador, configuración y código
+comparten una única gramática.
+
+--------------------------------------------------------------------------------
+3. Gramática completa
+--------------------------------------------------------------------------------
+    {{hc:<cuerpo>}}    cuerpo = elementos separados por ',' o ';', orden libre, sin distinguir mayúsculas
+
+  Elemento                 Significado                 Valor
+  -----------------------  --------------------------  ---------------------------------
+  <nombre de ancla>        (suelto) ancla 3x3          top-right / middle / tr ...
+  <número>                 (suelto) escala 0-1000      750
+  pos=<ancla | número>     ancla o escala              pos=top-right | pos=750
+  anchor=<nombre ancla>    ancla                       anchor=middle
+  y=<número>               escala                      y=500
+  scale=<número>           escala                      scale=1000
+  offset=<número>          ajuste fino (positivo = arriba) offset=-90
+  voffset=<número>         igual que offset            voffset=40
+  align=<left/center/right> alineación horizontal      align=left
+
+  Alias de anclas (extracto):
+      tl / tr / tc      ml / mr / mc      bl / br / bc
+      top / bottom / middle
+      (también se aceptan alias en chino: 左上 / 右上 / 中部 / 右下 ...)
+  Alias de alineación:
+      left | l | start          center | c | middle          right | r | end
+
+--------------------------------------------------------------------------------
+4. Ejemplos
+--------------------------------------------------------------------------------
+    {{hc:top-right}}                          esquina superior derecha (alineado a la derecha)
+    {{hc:750}}                                altura 750 en la escala 0-1000
+    {{hc:pos=750,align=left}}                 misma altura, pero alineado a la izquierda
+    {{hc:middle,offset=-90}}                  centro de pantalla, luego 90 más abajo
+    {{hc:pos=500,offset=-90,align=center}}    escala + ajuste + alineación explícita
+    {{hc:bc}}                                 abajo-centro (igual que el predeterminado)
+
+    UiIsolation.SetHintPosition("LevelHUD", "pos=500,offset=-90");
+
+--------------------------------------------------------------------------------
+5. Prioridad de resolución
+--------------------------------------------------------------------------------
+    (1) API explícita  (SetHintPosition)
+    (2) Marcador de texto propio  ({{hc:...}})
+    (3) Etiquetas de posición del propio plugin  (<voffset> / <pos> / <align> /
+        <line-height> / <line-indent> / <indent> / <margin>) -> se dejan tal cual
+    (4) Tabla recopilada / inferencia funcional por el nombre del plugin
+    (5) Predeterminado: abajo-centro, apilado natural
+
+  Nota: en cuanto coincide (3), la capa suelta por completo ese aviso: ni siquiera
+        toca la alineación horizontal. Eso es lo que mantiene las interfaces de
+        RueI / HintServiceMeow / TMP crudo exactamente donde estaban.
+
+--------------------------------------------------------------------------------
+6. Configuración
+--------------------------------------------------------------------------------
+  honor_plugin_position_syntax  (por defecto true)   activa (3)
+  auto_layout_by_plugin_name    (por defecto true)   activa (4)
+  enable_position_markers       (por defecto true)   reconoce y elimina {{hc:...}}
+  screen_height_units           (por defecto 2140)   unidades voffset de una pantalla completa
+  position_overrides            (por defecto vacío)  tabla del dueño del servidor, misma gramática:
+
+        position_overrides:
+          LevelSystem: middle,offset=-90
+          MyPlugin: pos=750,align=left
+
+--------------------------------------------------------------------------------
+7. Correspondencia con el ecosistema
+--------------------------------------------------------------------------------
+  «Scaled position» de RueI / ruei-cm-lab (0-1000)  ->  nuestro pos=<0-1000>, copia el valor
+      su fuente: baseline = 755 - 2.14 * pos;  2.14 * 1000 = 2140 = nuestro valor por defecto
+  XCoordinate / YCoordinate de HintServiceMeow     ->  su salida lleva etiquetas de
+                                                        posición, tratadas por (3)
+  TMP crudo <voffset> / <pos> / <align> / ...       ->  tratado por (3)
+
+--------------------------------------------------------------------------------
+8. Preguntas frecuentes
+--------------------------------------------------------------------------------
+  P: ¿Verán los jugadores el marcador?
+  R: No. Se elimina tras el análisis; solo aparece si desactivas
+     enable_position_markers (para diagnóstico).
+
+  P: ¿Choca con las plantillas {0} de otros frameworks?
+  R: No. Nuestro marcador usa dobles llaves {{ }} y se resuelve antes que las plantillas.
+
+  P: Mi posición arriba / centro está algo desviada.
+  R: Ajusta screen_height_units (el factor de pantalla completa); o afina por aviso
+     con offset.
+
+  P: Varios plugins comparten la misma posición.
+  R: Los avisos de una misma posición se ordenan de forma estable por prioridad y se
+     apilan verticalmente; nunca se pisan.
+
+  P: ¿Mover un plugin sin tocar su código?
+  R: Usa position_overrides: exactamente la misma gramática.
+================================================================================

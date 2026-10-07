@@ -174,7 +174,7 @@ position_overrides:
 | [`docs/languages.md`](docs/languages.md) | **多语言总入口**：全部 22 种客户端语言 + 翻译文件下载 |
 | [`docs/translations/`](docs/translations/) | 17 种外部语言翻译文件（放入服务器 `translations/` 目录即生效） |
 | [`docs/default-config.yml`](docs/default-config.yml) | **权威默认配置**（由编译产物实际序列化得到，66 项） |
-| [`docs/position-spec.zh.txt`](docs/position-spec.zh.txt) | **自有位置写法规范 v1**：语法 / 两个通道 / 示例 / 优先级 / 生态对应 |
+| [`docs/position-spec.*.txt`](docs/position-spec.zh.txt) | **自有位置写法规范 v1**（UN-5：中 / 英 / 法 / 俄 / 西各一份）：语法 / 两个通道 / 示例 / 优先级 / 生态对应 |
 | [`docs/api-guide.zh.txt`](docs/api-guide.zh.txt) | 插件作者要看的 API 写法指南 |
 | [`docs/patch-target-report.txt`](docs/patch-target-report.txt) | 拦截目标逐条核验报告 |
 | [`CHANGELOG.md`](CHANGELOG.md) | 变更记录 |

@@ -1,0 +1,149 @@
+================================================================================
+HintChorus — Own position syntax specification v1
+================================================================================
+Audience : plugin authors who want their text to land at a chosen screen position
+Companion: docs/api-guide.zh.txt | README.md "Positions: three syntaxes in one"
+
+In one line: write a short marker, or call one method, and your text is pinned
+wherever you want on the screen.
+
+--------------------------------------------------------------------------------
+0. Why a syntax at all
+--------------------------------------------------------------------------------
+The game exposes exactly one hint channel, so the text of every plugin is
+concatenated into a single message. Who comes first and on which line was
+completely uncontrollable - that is the root cause of "UI overwrites each other /
+jumps up and down once you install many plugins".
+HintChorus turns this into something you can *declare*: you only state "where I
+want to be", and the layer takes care of the rest.
+
+--------------------------------------------------------------------------------
+1. Three dimensions
+--------------------------------------------------------------------------------
+A position is described by three dimensions (the last two are optional):
+
+  Vertical        <- required, pick one of two
+      (1) 3x3 anchor:  top-left | top | top-right
+                       middle-left | middle | middle-right
+                       bottom-left | bottom | bottom-right
+      (2) 0-1000 scale: 0 = bottom of screen, 500 = middle, 1000 = top
+
+  Horizontal      <- optional; defaults from the anchor column
+      align = left | center | right
+
+  Fine tuning     <- optional
+      offset = <number>   (voffset units, positive = move UP; full screen ~ 2140)
+
+--------------------------------------------------------------------------------
+2. Two channels, one grammar
+--------------------------------------------------------------------------------
+Channel A - text marker (zero dependency, works without referencing this plugin)
+    Put {{hc:...}} anywhere in the hint text. The layer strips the whole marker
+    before sending, so players never see it.
+
+        player.ShowHint("{{hc:top-right}} Score 12");
+        player.ShowHint("{{hc:pos=750,align=left,offset=-90}} objective marker");
+
+Channel B - C# API (for authors who reference this plugin)
+    using HintChorus.Core.Layout;
+
+    UiIsolation.SetHintPosition("MyPlugin", HintAnchor.MiddleCenter, -90f);
+    UiIsolation.SetHintPosition("MyPlugin", "pos=750,align=left");  // same grammar
+    UiIsolation.ClearHintPosition("MyPlugin");                      // back to auto
+
+Both channels parse the *same* string, so a plugin's config value can simply
+store that string - marker, config and code all share one grammar.
+
+--------------------------------------------------------------------------------
+3. Full grammar
+--------------------------------------------------------------------------------
+    {{hc:<body>}}      body = items separated by ',' or ';', any order, case-insensitive
+
+  Item                     Meaning                     Value
+  -----------------------  --------------------------  ---------------------------------
+  <anchor name>            (bare) 3x3 anchor           top-right / middle / tr ...
+  <number>                 (bare) 0-1000 scale         750
+  pos=<anchor | number>    anchor or scale             pos=top-right | pos=750
+  anchor=<anchor name>     anchor                      anchor=middle
+  y=<number>               scale                       y=500
+  scale=<number>           scale                       scale=1000
+  offset=<number>          fine tuning (positive = up) offset=-90
+  voffset=<number>         same as offset              voffset=40
+  align=<left/center/right> horizontal alignment       align=left
+
+  Anchor aliases (excerpt):
+      tl / tr / tc      ml / mr / mc      bl / br / bc
+      top / bottom / middle
+      (Chinese aliases are also accepted: 左上 / 右上 / 中上 / 中部 / 右下 ...)
+  Alignment aliases:
+      left | l | start          center | c | middle          right | r | end
+
+--------------------------------------------------------------------------------
+4. Examples
+--------------------------------------------------------------------------------
+    {{hc:top-right}}                          top-right corner (aligns right)
+    {{hc:750}}                                height 750 on the 0-1000 scale
+    {{hc:pos=750,align=left}}                 same height, but aligned left
+    {{hc:middle,offset=-90}}                  screen middle, then 90 further down
+    {{hc:pos=500,offset=-90,align=center}}    scale + tuning + explicit align
+    {{hc:bc}}                                 bottom-centre (same as default)
+
+    UiIsolation.SetHintPosition("LevelHUD", "pos=500,offset=-90");
+
+--------------------------------------------------------------------------------
+5. Resolution priority (who wins)
+--------------------------------------------------------------------------------
+    (1) Explicit API  (SetHintPosition)
+    (2) Own text marker  ({{hc:...}})
+    (3) The plugin's own position tags  (<voffset> / <pos> / <align> /
+        <line-height> / <line-indent> / <indent> / <margin>) -> passed through
+    (4) Curated table / functional inference from the plugin name
+    (5) Default: bottom-centre, natural stacking
+
+  Note: once (3) matches, this layer lets go of that hint completely - it does not
+        even override horizontal alignment. This is what keeps UI coming from
+        RueI / HintServiceMeow / raw TMP exactly where it was.
+
+--------------------------------------------------------------------------------
+6. Configuration
+--------------------------------------------------------------------------------
+  honor_plugin_position_syntax  (default true)   enable (3)
+  auto_layout_by_plugin_name    (default true)   enable (4)
+  enable_position_markers       (default true)   recognize & strip {{hc:...}}
+  screen_height_units           (default 2140)   how many voffset units a full screen is
+  position_overrides            (default empty)  server-owner override table, same grammar:
+
+        position_overrides:
+          LevelSystem: middle,offset=-90
+          MyPlugin: pos=750,align=left
+
+--------------------------------------------------------------------------------
+7. Mapping to the ecosystem
+--------------------------------------------------------------------------------
+  RueI / ruei-cm-lab "Scaled position" (0-1000)  ->  our pos=<0-1000>, copy the value
+      their source: baseline = 755 - 2.14 * pos;  2.14 * 1000 = 2140 = our default
+  HintServiceMeow XCoordinate / YCoordinate      ->  its output carries position
+                                                     tags, handled by (3)
+  Raw TMP <voffset> / <pos> / <align> / ...      ->  handled by (3)
+
+--------------------------------------------------------------------------------
+8. FAQ
+--------------------------------------------------------------------------------
+  Q: Will players see the marker?
+  A: No. It is stripped after parsing; it is only shown if you turn
+     enable_position_markers off (for troubleshooting).
+
+  Q: Does it clash with other frameworks' {0} templates?
+  A: No. Our marker uses double braces {{ }} and is resolved before templates.
+
+  Q: My top / middle position is a bit off.
+  A: Tune screen_height_units (the whole-screen factor); or fine-tune per hint
+     with offset.
+
+  Q: What if several plugins share the same position?
+  A: Hints in the same position are stably sorted by priority and stacked
+     vertically; they never overwrite each other.
+
+  Q: I want to move a plugin without touching its code.
+  A: Use position_overrides - exactly the same grammar as above.
+================================================================================

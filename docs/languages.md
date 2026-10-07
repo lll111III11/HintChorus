@@ -63,3 +63,16 @@ Nur <color=yellow>[max_item_count] Gegenstände</color> können getragen werden.
 - **Français** — [docs/fr/README.md](fr/README.md)
 - **Русский** — [docs/ru/README.md](ru/README.md)
 - **Español** — [docs/es/README.md](es/README.md)
+
+## 位置写法规范 / Position syntax spec（UN-5）
+
+自有位置写法 **v1** 的规范文档，已按 UN-5 语言各出一份：
+
+- **中文** — [docs/position-spec.zh.txt](position-spec.zh.txt)
+- **English** — [docs/position-spec.en.txt](position-spec.en.txt)
+- **Français** — [docs/position-spec.fr.txt](position-spec.fr.txt)
+- **Русский** — [docs/position-spec.ru.txt](position-spec.ru.txt)
+- **Español** — [docs/position-spec.es.txt](position-spec.es.txt)
+
+同一套语法同时服务于三处：文本标记 `{{hc:...}}`、C# API `UiIsolation.SetHintPosition`、配置项 `position_overrides`。
+（`{{hc:...}}` 的锚点别名也接受中文，例如 `{{hc:右上}}`。）
