@@ -2,6 +2,18 @@
 
 本项目处于 **alpha** 阶段，接口与行为仍可能调整。
 
+### 兼容垫片：HintIsolation.dll（让依赖旧名的插件不必重编）
+
+- **背景**：改名后，凡是**编译时引用了旧程序集名**的插件会整只加载失败 —— 本机 FullModSquad 即如此
+  （报 Missing dependencies: HintIsolation v1.0.0.0）。**仅重启不会恢复**。
+- **新增** compat/HintIsolation.Shim：产出程序集名仍为 HintIsolation, Version=1.0.0.0 的小垫片，
+  只包含依赖方实际用到的 3 个类型（HintIsolation.UiIsolation 的 RegisterHintSource / UnregisterHintSource、
+  HintIsolation.Core.Interfaces.IHintTextSource、HintIsolation.Core.Enums.HintAlignment），
+  **全部转发到 HintChorus**，自身不含任何逻辑。
+- **部署位置**：LabAPI\dependencies\global\HintIsolation.dll（依赖解析目录，不会被当成插件加载）。
+- **验证**：本地按加载器同样的解析路径模拟，FullModSquad.GetTypes() 通过（40 个类型）。
+- **何时可删**：依赖方改为引用 HintChorus 并重编后，垫片与 compat/ 目录可一并移除。
+
 ## alpha (2026-10-07 · 试机修复 + 位置锁定)
 
 ### 修复

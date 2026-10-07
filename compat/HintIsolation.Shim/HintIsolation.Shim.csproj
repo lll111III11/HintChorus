@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!--
+	  ============================================================================
+	  兼容垫片: 程序集名刻意保持旧的 "HintIsolation"。
+	  作用: 让"编译时引用了旧名 HintIsolation"的插件(如本机上的 FullModSquad)
+	        在项目改名为 HintChorus 之后仍然能加载 —— 无需对方重编。
+	  所有调用都转发到 HintChorus, 本身不含任何逻辑。
+	  部署位置: LabAPI\dependencies\global\HintIsolation.dll
+	  ============================================================================
+	-->
+
+	<PropertyGroup>
+		<TargetFramework>net48</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>annotations</Nullable>
+		<!-- 关键: 程序集名与版本必须与旧版一致, 否则依赖方的引用解析不了 -->
+		<AssemblyName>HintIsolation</AssemblyName>
+		<RootNamespace>HintIsolation</RootNamespace>
+		<Version>1.0.0.0</Version>
+		<AssemblyVersion>1.0.0.0</AssemblyVersion>
+		<FileVersion>1.0.0.0</FileVersion>
+		<PlatformTarget>x64</PlatformTarget>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+		<!-- 不往输出目录带 HintChorus.dll, 运行期由 LabAPI 从 plugins\global 解析 -->
+		<EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<ManagedDir>D:\SteamLibrary\steamapps\common\SCP Secret Laboratory Dedicated Server\SCPSL_Data\Managed</ManagedDir>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="Assembly-CSharp">
+			<HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="netstandard">
+			<HintPath>$(ManagedDir)\netstandard.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- 只为拿到 HintChorus 的类型做转发; 不把它拷进垫片输出目录 -->
+		<ProjectReference Include="..\..\src\HintChorus.csproj" ReferenceOutputAssembly="true" Private="false" />
+	</ItemGroup>
+
+</Project>
