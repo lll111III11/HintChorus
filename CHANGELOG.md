@@ -46,6 +46,18 @@
   `size` / `color` / `alpha` 等**纯样式**标签不算位置，仍由本底层摆位。
 - 对「自带位置」的文本**连对齐也不覆盖**（保持插件自己的 `<align>`）。
 
+### 自有写法 v1（文本标记与 C# API 统一为一套语法）
+
+- **统一语法**：文本标记 `{{hc:...}}` 与 C# `UiIsolation.SetHintPosition(id, "…")` 解析**同一段字符串**，
+  插件配置项也可直接存该字符串。解析收敛到 `HintPosition.TryParse` 一处实现。
+- **补齐横向维度**：位置由三个维度描述 ——
+  **纵向**（九宫格锚点 **或** 0–1000 标尺）、**横向**（`align=left|center|right`，省略则由锚点列推导）、
+  **微调**（`offset`，正 = 上移）。
+- 新增 C# 字符串重载 `UiIsolation.SetHintPosition(pluginId, string spec)`（无法识别返回 `-1`）；
+  `IUiSlot` 暴露只读 `Position` 供插件自检落点。
+- **新增规范文档 [`docs/position-spec.zh.txt`](docs/position-spec.zh.txt)**：
+  语法表、别名表、示例、解析优先级、配置项、与 RueI / HSM 的对应关系、常见问题。
+
 ### 实现要点
 
 - 新增 `HintPosition`（九宫格锚点 + 偏移 + 自定位标记）、`PositionSyntax`（标记与外来标签解析）、

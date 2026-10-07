@@ -99,11 +99,14 @@ offset_font_size: 20     # 量文本宽度用的字号
 | 来源 | 写法 | 开关 |
 | --- | --- | --- |
 | **① 兼容原有写法** | 插件文本里已自带 `<voffset>` / `<pos>` / `<align>` / `<line-height>` 等标签 → **原样放行**，本底层不重排 | `honor_plugin_position_syntax` |
-| **② 自有写法 · 文本标记** | `{{hc:top-right}}` 或 `{{hc:pos=middle,offset=-90}}`（解析后从文本剥离，玩家看不到） | `enable_position_markers` |
-| **③ 自有写法 · C# API** | `UiIsolation.SetHintPosition("MyPlugin", HintAnchor.MiddleCenter, -90f)` | — |
+| **② 自有写法 · 文本标记** | `{{hc:top-right}}` / `{{hc:pos=750,align=left,offset=-90}}`（解析后从文本剥离，玩家看不到） | `enable_position_markers` |
+| **③ 自有写法 · C# API** | `UiIsolation.SetHintPosition("MyPlugin", "pos=750,align=left")`，或 `(…, HintAnchor.MiddleCenter, -90f)` —— **与文本标记同一套语法** | — |
 | **④ 自动排版** | 都没写时按**插件名**推断：`exp`/`level`/`经验`/`等级` → 屏幕中部再往下 90；`score`/`排行` → 右上；`kill`/`击杀` → 左上；`timer`/`倒计时` → 顶部居中；`team`/`队伍` → 中右；`music`/`点歌` → 右下 | `auto_layout_by_plugin_name` |
 
 **解析优先级**：显式 API → 文本标记 → 自带位置标签 → 名称目录 → 默认（底部自然堆叠）。
+
+> **自有写法完整规范**（三个维度：纵向锚点/标尺 + 横向对齐 + 微调；完整语法、别名表、示例、常见问题）
+> 见 [`docs/position-spec.zh.txt`](docs/position-spec.zh.txt)。
 
 ### 生态兼容对照（2026-10 于 GitHub 实搜并读其源码/文档）
 
@@ -171,6 +174,7 @@ position_overrides:
 | [`docs/languages.md`](docs/languages.md) | **多语言总入口**：全部 22 种客户端语言 + 翻译文件下载 |
 | [`docs/translations/`](docs/translations/) | 17 种外部语言翻译文件（放入服务器 `translations/` 目录即生效） |
 | [`docs/default-config.yml`](docs/default-config.yml) | **权威默认配置**（由编译产物实际序列化得到，66 项） |
+| [`docs/position-spec.zh.txt`](docs/position-spec.zh.txt) | **自有位置写法规范 v1**：语法 / 两个通道 / 示例 / 优先级 / 生态对应 |
 | [`docs/api-guide.zh.txt`](docs/api-guide.zh.txt) | 插件作者要看的 API 写法指南 |
 | [`docs/patch-target-report.txt`](docs/patch-target-report.txt) | 拦截目标逐条核验报告 |
 | [`CHANGELOG.md`](CHANGELOG.md) | 变更记录 |

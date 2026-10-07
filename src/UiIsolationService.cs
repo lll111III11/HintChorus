@@ -167,6 +167,17 @@ internal sealed class UiIsolationService : IUiIsolation
 	}
 
 	/// <inheritdoc/>
+	public int SetHintPosition(string pluginId, string spec)
+	{
+		if (!HintPosition.TryParse(spec, out HintPosition position))
+		{
+			return -1;
+		}
+
+		return UiSlotRegistry.SetPluginPosition(pluginId, position);
+	}
+
+	/// <inheritdoc/>
 	public bool ClearHintPosition(string pluginId)
 	{
 		return UiSlotRegistry.ClearPluginPosition(pluginId);

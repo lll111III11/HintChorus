@@ -47,6 +47,9 @@ public sealed class UiSlot : IUiSlot
 	/// <summary>上一次实际生效的位置(诊断用; 由合成器每帧写回)。</summary>
 	public HintPosition ResolvedPosition { get; internal set; } = HintPosition.Default;
 
+	/// <inheritdoc/>
+	public HintPosition Position => ResolvedPosition;
+
 	public DateTime LastActivityUtc { get; private set; } = DateTime.UtcNow;
 
 	public long TotalReceived { get; private set; }

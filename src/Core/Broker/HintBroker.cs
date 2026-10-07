@@ -948,11 +948,9 @@ public sealed class HintBroker : IHintBroker
 				HintPosition position = ResolveSlotPosition(slot, scratch);
 				bucket.Position = position;
 				slot.ResolvedPosition = position;
-				// 自定位(插件自带位置标签)的文本, 其对齐也由插件自己控制 —— 本底层不插手,
-				// 否则会把「位置一动不动」变成「被我们居中了」。
-				HintAlignment alignment = (position.IsDefault || position.IsSelfPositioned)
-					? HintAlignment.Left
-					: HintPosition.AlignOf(position.Anchor);
+				// 对齐由位置自身决定: 自定位 → 沿用插件自己的; 显式 align= → 用它;
+				// 默认位置 → Left(保持旧观感); 其余 → 由锚点列推导。
+				HintAlignment alignment = position.ResolveAlign(HintAlignment.Left);
 
 				if (slot.Origin == HintOrigin.Native)
 				{

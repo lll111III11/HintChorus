@@ -86,6 +86,14 @@ public interface IUiIsolation
 	/// <returns>被立即改写的已存在信口数(之后新建的会另行套用)。</returns>
 	int SetHintPosition(string pluginId, HintAnchor anchor, float offsetUnits = 0f);
 
+	/// <summary>
+	/// 用<b>自有写法的字符串语法</b>设定位置 —— 与文本标记 <c>{{hc:...}}</c> 是<b>同一套语法</b>,
+	/// 所以插件的配置项、文本标记、C# 代码三处可以通用同一个字符串。
+	/// <para>例: <c>"top-right"</c> / <c>"pos=750,align=left"</c> / <c>"middle,offset=-90"</c> / <c>"750"</c>。</para>
+	/// </summary>
+	/// <returns>被立即改写的已存在信口数; <c>-1</c> = 字符串无法识别(不会改动任何信口)。</returns>
+	int SetHintPosition(string pluginId, string spec);
+
 	/// <summary>撤销一个插件的预设位置, 回到自动推断。</summary>
 	bool ClearHintPosition(string pluginId);
 }

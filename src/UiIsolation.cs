@@ -244,6 +244,17 @@ public static class UiIsolation
 		return Service.SetHintPosition(pluginId, anchor, offsetUnits);
 	}
 
+	/// <summary>
+	/// 用<b>自有写法的字符串语法</b>设定位置 —— 与文本标记 <c>{{hc:...}}</c> 是<b>同一套语法</b>,
+	/// 因插件配置项、文本标记、C# 代码三处可以通用同一个字符串。
+	/// <para>例: <c>UiIsolation.SetHintPosition("MyPlugin", "pos=750,align=left");</c></para>
+	/// </summary>
+	/// <returns>被立即改写的已存在信口数; <c>-1</c> = 字符串无法识别(不会改动任何信口)。</returns>
+	public static int SetHintPosition(string pluginId, string spec)
+	{
+		return Service.SetHintPosition(pluginId, spec);
+	}
+
 	/// <summary>撤销一个插件的预设位置, 回到「已收录表 / 功能区推断 / 默认」的自动链路。</summary>
 	public static bool ClearHintPosition(string pluginId)
 	{

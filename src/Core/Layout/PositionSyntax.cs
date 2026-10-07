@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace HintChorus.Core.Layout;
@@ -9,13 +8,14 @@ namespace HintChorus.Core.Layout;
 ///
 /// <list type="number">
 ///   <item>
-///     <b>自有写法(文本标记)</b>: <c>{{hc:pos=top-right,offset=-90}}</c> / <c>{{hc:middle}}</c>。
+///     <b>自有写法(文本标记)</b>: <c>{{hc:pos=top-right,offset=-90}}</c> / <c>{{hc:750}}</c>。
+///     标记体交由 <see cref="HintPosition.TryParse"/> 解析 —— 与 C# 字符串 API <b>完全同一套语法</b>。
 ///     解析后<b>从文本里剥掉</b>, 玩家绝对看不到; 与其它框架的 <c>{0}</c> 模板不冲突(本标记是双大括号)。
 ///   </item>
 ///   <item>
 ///     <b>兼容原有写法</b>: 插件文本里已经自带的 TMP 位置标签
 ///     (<c>&lt;voffset&gt;</c> / <c>&lt;pos&gt;</c> / <c>&lt;align&gt;</c> / <c>&lt;line-height&gt;</c> /
-///     <c>&lt;margin&gt;</c> / <c>&lt;indent&gt;</c>) —— 一律判为「自带位置」,
+///     <c>&lt;line-indent&gt;</c> / <c>&lt;indent&gt;</c> / <c>&lt;margin&gt;</c>) —— 一律判为「自带位置」,
 ///     由 <see cref="HintPosition.SelfPositioned"/> 原样放行, 不被本底层重排。
 ///   </item>
 /// </list>
@@ -54,7 +54,7 @@ public static class PositionSyntax
 	/// </summary>
 	/// <param name="text">原始提示文本。</param>
 	/// <param name="parsed">
-	/// 命中的位置(多个标记时以<b>最后一个</b>为准); 无标记时为 <c>null</c>。
+	/// 命中的位置(多个标记时以<b>最后一个</b>为准); 无标记或标记无效时为 <c>null</c>。
 	/// </param>
 	/// <returns>剥掉标记后的可显示文本。</returns>
 	public static string StripMarkers(string? text, out HintPosition? parsed)
@@ -82,92 +82,13 @@ public static class PositionSyntax
 	}
 
 	/// <summary>
-	/// 解析标记体。可写:
-	/// <list type="bullet">
-	///   <item><c>top-right</c> / <c>middle</c> / <c>右上</c>(直接写锚点);</item>
-	///   <item><c>pos=top-right,offset=-90</c>(键值对, 偏移正=上移)。</item>
-	/// </list>
+	/// 解析标记体 —— <b>直接复用自有写法的统一语法</b>(见 <see cref="HintPosition.TryParse"/>)。
+	///
+	/// <para>可写: <c>top-right</c> / <c>middle</c> / <c>右上</c> / <c>750</c>(0–1000 标尺) /
+	/// <c>pos=750,align=left,offset=-90</c>。</para>
 	/// </summary>
 	public static bool TryParseMarker(string? body, out HintPosition position)
 	{
-		position = HintPosition.Default;
-		if (string.IsNullOrWhiteSpace(body))
-		{
-			return false;
-		}
-
-		HintAnchor? anchor = null;
-		float? scale = null;
-		float offset = 0f;
-
-		foreach (string rawPart in body.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries))
-		{
-			string part = rawPart.Trim();
-			if (part.Length == 0)
-			{
-				continue;
-			}
-
-			int eq = part.IndexOf('=');
-			if (eq > 0)
-			{
-				string key = part.Substring(0, eq).Trim().ToLowerInvariant();
-				string val = part.Substring(eq + 1).Trim();
-
-				if (key == "pos" || key == "anchor" || key == "位置")
-				{
-					if (HintPosition.TryParseAnchor(val, out HintAnchor named))
-					{
-						anchor = named;
-					}
-					else if (float.TryParse(val, NumberStyles.Float, CultureInfo.InvariantCulture, out float posValue))
-					{
-						// 数字形式的 pos = 生态通用的 0–1000 纵向标尺(0 底 / 500 中 / 1000 顶),
-						// 与 RueI / ruei-cm-lab 的 Scaled position 同义 —— 迁移过来可直接照抄数值。
-						scale = posValue;
-					}
-				}
-				else if (key == "y" || key == "scale" || key == "标尺")
-				{
-					if (float.TryParse(val, NumberStyles.Float, CultureInfo.InvariantCulture, out float yValue))
-					{
-						scale = yValue;
-					}
-				}
-				else if (key == "offset" || key == "voffset" || key == "偏移")
-				{
-					if (float.TryParse(val, NumberStyles.Float, CultureInfo.InvariantCulture, out float o))
-					{
-						offset = o;
-					}
-				}
-
-				continue;
-			}
-
-			if (HintPosition.TryParseAnchor(part, out HintAnchor direct))
-			{
-				anchor = direct;
-			}
-			else if (float.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out float bare))
-			{
-				// 裸数字 = 0–1000 标尺
-				scale = bare;
-			}
-		}
-
-		if (scale.HasValue)
-		{
-			position = HintPosition.FromScale(scale.Value, offset);
-			return true;
-		}
-
-		if (anchor is null)
-		{
-			return false;
-		}
-
-		position = new HintPosition(anchor.Value, offset, managed: true);
-		return true;
+		return HintPosition.TryParse(body, out position);
 	}
 }
