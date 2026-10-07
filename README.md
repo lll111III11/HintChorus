@@ -190,6 +190,18 @@ dotnet build src/HintChorus.csproj -c Release -p:ManagedDir="<你的服务器>/S
 
 引导器是独立工程（`bootstrap/`），其产物会被主工程**内嵌**并在运行时释放。
 
+### 验证补丁是否真装上（重要）
+
+**编译通过 ≠ 补丁装得上。** Harmony 按**参数名**把补丁参数绑定到目标参数，
+签名或参数名不符会抛 `Patching exception in method ...`，运行时只记一行错误就过去了 ——
+表现为"某个 UI 通道莫名失效"。2026-10 试机时广播补丁就这么挂掉过一次。
+
+```powershell
+pwsh -File tools/verify-patches.ps1
+# 输出: 每个补丁类 [OK]/[FAIL] + 最内层异常，失败时退出码 1
+# 自动探测 Managed 目录，也可用 -Managed / 环境变量 SCPSL_MANAGED 指定
+```
+
 ---
 
 ## 许可 / License

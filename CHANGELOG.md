@@ -68,6 +68,21 @@
 - **修复**：`docs/es/README.md` 自加入仓库起一直是 **0 字节**（当初目录嵌套失误，内容落在了
   `docs/es/es/`）。本次补全西班牙语 README。
 
+### 修复：广播补丁装不上（试机暴露）
+
+- **现象**：试机日志报 `安装表面补丁 BroadcastTargetAddElementPatch 失败: Patching exception in method ...`，
+  两个广播补丁都装不上 → 自愈每 5s 重试、连续 3 次失败后放弃 → **广播拦截整体失效**。
+- **根因**（本地复现取证）：Harmony 是**按参数名**把补丁参数绑定到目标参数的。目标参数名是
+  `data` / `time` / `flags`，而补丁里写成了 `message` / `duration` / `type` →
+  内层异常 `Parameter "message" not found in method ...`。签名类型其实是对的，是**名字**不匹配。
+- **修复**：两个广播补丁的参数名改回与游戏一致，并在源码注释里写死这条约束。
+
+### 新增：`tools/verify-patches.ps1`（防回归）
+
+- 本地加载游戏程序集 + 0Harmony，对插件里每个 `[HarmonyPatch]` 类逐个执行
+  `CreateClassProcessor(...).Patch()`，打印最内层异常；失败时退出码 1。
+- 同类问题**编译期完全看不出来**，只有真装一次才会暴露 —— 现固化为可重复执行的检查。
+
 ### 实现要点
 
 - 新增 `HintPosition`（九宫格锚点 + 偏移 + 自定位标记）、`PositionSyntax`（标记与外来标签解析）、
