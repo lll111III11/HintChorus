@@ -52,9 +52,15 @@ public readonly struct HintPosition : IEquatable<HintPosition>
 	public static readonly HintPosition SelfPositioned = new HintPosition(HintAnchor.BottomCenter, 0f, managed: false);
 
 	public HintPosition(HintAnchor anchor, float offsetUnits = 0f, bool managed = true)
+		: this(anchor, offsetUnits, -1f, managed)
+	{
+	}
+
+	public HintPosition(HintAnchor anchor, float offsetUnits, float scale, bool managed = true)
 	{
 		Anchor = anchor;
 		OffsetUnits = offsetUnits;
+		Scale = scale;
 		Managed = managed;
 	}
 
@@ -64,11 +70,29 @@ public readonly struct HintPosition : IEquatable<HintPosition>
 	/// <summary>额外偏移(voffset 单位; <b>正 = 上移</b>; 参考: 整屏约 2140)。</summary>
 	public float OffsetUnits { get; }
 
+	/// <summary>
+	/// <b>0–1000 纵向标尺</b>(整个生态的通用语言): <c>0 = 屏幕底</c>、<c>500 = 屏幕中</c>、<c>1000 = 屏幕顶</c>。
+	/// <para>与 <b>RueI</b> / <b>ruei-cm-lab</b> 的 <c>Scaled position</c> 同一含义 —— 它们的换算
+	/// <c>baseline = 755 − 2.14 × pos</c> 与本项目"整屏约 2140 voffset 单位"完全对应
+	/// (<c>1000 × 2.14 = 2140</c>)。接受这个标尺, 从那些框架迁移过来的作者可以照抄原数值。</para>
+	/// <para><c>&lt; 0</c> 表示未使用, 退回到按 <see cref="Anchor"/> 摆放。</para>
+	/// </summary>
+	public float Scale { get; }
+
+	/// <summary>是否使用了 0–1000 纵向标尺。</summary>
+	public bool HasScale => Managed && Scale >= 0f;
+
+	/// <summary>按 0–1000 标尺构造(生态兼容入口)。</summary>
+	public static HintPosition FromScale(float scale, float offsetUnits = 0f)
+	{
+		return new HintPosition(HintAnchor.MiddleCenter, offsetUnits, scale, managed: true);
+	}
+
 	/// <summary>true = 由本底层摆位; false = 插件自带位置标签, 原样放行。</summary>
 	public bool Managed { get; }
 
-	/// <summary>是否等同于默认位置(底部中央 + 零偏移 + 受管)。</summary>
-	public bool IsDefault => Managed && Anchor == HintAnchor.BottomCenter && Math.Abs(OffsetUnits) < 0.01f;
+	/// <summary>是否等同于默认位置(底部中央 + 零偏移 + 未用标尺 + 受管)。</summary>
+	public bool IsDefault => Managed && !HasScale && Anchor == HintAnchor.BottomCenter && Math.Abs(OffsetUnits) < 0.01f;
 
 	/// <summary>是否"自带位置标签"(不参与本底层的摆位换算)。</summary>
 	public bool IsSelfPositioned => !Managed;
@@ -78,10 +102,13 @@ public readonly struct HintPosition : IEquatable<HintPosition>
 	/// <para><b>重要</b>: 底部区必须排在合成串的<b>末尾</b> —— 提示块底部锚定, 只有最后一行才贴着屏幕底;
 	/// 把底部区放最后, 它的自然堆叠就与旧行为完全一致(零 voffset)。</para>
 	/// </summary>
-	public bool IsBottomAnchored => (byte)Anchor <= (byte)HintAnchor.BottomRight;
+	public bool IsBottomAnchored => !HasScale && (byte)Anchor <= (byte)HintAnchor.BottomRight;
 
-	/// <summary>垂直档位: 0 = 底(含自定位), 1 = 中, 2 = 顶。合成时按档位分区。</summary>
-	public byte Tier => Managed ? (byte)((byte)Anchor / 3) : (byte)0;
+	/// <summary>
+	/// 垂直档位: 0 = 底(含自定位), 1 = 中, 2 = 顶。合成时按档位分区。
+	/// <para>用了 0–1000 标尺的一律归入"中"档 —— 它的落点由标尺<b>绝对</b>决定, 与档位基准无关。</para>
+	/// </summary>
+	public byte Tier => !Managed ? (byte)0 : (HasScale ? (byte)1 : (byte)((byte)Anchor / 3));
 
 	/// <summary>该锚点对应的水平对齐(仅对非默认位置生效, 以免改变既有观感)。</summary>
 	public static HintAlignment AlignOf(HintAnchor anchor)
@@ -188,17 +215,25 @@ public readonly struct HintPosition : IEquatable<HintPosition>
 	}
 
 	public bool Equals(HintPosition other)
-		=> Anchor == other.Anchor && Math.Abs(OffsetUnits - other.OffsetUnits) < 0.01f && Managed == other.Managed;
+		=> Anchor == other.Anchor
+			&& Math.Abs(OffsetUnits - other.OffsetUnits) < 0.01f
+			&& Math.Abs(Scale - other.Scale) < 0.01f
+			&& Managed == other.Managed;
 
 	public override bool Equals(object? obj) => obj is HintPosition other && Equals(other);
 
-	public override int GetHashCode() => (((int)Anchor * 397) ^ OffsetUnits.GetHashCode()) ^ (Managed ? 1 : 0);
+	public override int GetHashCode()
+		=> ((((int)Anchor * 397) ^ OffsetUnits.GetHashCode()) * 397 ^ Scale.GetHashCode()) ^ (Managed ? 1 : 0);
 
 	public override string ToString()
 	{
 		if (!Managed)
 		{
 			return "self";
+		}
+		if (HasScale)
+		{
+			return "scale:" + Scale.ToString("0.#") + (Math.Abs(OffsetUnits) < 0.01f ? string.Empty : "(" + OffsetUnits.ToString("0.#") + ")");
 		}
 		return Anchor + (Math.Abs(OffsetUnits) < 0.01f ? string.Empty : "(" + OffsetUnits.ToString("0.#") + ")");
 	}

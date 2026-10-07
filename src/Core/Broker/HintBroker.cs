@@ -948,7 +948,11 @@ public sealed class HintBroker : IHintBroker
 				HintPosition position = ResolveSlotPosition(slot, scratch);
 				bucket.Position = position;
 				slot.ResolvedPosition = position;
-				HintAlignment alignment = position.IsDefault ? HintAlignment.Left : HintPosition.AlignOf(position.Anchor);
+				// 自定位(插件自带位置标签)的文本, 其对齐也由插件自己控制 —— 本底层不插手,
+				// 否则会把「位置一动不动」变成「被我们居中了」。
+				HintAlignment alignment = (position.IsDefault || position.IsSelfPositioned)
+					? HintAlignment.Left
+					: HintPosition.AlignOf(position.Anchor);
 
 				if (slot.Origin == HintOrigin.Native)
 				{
@@ -1269,12 +1273,22 @@ public sealed class HintBroker : IHintBroker
 				regionHeight += heights[index];
 			}
 
-			float basePosition = position.Tier switch
+			float basePosition;
+			if (position.HasScale)
 			{
-				1 => (screen * 0.5f) - (regionHeight * 0.5f),
-				2 => screen - regionHeight,
-				_ => 0f,
-			};
+				// 0–1000 纵向标尺(生态通用): 0 = 屏幕底, 500 = 屏幕中, 1000 = 屏幕顶。
+				// 该区"中心"落在标尺所示高度上 —— 与 RueI 的 VerticalAlign.Center(默认)一致。
+				basePosition = (position.Scale / 1000f * screen) - (regionHeight * 0.5f);
+			}
+			else
+			{
+				basePosition = position.Tier switch
+				{
+					1 => (screen * 0.5f) - (regionHeight * 0.5f),
+					2 => screen - regionHeight,
+					_ => 0f,
+				};
+			}
 			basePosition += position.OffsetUnits;
 
 			// 区内"距区底"的高度(只算有内容的行)

@@ -28,6 +28,24 @@
   `timer` / `倒计时` → 顶部居中；`team` / `队伍` → 中右；`music` / `点歌` → 右下。
   开关 `auto_layout_by_plugin_name`；可用 `position_overrides` 覆盖。
 
+### 生态兼容（2026-10 于 GitHub 实搜并阅读其源码/文档）
+
+- 把生态内框架的**位置写法**接入为兼容对象——从这些框架出来的 UI，位置一动不动：
+
+| 项目 | 其位置写法 | 处理 |
+| --- | --- | --- |
+| HintServiceMeow ★74 | `Hint.XCoordinate/YCoordinate`（画布单位，半宽 1200）+ `HintAlignment` / `HintVerticalAlign` | 登记「自带位置体系」→ **原样放行** |
+| RueI ★24 | **0–1000 纵向标尺**（源码：`baseline = 755 − 2.14 × pos`）+ `VerticalAlign: Up/Center/Down` | 原样放行；自有写法接受同款标尺 |
+| ruei-cm-lab | 同一 0–1000 标尺（`offset = 700 − (1000 − pos) × 1.08`）+ 离屏哨兵行固定基线 | 原样放行 |
+| UsefulHints ★18 | 配置里直接写原生 TMP 标签 `<align=left><size=28>` | 识别位置标签 → 原样放行 |
+
+- **新增 0–1000 纵向标尺**：自有写法 `{{hc:pos=750}}` / `{{hc:y=500,offset=-90}}` 与 RueI 的
+  `Scaled position` 同义（`2.14 × 1000 = 2140`，正是 `screen_height_units` 默认值），迁移数值可照抄。
+- 外来位置标签识别名单对齐 HintServiceMeow 标签白名单中的**位置类**标签
+  （`voffset` / `pos` / `align` / `line-height` / `line-indent` / `indent` / `margin`）；
+  `size` / `color` / `alpha` 等**纯样式**标签不算位置，仍由本底层摆位。
+- 对「自带位置」的文本**连对齐也不覆盖**（保持插件自己的 `<align>`）。
+
 ### 实现要点
 
 - 新增 `HintPosition`（九宫格锚点 + 偏移 + 自定位标记）、`PositionSyntax`（标记与外来标签解析）、

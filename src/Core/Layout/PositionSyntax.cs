@@ -27,9 +27,14 @@ public static class PositionSyntax
 		@"\{\{\s*hc\s*:\s*(?<body>[^{}]*)\}\}",
 		RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-	/// <summary>兼容检测: 外来位置标签(含自闭合与成对)。</summary>
+	/// <summary>
+	/// 兼容检测: 外来<b>位置</b>标签(含自闭合与成对)。
+	/// <para>这份名单取自生态实况 —— 与 <b>HintServiceMeow</b> 的标签白名单
+	/// (<c>align/indent/line-height/line-indent/margin/pos/voffset/…</c>) 中"会改变落点"的那些对齐;
+	/// <c>size</c> / <c>color</c> / <c>alpha</c> 等纯样式标签<b>不算</b>位置(用了它们仍由本底层摆位)。</para>
+	/// </summary>
 	private static readonly Regex ForeignTagRegex = new Regex(
-		@"<\s*/?\s*(voffset|pos|align|line-height|margin|indent)\b[^>]*>",
+		@"<\s*/?\s*(voffset|pos|align|line-height|line-indent|indent|margin)\b[^>]*>",
 		RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 	/// <summary>文本里有没有自有写法标记。</summary>
@@ -92,6 +97,7 @@ public static class PositionSyntax
 		}
 
 		HintAnchor? anchor = null;
+		float? scale = null;
 		float offset = 0f;
 
 		foreach (string rawPart in body.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries))
@@ -108,14 +114,32 @@ public static class PositionSyntax
 				string key = part.Substring(0, eq).Trim().ToLowerInvariant();
 				string val = part.Substring(eq + 1).Trim();
 
-				if ((key == "pos" || key == "anchor" || key == "位置") && HintPosition.TryParseAnchor(val, out HintAnchor a))
+				if (key == "pos" || key == "anchor" || key == "位置")
 				{
-					anchor = a;
+					if (HintPosition.TryParseAnchor(val, out HintAnchor named))
+					{
+						anchor = named;
+					}
+					else if (float.TryParse(val, NumberStyles.Float, CultureInfo.InvariantCulture, out float posValue))
+					{
+						// 数字形式的 pos = 生态通用的 0–1000 纵向标尺(0 底 / 500 中 / 1000 顶),
+						// 与 RueI / ruei-cm-lab 的 Scaled position 同义 —— 迁移过来可直接照抄数值。
+						scale = posValue;
+					}
 				}
-				else if ((key == "offset" || key == "voffset" || key == "y" || key == "偏移")
-					&& float.TryParse(val, NumberStyles.Float, CultureInfo.InvariantCulture, out float o))
+				else if (key == "y" || key == "scale" || key == "标尺")
 				{
-					offset = o;
+					if (float.TryParse(val, NumberStyles.Float, CultureInfo.InvariantCulture, out float yValue))
+					{
+						scale = yValue;
+					}
+				}
+				else if (key == "offset" || key == "voffset" || key == "偏移")
+				{
+					if (float.TryParse(val, NumberStyles.Float, CultureInfo.InvariantCulture, out float o))
+					{
+						offset = o;
+					}
 				}
 
 				continue;
@@ -125,6 +149,17 @@ public static class PositionSyntax
 			{
 				anchor = direct;
 			}
+			else if (float.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out float bare))
+			{
+				// 裸数字 = 0–1000 标尺
+				scale = bare;
+			}
+		}
+
+		if (scale.HasValue)
+		{
+			position = HintPosition.FromScale(scale.Value, offset);
+			return true;
 		}
 
 		if (anchor is null)

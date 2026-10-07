@@ -105,6 +105,30 @@ offset_font_size: 20     # 量文本宽度用的字号
 
 **解析优先级**：显式 API → 文本标记 → 自带位置标签 → 名称目录 → 默认（底部自然堆叠）。
 
+### 生态兼容对照（2026-10 于 GitHub 实搜并读其源码/文档）
+
+| 项目 | 它的位置写法 | 我们的处理 |
+| --- | --- | --- |
+| **HintServiceMeow** ★74 | `Hint.XCoordinate/YCoordinate`（画布单位，半宽 1200）+ `HintAlignment` / `HintVerticalAlign`，自行渲染 TMP 标签 | 登记为「自带位置体系」→ **原样放行**；其文本里的 `<voffset>` / `<pos>` / `<align>` 亦被自动识别 |
+| **RueI** ★24 | **0–1000 纵向标尺**（源码：`baseline = 755 − 2.14 × pos`）+ `VerticalAlign: Up/Center/Down` | 同上；且我们自有写法**直接接受 0–1000 标尺**，数值可照抄 |
+| **ruei-cm-lab** | 同一 0–1000 标尺（`offset = 700 − (1000 − pos) × 1.08`）+ 离屏哨兵行固定基线 | 同上 |
+| **UsefulHints** ★18 | 直接在配置里写原生 TMP 标签 `<align=left><size=28><color=…>` | 识别 `<align>` 等位置标签 → **原样放行** |
+| 任何直写 `<voffset>` / `<pos>` / `<line-height>` / `<indent>` / `<margin>` / `<line-indent>` 的插件 | 原生 TMP | 一律 **原样放行**，位置一动不动 |
+| 纯样式标签（`<size>` / `<color>` / `<alpha>` / `<b>`…） | 原生 TMP | **不算位置** —— 仍由本底层摆位，样式保留 |
+
+> 关键换算：RueI 的 `2.14 × 1000 = 2140`，正是本项目 `screen_height_units` 的默认值 —— 两套坐标天然对齐。
+>
+> 对「自带位置」的文本，我们**连对齐也不改**（保持插件自己的 `<align>`），确保位置与观感一动不动。
+
+### 0–1000 纵向标尺（生态通用语言）
+
+自有写法同时支持这个标尺：`0 = 屏幕底`、`500 = 屏幕中`、`1000 = 屏幕顶` —— 从 RueI / ruei-cm-lab 迁移过来可以直接照抄数值：
+
+```
+{{hc:pos=750}}                ← 与 RueI 的 Scaled position 同义
+{{hc:pos=500,offset=-90}}     ← 标尺定位, 再往下 90
+```
+
 锚点可写英文或中文：`top-left` / `top` / `top-right` / `middle-left` / `middle` / `middle-right` /
 `bottom-left` / `bottom` / `bottom-right`，也接受 `tl` / `tr` / `mc` 等缩写与 `左上` / `中部` / `右下`。
 

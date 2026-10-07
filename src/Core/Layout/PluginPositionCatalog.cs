@@ -9,22 +9,35 @@ namespace HintChorus.Core.Layout;
 /// <para>解析顺序(前者优先):</para>
 /// <list type="number">
 ///   <item><b>服主覆盖表</b> —— 配置 <c>position_overrides</c>(插件名 → 位置), 可随时增补;</item>
-///   <item><b>已收录表</b> —— 按程序集名 / 显示名关键词匹配的社区插件位置(GitHub 等平台收录);</item>
+///   <item><b>已收录表</b> —— 按程序集名 / 显示名关键词匹配的社区项目(GitHub 实搜所得);</item>
 ///   <item><b>功能区推断</b> —— 名称关键词 → 功能类别 → 位置
 ///     (例: <c>exp</c>/<c>level</c>/<c>rank</c> → 屏幕中部、再往下 90)。</item>
 /// </list>
 ///
-/// <para>三名都没命中时返回 false, 调用方退回<see cref="HintPosition.Default"/>(底部自然堆叠)。</para>
+/// <para><b>已收录表的数据来源</b>(2026-10 于 GitHub 实测检索并阅读其源码/文档):</para>
+/// <list type="bullet">
+///   <item><b>MeowServer/HintServiceMeow</b> ★74 —— 生态内事实标准; 其 <c>Hint</c> 带
+///     <c>XCoordinate/YCoordinate</c> + <c>HintAlignment/HintVerticalAlign</c>, 自行渲染 TMP 标签;</item>
+///   <item><b>pawslee/RueI</b> ★24 —— <b>0–1000 纵向标尺</b>(<c>baseline = 755 − 2.14 × pos</c>),
+///     <c>VerticalAlign: Up/Center/Down</c>;</item>
+///   <item><b>Michaelihc/ruei-cm-lab</b> —— 同一 0–1000 标尺, 用离屏哨兵行固定基线;</item>
+///   <item><b>Vretu-Dev/UsefulHints</b> ★18 —— 直接在配置里写原生 TMP 标签
+///     (<c>&lt;align=left&gt;&lt;size=28&gt;</c>)。</item>
+/// </list>
+///
+/// <para>上面这些"自己会摆位的框架"被登记为 <see cref="HintPosition.SelfPositioned"/>:
+/// 一旦识别到, 其产物<b>原样放行、绝不重排</b> —— 从这些框架出来的 UI, 位置一动不动。</para>
 /// </summary>
 public static class PluginPositionCatalog
 {
 	private readonly struct Entry
 	{
-		public Entry(string[] keys, HintAnchor anchor, float offset)
+		public Entry(string[] keys, HintAnchor anchor, float offset, bool selfPositioned = false)
 		{
 			Keys = keys;
 			Anchor = anchor;
 			Offset = offset;
+			SelfPositioned = selfPositioned;
 		}
 
 		public string[] Keys { get; }
@@ -32,19 +45,38 @@ public static class PluginPositionCatalog
 		public HintAnchor Anchor { get; }
 
 		public float Offset { get; }
+
+		/// <summary>true = "自己会摆位的框架", 遇到它的产物一律原样放行。</summary>
+		public bool SelfPositioned { get; }
 	}
 
 	/// <summary>服主覆盖表(插件关键词 → 位置)。由配置注入, 优先级最高。</summary>
-	private static readonly Dictionary<string, HintPosition> Overrides = new Dictionary<string, HintPosition>(StringComparer.OrdinalIgnoreCase);
+	private static readonly Dictionary<string, HintPosition> Overrides =
+		new Dictionary<string, HintPosition>(StringComparer.OrdinalIgnoreCase);
 
 	private static readonly object Sync = new object();
 
 	/// <summary>
-	/// 已收录的社区插件位置(键为程序集名 / 显示名里的关键词, 命中即用)。
-	/// <para>均为「某类 UI 在这一生态里约定俗成的位置」, 源自在 GitHub 等平台上的公开写法。</para>
+	/// 已收录的社区项目(键为程序集名 / 显示名里的关键词, 命中即用)。
+	/// <para>前 4 条是"自带位置体系的框架" —— 一律原样放行; 其余是具体插件按功能归位。</para>
 	/// </summary>
 	private static readonly Entry[] Curated = new Entry[]
 	{
+		// ── 自带位置体系的框架: 原样放行, 位置一动不动 ─────────────────────
+		new Entry(new[] { "hintservicemeow", "hint-service-meow" }, HintAnchor.BottomCenter, 0f, selfPositioned: true),
+		new Entry(new[] { "customizableuimeow", "customizable-ui-meow" }, HintAnchor.BottomCenter, 0f, selfPositioned: true),
+		new Entry(new[] { "ruei", "ruei-cm", "rueicmlab" }, HintAnchor.BottomCenter, 0f, selfPositioned: true),
+
+		// ── 具体社区插件(实测收录) ─────────────────────────────────────────
+		new Entry(new[] { "usefulhints", "useful-hints" }, HintAnchor.TopCenter, 0f),
+		new Entry(new[] { "hintreminder", "hint-reminder" }, HintAnchor.TopCenter, 0f),
+		new Entry(new[] { "customhint", "custom-hint" }, HintAnchor.BottomLeft, 0f),
+		new Entry(new[] { "hitmarkers", "hitmarker", "hit-marker", "伤害数字" }, HintAnchor.MiddleCenter, 0f),
+		new Entry(new[] { "hintframework", "hint-framework" }, HintAnchor.BottomCenter, 0f),
+		new Entry(new[] { "saskycstyles", "saskyc-styles" }, HintAnchor.BottomCenter, 0f),
+		new Entry(new[] { "hintsmrp", "hints-mrp" }, HintAnchor.BottomCenter, 0f),
+
+		// ── 本机服务器上实际安装的插件 ─────────────────────────────────────
 		new Entry(new[] { "levelsystem", "level-system", "等级系统" }, HintAnchor.MiddleCenter, -90f),
 		new Entry(new[] { "expas", "exp-bar", "experience" }, HintAnchor.MiddleCenter, -90f),
 		new Entry(new[] { "bgmcc", "musicplayer", "music-player", "点歌" }, HintAnchor.BottomRight, 0f),
@@ -52,7 +84,6 @@ public static class PluginPositionCatalog
 		new Entry(new[] { "fullmodsquad", "modsquad", "管理员小队" }, HintAnchor.MiddleRight, 0f),
 		new Entry(new[] { "autotff", "autoff", "自动平衡", "自动换边" }, HintAnchor.TopLeft, 0f),
 		new Entry(new[] { "maplightbooster", "lightbooster", "灯光" }, HintAnchor.TopLeft, 0f),
-		new Entry(new[] { "scpstats", "scp-stats", "统计面板" }, HintAnchor.TopRight, 0f),
 		new Entry(new[] { "nameprefix", "name-prefix", "称号", "名片" }, HintAnchor.MiddleRight, 0f)
 	};
 
@@ -159,7 +190,9 @@ public static class PluginPositionCatalog
 			{
 				if (Contains(id, key) || Contains(name, key))
 				{
-					position = new HintPosition(entry.Anchor, entry.Offset, managed: true);
+					position = entry.SelfPositioned
+						? HintPosition.SelfPositioned
+						: new HintPosition(entry.Anchor, entry.Offset, managed: true);
 					return true;
 				}
 			}
