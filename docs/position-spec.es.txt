@@ -148,3 +148,19 @@ comparten una única gramática.
   P: ¿Mover un plugin sin tocar su código?
   R: Usa position_overrides: exactamente la misma gramática.
 ================================================================================
+
+
+--------------------------------------------------------------------------------
+9. Bloqueo de posicion (una vez fijada, no se mueve)
+--------------------------------------------------------------------------------
+La posicion se asigna UNA SOLA VEZ, la primera vez que aparece el duenio - asignar
+ES "ordenacion terminada". Despues:
+  . que otros plugins aparezcan/desaparezcan o cambien de contenido nunca empuja
+    una fila ya colocada;
+  . dentro de una misma zona, las filas ocupan huecos de ALTURA FIJA en orden, en
+    lugar de flotar segun la altura del contenido.
+
+Como: la colocacion se calcula solo a partir del INDICE DE FILA BLOQUEADO del duenio,
+con la zona anclada unicamente a su fila 0 - al margen de cuantas filas tenga ahora.
+Los plugins sin posicion declarada no se bloquean: conservan el apilado natural
+abajo, asi que el aspecto actual no cambia.

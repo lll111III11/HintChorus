@@ -117,6 +117,17 @@ public sealed class HintBroker : IHintBroker
 
 	private bool _dirtyAll;
 
+	// ── 位置锁定(「一旦固定即锁定, 不允许挪动」的落地) ─────────────────────────
+	/// <summary>
+	/// 位置区 → 归属(插件)的<b>锁定顺序</b>。只增不改: 行号一旦分配就不再变动。
+	/// <para>归属显式换了位置时会在新区追加取号, 旧区保留一个空位 —— 这样其它插件的行号不受影响。</para>
+	/// </summary>
+	private readonly Dictionary<HintPosition, List<string>> _regionOrder = new Dictionary<HintPosition, List<string>>();
+
+	/// <summary>归属 → (锁定位置, 锁定行号)。</summary>
+	private readonly Dictionary<string, (HintPosition Position, int Row)> _lockedRows =
+		new Dictionary<string, (HintPosition, int)>(StringComparer.OrdinalIgnoreCase);
+
 	private const ulong SignatureSeed = 14695981039346656037uL;
 
 	public static HintBroker Instance { get; } = new HintBroker();
@@ -333,6 +344,9 @@ public sealed class HintBroker : IHintBroker
 			_unitsRevision = -1L;
 			_channelRevision = 0L;
 			_slotRevision = -1L;
+			// 位置锁定状态随渲染核心一起复位(下次 Start 时重新分配行号)
+			_regionOrder.Clear();
+			_lockedRows.Clear();
 		}
 		StartupLog.Info("[HintChorus] 合并渲染核心已停止");
 	}
@@ -810,6 +824,9 @@ public sealed class HintBroker : IHintBroker
 
 		/// <summary>该归属解析出的屏幕位置(默认 = 底部中央自然堆叠)。</summary>
 		public HintPosition Position = HintPosition.Default;
+
+		/// <summary>该归属的<b>锁定行号</b>(首次出现时分配, 之后不再变动)。</summary>
+		public int FixedRow;
 	}
 
 	/// <summary>
@@ -1123,6 +1140,10 @@ public sealed class HintBroker : IHintBroker
 		foreach (OwnerBucket bucket in owners)
 		{
 			HintPosition position = bucket.Position;
+
+			// 位置锁定: 首次出现时分配固定行号, 之后永不重排。
+			bucket.FixedRow = EnsureLockedRow(bucket.Owner, position);
+
 			if (position.IsBottomAnchored || position.IsSelfPositioned)
 			{
 				bottomOwners.Add(bucket);
@@ -1191,6 +1212,48 @@ public sealed class HintBroker : IHintBroker
 			out bool partAny);
 
 		anyContent |= partAny;
+
+		// 逐行标注"锁定行号": 易变区占底部前几行, 其后每个归属按它自己的锁定行号排。
+		// 行号一旦分配就不再变动 —— 这正是"位置固定后不允许挪动"的落点。
+		int perOwner = ((RowsPerPlugin <= 0) ? int.MaxValue : RowsPerPlugin);
+		int index = 0;
+
+		int volatileCount = padRows
+			? ((nativeLines is null) ? 0 : Math.Max(0, VolatileRows))
+			: (((nativeLines?.Count) ?? 0) + ((transientLines?.Count) ?? 0));
+
+		while (index < volatileCount && index < part.Count)
+		{
+			part[index].FixedRow = index;
+			index++;
+		}
+
+		foreach (OwnerBucket bucket in group)
+		{
+			int take = Math.Min(bucket.Lines.Count, perOwner);
+			int reserve = padRows ? Math.Min(bucket.Units, perOwner) : take;
+
+			for (int k = 0; k < take && index < part.Count; k++, index++)
+			{
+				part[index].FixedRow = bucket.FixedRow;
+			}
+
+			if (padRows)
+			{
+				for (int k = take; k < reserve && index < part.Count; k++, index++)
+				{
+					part[index].FixedRow = bucket.FixedRow;
+				}
+			}
+		}
+
+		// 兜底: 任何没被标注到的行(理论上不会)按出现顺序给号
+		while (index < part.Count)
+		{
+			part[index].FixedRow = index;
+			index++;
+		}
+
 		foreach (LayoutRow row in part)
 		{
 			row.Position = position;
@@ -1209,6 +1272,38 @@ public sealed class HintBroker : IHintBroker
 			}
 		}
 		return false;
+	}
+
+	/// <summary>
+	/// <b>分配 / 取回一个归属的锁定行号</b> —— 「位置一旦固定即锁定」的落点。
+	///
+	/// <para>首次见到该归属时, 把它追加到对应位置区的末尾并记下行号; 之后一律返回<b>同一行号</b>。
+	/// 由于摆放只按行号计算(与区里有多少行无关), 别的插件出现/消失/内容增减都<b>不会推动它</b>。</para>
+	///
+	/// <para>归属若显式改了位置(API / 配置), 会在新区重新取号; 旧区保留一个空位,
+	/// 以保证其它插件的行号不受牵连。</para>
+	/// </summary>
+	private int EnsureLockedRow(string owner, HintPosition position)
+	{
+		lock (_sync)
+		{
+			if (_lockedRows.TryGetValue(owner, out (HintPosition Position, int Row) locked)
+				&& locked.Position.Equals(position))
+			{
+				return locked.Row;
+			}
+
+			if (!_regionOrder.TryGetValue(position, out List<string> list))
+			{
+				list = new List<string>();
+				_regionOrder[position] = list;
+			}
+
+			int row = list.Count;
+			list.Add(owner);
+			_lockedRows[owner] = (position, row);
+			return row;
+		}
 	}
 
 	/// <summary>
@@ -1247,76 +1342,74 @@ public sealed class HintBroker : IHintBroker
 			accumulated += heights[i];
 		}
 
-		Dictionary<HintPosition, List<int>> regions = new Dictionary<HintPosition, List<int>>();
-		List<HintPosition> order = new List<HintPosition>();
+		// 逐行按【锁定行号】摆放 —— 不再按"区内累计高度"堆叠。
+		//
+		// 关键: 每行的目标高度只由它自己的锁定行号决定, 基准只锚定"第 0 行",
+		// 与这个位置区里当前有多少行【完全无关】。因此:
+		//   · 别的插件出现/消失/内容变化, 都不会推动已经锁定的行;
+		//   · 这就是"位置一旦固定即锁定, 不允许挪动"。
+		List<string> outLines = new List<string>(count);
 		for (int i = 0; i < count; i++)
 		{
-			HintPosition position = rows[i].Position;
-			if (!regions.TryGetValue(position, out List<int> list))
+			if (rows[i].Text.Length == 0)
 			{
-				list = new List<int>();
-				regions[position] = list;
-				order.Add(position);
+				continue;
 			}
-			list.Add(i);
-		}
 
-		List<string> outLines = new List<string>(count);
-		foreach (HintPosition position in order)
-		{
-			List<int> members = regions[position];
-			float regionHeight = 0f;
-			foreach (int index in members)
+			HintPosition position = rows[i].Position;
+			int row = Math.Max(0, rows[i].FixedRow);
+
+			// 自定位(插件自带位置标签)的行: 原样放行, 绝不叠加 voffset ——
+			// 从 RueI / HintServiceMeow / 原生 TMP 过来的 UI, 位置一动不动。
+			if (position.IsSelfPositioned)
 			{
-				regionHeight += heights[index];
+				outLines.Add(rows[i].Text);
+				continue;
+			}
+
+			// 默认位置(未声明任何位置)的行: 沿用原有"底部自然堆叠", 不参与锁定摆放 ——
+			// 这样"全部默认"时的观感与旧版一致, 不会因为引入锁定而倒转顺序。
+			if (position.IsDefault)
+			{
+				outLines.Add(rows[i].Text);
+				continue;
 			}
 
 			float basePosition;
+			float stepSign;   // +1 = 行号越大越靠上; -1 = 行号越大越靠下
 			if (position.HasScale)
 			{
 				// 0–1000 纵向标尺(生态通用): 0 = 屏幕底, 500 = 屏幕中, 1000 = 屏幕顶。
-				// 该区"中心"落在标尺所示高度上 —— 与 RueI 的 VerticalAlign.Center(默认)一致。
-				basePosition = (position.Scale / 1000f * screen) - (regionHeight * 0.5f);
+				// 第 0 行落在标尺所示高度, 后续行往下排。
+				basePosition = position.Scale / 1000f * screen;
+				stepSign = -1f;
+			}
+			else if (position.Tier == 2)
+			{
+				basePosition = screen - unit;   // 顶档: 第 0 行贴顶, 后续行往下
+				stepSign = -1f;
+			}
+			else if (position.Tier == 1)
+			{
+				basePosition = screen * 0.5f;   // 中档: 第 0 行落在中线, 后续行往下(与"中部再往下 N"一致)
+				stepSign = -1f;
 			}
 			else
 			{
-				basePosition = position.Tier switch
-				{
-					1 => (screen * 0.5f) - (regionHeight * 0.5f),
-					2 => screen - regionHeight,
-					_ => 0f,
-				};
-			}
-			basePosition += position.OffsetUnits;
-
-			// 区内"距区底"的高度(只算有内容的行)
-			float[] within = new float[members.Count];
-			float running = 0f;
-			for (int k = members.Count - 1; k >= 0; k--)
-			{
-				within[k] = running;
-				running += heights[members[k]];
+				basePosition = 0f;              // 底档: 第 0 行贴底, 后续行往上
+				stepSign = 1f;
 			}
 
-			for (int k = 0; k < members.Count; k++)
+			float desired = basePosition + (stepSign * row * unit) + position.OffsetUnits;
+			float delta = desired - natural[i];
+			if (Math.Abs(delta) < 0.5f)
 			{
-				int index = members[k];
-				if (rows[index].Text.Length == 0)
-				{
-					continue;
-				}
-
-				float desired = basePosition + within[k];
-				float delta = desired - natural[index];
-				if (Math.Abs(delta) < 0.5f)
-				{
-					outLines.Add(rows[index].Text);
-				}
-				else
-				{
-					float voffset = delta * ((sign < 0f) ? -1f : 1f);
-					outLines.Add("<voffset=" + voffset.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + ">" + rows[index].Text);
-				}
+				outLines.Add(rows[i].Text);
+			}
+			else
+			{
+				float voffset = delta * ((sign < 0f) ? -1f : 1f);
+				outLines.Add("<voffset=" + voffset.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + ">" + rows[i].Text);
 			}
 		}
 
@@ -1367,6 +1460,13 @@ public sealed class HintBroker : IHintBroker
 
 		/// <summary>该行的屏幕位置(默认 = 底部中央自然堆叠)。</summary>
 		public HintPosition Position = HintPosition.Default;
+
+		/// <summary>
+		/// <b>锁定行号</b>(位置固定后不再变动)。
+		/// <para>归属首次出现时分配, 之后<b>永不重排</b> —— 别的插件来去、内容多少, 都不会推动这一行。
+		/// 这是"位置一旦固定即锁定"的实现基础。</para>
+		/// </summary>
+		public int FixedRow;
 	}
 
 	/// <summary>

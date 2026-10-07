@@ -149,3 +149,19 @@ partagent une seule grammaire.
   Q : Déplacer un plugin sans toucher à son code ?
   R : Utilisez position_overrides — exactement la même grammaire.
 ================================================================================
+
+
+--------------------------------------------------------------------------------
+9. Verrouillage de position (une fois fixee, elle ne bouge plus)
+--------------------------------------------------------------------------------
+Une position est attribuee UNE SEULE FOIS, a la premiere apparition du proprietaire -
+l'attribution EST le "tri termine". Ensuite :
+  . l'apparition/disparition d'autres plugins ou un changement de contenu ne
+    pousse jamais une ligne deja placee ;
+  . dans une meme zone, les lignes prennent des emplacements a hauteur FIXE, au
+    lieu de flotter selon la hauteur du contenu.
+
+Principe : le placement est calcule uniquement a partir de l'INDEX DE LIGNE VERROUILLE
+du proprietaire, la zone n'etant ancree qu'a sa ligne 0 - independamment du nombre de
+lignes presentes. Les plugins sans position declaree ne sont pas verrouilles : ils
+conservent l'empilement naturel en bas, donc l'aspect existant reste inchange.

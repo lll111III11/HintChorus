@@ -147,3 +147,19 @@ store that string - marker, config and code all share one grammar.
   Q: I want to move a plugin without touching its code.
   A: Use position_overrides - exactly the same grammar as above.
 ================================================================================
+
+
+--------------------------------------------------------------------------------
+9. Position locking (once fixed, it never moves)
+--------------------------------------------------------------------------------
+A position is assigned ONCE, the first time the owner appears - assignment IS the
+"sorting finished". After that:
+  . other plugins appearing/disappearing or changing content never push an
+    already-placed row;
+  . rows inside one position region take fixed-height slots in order, instead of
+    floating with content height.
+
+How: placement is computed purely from that owner's LOCKED ROW INDEX, with the
+region anchored to its row 0 only - completely independent of how many rows the
+region currently has. Plugins that declare no position are not locked; they keep
+the natural bottom stacking, so the existing look is unchanged.
