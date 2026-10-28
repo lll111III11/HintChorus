@@ -15,11 +15,13 @@
 # HintChorus
 
 **SCP:SL 动态 UI 隔离底层** —— 让**互不相识的插件**在同一个屏幕上和平共处，谁也不用改写法。
+(**SCP:SL dynamic UI isolation layer** — lets **plugins that know nothing about each other** share one screen peacefully, with zero code changes.)
 > **关键词 / Keywords**：SCP:SL ｜ SCP Secret Laboratory ｜ 秘密实验室 ｜ LabAPI ｜ EXILED ｜ Hint ｜ HUD ｜ 提示条 ｜ 屏幕文本 ｜ 多插件共存 ｜ 提示互相顶掉 ｜ 提示错位 ｜ UI 隔离 ｜ hint framework ｜ hint isolation ｜ UI isolation ｜ plugin compatibility ｜ zero code changes
 
 
 > 一句话：游戏只给了一个「提示条」通道，谁后发谁覆盖。本插件把这个通道变成**多个互不干扰的信口**，
 > 并且**按调用方自动归因** —— 插件照原来的样子写 `SendHint` / `SendBroadcast`，丢进去就能用。
+> (In one line: the game exposes a single hint channel, and whoever writes last overwrites everyone else. This plugin turns that channel into **multiple isolated slots** and performs **per-caller attribution**, so plugins keep calling `SendHint` / `SendBroadcast` exactly as before.)
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
 ![Platform](https://img.shields.io/badge/SCP%3ASL-LabAPI-blue)
