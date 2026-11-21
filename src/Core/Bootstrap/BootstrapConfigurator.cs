@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using HintChorus.Core.Broker;
 using HintChorus.Core.Compat;
+using HintChorus.Core.Diagnostics;
 using HintChorus.Core.Identity;
 using HintChorus.Core.Interception;
 using HintChorus.Core.Layout;
@@ -39,6 +40,11 @@ internal static class BootstrapConfigurator
 
 	internal static void Apply(HintChorusPlugin.PluginConfig config)
 	{
+		// 日志: 报告日志默认开(崩溃检测), 详细 UI 日志默认关 —— 只有配置文件里显式打开才记录。
+		UiLog.Initialize(config.EnableCrashReportLog, config.EnableDetailedUiLog, config.DetailedUiLogPerPlayer,
+			Path.Combine(RuntimeHome.HomePath, "logs"));
+		UiLog.ResetThrottle();
+
 		UiIdRegistry.Granularity = config.UiIdGranularity;
 		UiIdRegistry.Persist = config.PersistUiIds;
 		UiInterception instance = UiInterception.Instance;

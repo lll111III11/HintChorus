@@ -3,6 +3,7 @@ using System.Reflection;
 using HarmonyLib;
 using HintChorus.Core.Broker;
 using HintChorus.Core.Compat;
+using HintChorus.Core.Diagnostics;
 using HintChorus.Core.Enums;
 using HintChorus.Core.Identity;
 using HintChorus.Core.Interception;
@@ -97,7 +98,9 @@ public sealed class HintSurfaceIsolation : IUiSurfaceInterceptor
 					NativeHintTranslator.ResolvePlayerLanguage(val, NativeHintLanguage),
 					out string text))
 			{
-					UiSlotRegistry.GetOrCreate(UiIdRegistry.ResolveRoute(NativeId), "系统原生提示", 64, ShowLabels, MaxEntries, MaxDuration, HintOrigin.Native).Push(text, Time.time, ((DisplayableObject<SharedHintData>)(object)val3).DurationScalar);
+					float nativeDuration = ((DisplayableObject<SharedHintData>)(object)val3).DurationScalar;
+					UiSlotRegistry.GetOrCreate(UiIdRegistry.ResolveRoute(NativeId), "系统原生提示", 64, ShowLabels, MaxEntries, MaxDuration, HintOrigin.Native).Push(text, Time.time, nativeDuration);
+					UiLog.Hint(HintFallback.NativeOwner, DisplayName, text, nativeDuration, "并入(译文)");
 				HintBroker.Instance.MarkDirty(val);
 				InterceptedCount++;
 				return false;
@@ -130,6 +133,15 @@ public sealed class HintSurfaceIsolation : IUiSurfaceInterceptor
 		UiId id;
 		if (callerInfo.IsPlugin)
 		{
+			// 插件级原生回退(Hint orvs): 被选中的插件恢复原版行为, 不再并入合并层。
+			// 其它插件不受影响 —— 多个 Hint 插件可以同时存在且互不冲突。
+			if (HintFallback.ShouldPassThrough(callerInfo.PluginId))
+			{
+				YieldToForeignHint(val, val2);
+				PassedThroughCount++;
+				UiLog.Hint(callerInfo.PluginId, DisplayName, text2, ((DisplayableObject<SharedHintData>)(object)val2).DurationScalar, "原生直通(orvs)");
+				return true;
+			}
 			if (!AutoAttribute)
 			{
 				YieldToForeignHint(val, val2);
@@ -150,7 +162,9 @@ public sealed class HintSurfaceIsolation : IUiSurfaceInterceptor
 			priority = 64;
 		}
 		UiId id2 = UiIdRegistry.ResolveRoute(id);
-		UiSlotRegistry.GetOrCreate(id2, callerInfo.IsPlugin ? UiIdRegistry.DisplayNameOf(id2) : "系统原生提示", priority, ShowLabels, MaxEntries, MaxDuration, callerInfo.IsPlugin ? HintOrigin.Attributed : HintOrigin.Native).Push(text2, Time.time, ((DisplayableObject<SharedHintData>)(object)val2).DurationScalar);
+		float duration = ((DisplayableObject<SharedHintData>)(object)val2).DurationScalar;
+		UiSlotRegistry.GetOrCreate(id2, callerInfo.IsPlugin ? UiIdRegistry.DisplayNameOf(id2) : "系统原生提示", priority, ShowLabels, MaxEntries, MaxDuration, callerInfo.IsPlugin ? HintOrigin.Attributed : HintOrigin.Native).Push(text2, Time.time, duration);
+		UiLog.Hint(callerInfo.IsPlugin ? callerInfo.PluginId : HintFallback.NativeOwner, DisplayName, text2, duration);
 		HintBroker.Instance.MarkDirty(val);
 		InterceptedCount++;
 		return false;

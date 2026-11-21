@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using HintChorus.Core.Enums;
+using HintChorus.Core.Diagnostics;
 using HintChorus.Core.Interfaces;
 using HintChorus.Core.Layout;
 using HintChorus.Core.Models;
@@ -137,8 +138,6 @@ public sealed class HintBroker : IHintBroker
 	public bool Enabled { get; set; } = true;
 
 	public bool DebugLog { get; set; }
-
-	public HintEffect[]? GlobalEffects { get; set; }
 
 	public long RenderTicks { get; private set; }
 
@@ -634,6 +633,7 @@ public sealed class HintBroker : IHintBroker
 				catch (Exception ex)
 				{
 					Logger.Error((object)("[HintChorus] 单个玩家渲染异常(已隔离, 不影响其它玩家): " + ex));
+					UiLog.Report("RenderPlayer", ex);
 				}
 			}
 		}
@@ -728,6 +728,7 @@ public sealed class HintBroker : IHintBroker
 			}
 		}
 		ShowMerged(hub, composite, duration);
+		UiLog.PlayerRender(hub, composite);
 	}
 
 	private static ulong Mix(ulong hash, long value)
@@ -1027,6 +1028,13 @@ public sealed class HintBroker : IHintBroker
 			return false;
 		}
 
+		// 详细 UI 日志(默认关): 记录每个插件这一帧落在哪个屏幕位置、每行显示什么。
+		// 只有配置里显式打开 EnableDetailedUiLog 才会走到这里。
+		if (UiLog.Detailed)
+		{
+			LogLayout(owners, nativeLines, transientLines);
+		}
+
 		if (HasPositionedRows(rows))
 		{
 			composite = ComposePositionedBlock(rows, ScreenHeightUnits, OffsetRowHeight, OffsetSign, MeasureVisualRows);
@@ -1046,6 +1054,29 @@ public sealed class HintBroker : IHintBroker
 		}
 		duration = ((minRemaining == float.MaxValue) ? 2f : Mathf.Max(minRemaining, 2.5f));
 		return true;
+	}
+
+	/// <summary>
+	/// 详细 UI 日志 · 把这一帧各归属的落点与内容写出去(带节流, 同一归属 2 秒最多一条)。
+	/// <para>只在 <c>EnableDetailedUiLog</c> 打开时调用, 默认路径完全不经过这里。</para>
+	/// </summary>
+	private static void LogLayout(List<OwnerBucket> owners, List<string> nativeLines, List<string> transientLines)
+	{
+		foreach (OwnerBucket bucket in owners)
+		{
+			if (bucket.Lines.Count > 0)
+			{
+				UiLog.Layout(bucket.Owner, bucket.Position.ToString(), bucket.Lines);
+			}
+		}
+		if (nativeLines.Count > 0)
+		{
+			UiLog.Layout(HintFallback.NativeOwner, "volatile", nativeLines);
+		}
+		if (transientLines.Count > 0)
+		{
+			UiLog.Layout("一次性提示", "volatile", transientLines);
+		}
 	}
 
 	/// <summary>空调色板: <see cref="BuildRows"/> 在无易变区时用它占位(不会被修改)。</summary>
@@ -1625,7 +1656,7 @@ public sealed class HintBroker : IHintBroker
 		//IL_0014: Expected Obj, but got Unknown
 		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0021: Expected Obj, but got Unknown
-		TextHint val = new TextHint(text, new HintParameter[1] { (HintParameter)new StringHintParameter(string.Empty) }, GlobalEffects, duration);
+		TextHint val = new TextHint(text, new HintParameter[1] { (HintParameter)new StringHintParameter(string.Empty) }, (HintEffect[]?)null, duration);
 		lock (_sync)
 		{
 			_ownHints.Add((Hint)(object)val);
@@ -1742,6 +1773,7 @@ public sealed class HintBroker : IHintBroker
 			catch (Exception ex)
 			{
 				Logger.Error((object)("[HintChorus] Hint 刷新异常: " + ex));
+				UiLog.Report("BrokerLoop", ex);
 			}
 		}
 	}

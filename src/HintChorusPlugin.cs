@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using HintChorus.Commands;
 using HintChorus.Core.Bootstrap;
 using HintChorus.Core.Broker;
+using HintChorus.Core.Diagnostics;
 using HintChorus.Core.Enums;
 using HintChorus.Core.Interception;
 using HintChorus.Core.ServerSpecific;
@@ -30,6 +32,15 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 
 		[Description("打印每个玩家的复合 Hint 内容(排障用)")]
 		public bool HintDebugLog { get; set; }
+
+		[Description("崩溃 / 异常报告日志(默认开): 插件自身异常、补丁自愈失败、命令异常等写入 configs/<端口>/HintChorus/logs/report-*.log; 这是默认保留的唯一日志功能")]
+		public bool EnableCrashReportLog { get; set; } = true;
+
+		[Description("详细 UI 日志(默认关): 记录每个插件的提示内容与最终屏幕位置、每个玩家的合成结果, 写入 logs/ui-*.log; 排障时再打开, 打开后 IO 开销明显")]
+		public bool EnableDetailedUiLog { get; set; }
+
+		[Description("详细 UI 日志 · 逐玩家记录最终合成文本(默认关; 需要同时打开 EnableDetailedUiLog 才生效)")]
+		public bool DetailedUiLogPerPlayer { get; set; }
 
 		[Description("内容未变时跳过重发(默认开): 一个字没变就绝不重发, 消除 UI 闪烁与后台卡顿; 关掉会退回'每轮都重发'的旧行为")]
 		public bool SuppressUnchangedResend { get; set; } = true;
@@ -227,23 +238,50 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
-		BootstrapConfigurator.Apply(base.Config);
-		if (base.Config.EnableSssRegistry)
+		try
 		{
-			SssRegistry.Initialize(base.Config.ProtectSssFromOverwrites);
-			if (base.Config.EnableSssForceRewrite)
+			BootstrapConfigurator.Apply(base.Config);
+			if (base.Config.EnableSssRegistry)
 			{
-				SssForceRewrite.Install();
+				SssRegistry.Initialize(base.Config.ProtectSssFromOverwrites);
+				if (base.Config.EnableSssForceRewrite)
+				{
+					SssForceRewrite.Install();
+				}
+				_guardianLoop = Timing.RunCoroutine(GuardianRoutine(), Segment.Update);
 			}
-			_guardianLoop = Timing.RunCoroutine(GuardianRoutine(), Segment.Update);
+			ReleaseBootstrapIfNeeded();
+			if (base.Config.InterceptThirdPartyUi)
+			{
+				UiInterception.Instance.Install();
+			}
+			HintFallback.ResetAll();
+			HintCommand.EnsureRegistered();
+			_maintenanceLoop = Timing.RunCoroutine(MaintenanceRoutine(), Segment.Update);
+			UiLog.WriteStartupReport(BuildStartupReport());
+			StartupLog.Info("[HintChorus] Enable 完成 → 外部插件可经 UiIsolation / IUiIsolation 注册通道、文本源、SSS 端口");
+			StartupLog.Info("[HintChorus] beta 1.1.0: 可进生产服务器但请谨慎; 出问题在控制台输入 Hint orvs 回退到原生提示");
 		}
-		ReleaseBootstrapIfNeeded();
-		if (base.Config.InterceptThirdPartyUi)
+		catch (Exception ex)
 		{
-			UiInterception.Instance.Install();
+			Logger.Error((object)("[HintChorus] Enable 失败: " + ex));
+			UiLog.Report("Enable", ex);
+			throw;
 		}
-		_maintenanceLoop = Timing.RunCoroutine(MaintenanceRoutine(), Segment.Update);
-		StartupLog.Info("[HintChorus] Enable 完成 → 外部插件可经 UiIsolation / IUiIsolation 注册通道、文本源、SSS 端口");
+	}
+
+	/// <summary>启动报告(默认日志): 版本、关键开关、已发现的 Hint 插件。</summary>
+	private string BuildStartupReport()
+	{
+		return "版本: " + GetType().Assembly.GetName().Version + " (beta)"
+			+ "\n端口: " + LabApi.Features.Wrappers.Server.Port
+			+ "\n合并核心: " + base.Config.EnableHintChorus
+			+ " | 第三方拦截: " + base.Config.InterceptThirdPartyUi
+			+ " | 排版: " + base.Config.LayoutMode
+			+ "\n日志: 报告=" + base.Config.EnableCrashReportLog
+			+ " | 详细UI=" + base.Config.EnableDetailedUiLog
+			+ " | 逐玩家=" + base.Config.DetailedUiLogPerPlayer
+			+ "\n已发现 Hint 插件: " + string.Join(", ", HintFallback.Candidates());
 	}
 
 	private void ReleaseBootstrapIfNeeded()
@@ -272,12 +310,15 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
 		Timing.KillCoroutines(new CoroutineHandle[1] { _guardianLoop });
 		Timing.KillCoroutines(new CoroutineHandle[1] { _maintenanceLoop });
+		HintCommand.Unregister();
+		HintFallback.ResetAll();
 		SssForceRewrite.Uninstall();
 		UiInterception.Instance.Uninstall();
 		HintBroker.Instance.Stop();
 		SssRegistry.Terminate();
 		UiSlotRegistry.Clear();
 		RuntimeHome.UninstallResolver();
+		UiLog.ReportEvent("Disable", "插件已停用: 拦截层卸载、回退状态清空");
 		StartupLog.Info("[HintChorus] Disable 完成: 拦截层已卸载, 信口已释放, SSS 数组已还原");
 	}
 
@@ -306,10 +347,12 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			try
 			{
 				UiInterception.Tick();
+				HintCommand.EnsureRegistered();
 			}
 			catch (Exception ex)
 			{
 				Logger.Error((object)("[HintChorus] 维护循环异常: " + ex));
+				UiLog.Report("Maintenance", ex);
 			}
 			int num = sinceGuard + 1;
 			sinceGuard = num;

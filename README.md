@@ -14,6 +14,27 @@
 
 # HintChorus
 
+> ## Beta 1.1.0 — “Wait, is it really entering beta?” … “Yep, it really is!”
+>
+> **HintChorus is now in Beta.** It can be used on regular production servers, but please keep an eye on it.
+>
+> - Trimmed unnecessary hint-interception paths, and **experimentally merged the game's native hints into the composite render** (works in most observed cases).
+> - **Compatibility fallback**: run `Hint orvs` in the server backend console to return the installed hint framework(s) to the vanilla display, one by one. If several are found, it lists them and asks you to pick one by number.
+> - **Detailed logging (off by default)**: font size, screen position and owning plugin for every line of text. Enable `EnableDetailedUiLog` in the config to inspect each plugin's text behaviour.
+> - **Default logging** keeps ordinary events and exceptions only (crash detection).
+> - Fixed about **80%** of the known bugs. Multiple hint plugins can coexist without conflicts.
+>
+> If something breaks: run `Hint orvs`, or remove/delete HintChorus and restart.
+> Target build: current public branch 14.2.x; patch targets will be re-verified after 15.0 “Megapatch III”.
+>
+> ---
+>
+> **HintChorus 要进入 Beta 了，真的假的？我去，真的！**
+>
+> 已可应用于正常的生产服务器，但仍需观察使用。本次更新精简了不必要的 Hint 拦截，并尝试性把原版 Hint 融入到渲染中；新增 `Hint orvs` 控制台回退、详细 UI 日志（默认关闭）；默认日志只记录普通事件与异常事件；修复了约 80% 的已知问题。出问题时可用 `Hint orvs` 退回，或直接移出/删除 HintChorus。
+>
+> 完整发布稿见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
+
 **SCP:SL 动态 UI 隔离底层** —— 让**互不相识的插件**在同一个屏幕上和平共处，谁也不用改写法。
 (**SCP:SL dynamic UI isolation layer** — lets **plugins that know nothing about each other** share one screen peacefully, with zero code changes.)
 
@@ -38,22 +59,63 @@
 
 | 方式 (Method) | 链接 (Link) |
 | --- | --- |
-| 直接下载（仓库内，文件名带 `alpha` 前缀）<br>(Direct download, inside the repo, filename carries the `alpha` prefix) | [`alpha-HintChorus.dll`](alpha-HintChorus.dll) |
-| 发行页（推荐，含版本说明）<br>(Releases page — recommended, includes release notes) | [alpha-v1.0.0](https://github.com/lll111III111/HintChorus/releases/latest) ｜ [全部发行 (All releases)](https://github.com/lll111III111/HintChorus/releases) |
+| 直接下载（仓库内，Beta 版）<br>(Direct download, inside the repo, beta build) | [`HintChorus.dll`](HintChorus.dll) |
+| 发行页（推荐，含版本说明）<br>(Releases page — recommended, includes release notes) | [最新发行 (Latest release)](https://github.com/lll111III111/HintChorus/releases/latest) ｜ [全部发行 (All releases)](https://github.com/lll111III111/HintChorus/releases) |
 
-> 文件名前面的 `alpha-` 只是**标记这是 alpha 阶段的产物**；插件内部的程序集名始终是 `HintChorus`，
+> 从 Beta 起，发行文件不再带 `alpha-` 前缀；插件内部的程序集名始终是 `HintChorus`，
 > 所以改名不影响加载，也不影响引导器找它。
-> (The leading `alpha-` only **marks this as an alpha-stage build**; the assembly name inside the plugin is always `HintChorus`, so renaming the file affects neither loading nor the bootstrap's ability to find it.)
+> (Since Beta, release files no longer carry the `alpha-` prefix; the assembly name inside the plugin is always `HintChorus`, so renaming the file affects neither loading nor the bootstrap's ability to find it.)
 
 安装：
 (Installation:)
 
-1. 把 `alpha-HintChorus.dll` 放进 `plugins/global/`
-   (Put `alpha-HintChorus.dll` into `plugins/global/`)
+1. 把 `HintChorus.dll` 放进 `plugins/global/`
+   (Put `HintChorus.dll` into `plugins/global/`)
 2. 启动服务器（首次会自动释放 `0HintChorus.Bootstrap.dll` 并提示重启一次，这是引导器抢位的设计）
    (Start the server — on first run it automatically extracts `0HintChorus.Bootstrap.dll` and asks you to restart once; that is by design, so the bootstrap can grab the highest load priority)
 3. 按需改 `configs/<端口>/HintChorus/config.yml`（**键名是 snake_case**，见 [`docs/default-config.yml`](docs/default-config.yml)）
    (Optionally edit `configs/<端口>/HintChorus/config.yml`, where `<端口>` is your server port — **keys are snake_case**, see [`docs/default-config.yml`](docs/default-config.yml))
+
+---
+
+## Beta 1.1.0 新增 (What's new in beta)
+
+### 1. 控制台回退：`Hint orvs`（大小写不敏感）
+
+某个 Hint 插件出问题时，**不用改配置、不用卸载插件**，直接在服务器后台控制台输入：
+
+| 命令 | 作用 |
+| --- | --- |
+| `Hint orvs` | 列出已发现的 Hint 插件；只有 1 个时自动切换；多个时按编号选择 |
+| `Hint orvs <编号>` | 只把这个插件切回**游戏原版提示**，其它插件继续由合并层托管 |
+| `Hint orvs <编号> merge` | 恢复该插件为合并渲染 |
+| `Hint orvs all` / `reset` | 全部切回原生 / 全部恢复合并 |
+
+本插件**支持多个 Hint 插件同时存在且互不冲突**；回退只影响被选中的插件，不写配置文件，重启即恢复默认。
+
+### 2. 报告日志 / UI 位置日志（默认只开崩溃报告）
+
+日志目录：`configs/<端口>/HintChorus/logs/`
+
+| 配置键 | 默认 | 说明 |
+| --- | --- | --- |
+| `EnableCrashReportLog` | **开** | 崩溃/异常报告 + 启动报告 → `report-yyyyMMdd.log` |
+| `EnableDetailedUiLog` | **关** | 每个插件的提示内容、最终屏幕位置、占用行数 → `ui-yyyyMMdd.log` |
+| `DetailedUiLogPerPlayer` | **关** | 逐玩家最终合成文本（IO 开销最大） |
+
+默认只保留报告日志；要看每个插件的文字运行情况，必须去配置文件里**准确打开** `EnableDetailedUiLog`。
+
+### 3. 新 Hint 写法（零配置）
+
+不修改任何配置文件，一条调用即可独立发提示：
+
+```csharp
+UiIsolation.SendHint("MyPlugin", "你好", 3f, "top-right");
+UiIsolation.SendHint("MyPlugin", "你好", HintAnchor.MiddleCenter, -90f, 3f);
+UiIsolation.ClearHint("MyPlugin");
+```
+
+旧写法（`RegisterHintChannel` / `SetHintPosition` / 文本标记 `{{hc:...}}`）保持兼容。
 
 ---
 

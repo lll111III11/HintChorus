@@ -1,6 +1,100 @@
 # 变更记录 / Changelog
 
-本项目处于 **alpha** 阶段，接口与行为仍可能调整。
+本项目已从 **alpha** 进入 **beta**：可以进入正常的生产服务器，但仍需**谨慎使用**；
+一旦出现异常，请立即按本文末尾的「回退」步骤退回上一版本或关闭插件。
+
+## beta 1.1.0 (2026-11-21)
+
+### Release headline / 发布标题
+
+**HintChorus Beta 1.1.0 — “Wait, is it really entering beta?” … “Yep, it really is!”**
+
+HintChorus is now in Beta. Usable on regular production servers, but keep an eye on it.
+
+- Trimmed unnecessary hint-interception paths, and experimentally merged the game's native hints into the composite render.
+- Compatibility fallback: run `Hint orvs` in the server console to return the installed hint framework(s) to the vanilla display, one by one (numbered selection when several are found).
+- Detailed logging (off by default) records font size, screen position and owning plugin for every line; default logging keeps ordinary events and exceptions only.
+- Fixed about **80%** of the known bugs; multiple hint plugins can coexist without conflicts.
+
+Full bilingual release notes: [RELEASE_NOTES.md](RELEASE_NOTES.md)
+
+### 更新速览
+
+HintChorus 进入 Beta —— 可以应用于正常的生产服务器，但仍需观察使用。
+
+- 本次更新**精简了不必要的 Hint 拦截路径**，并**尝试性地把游戏原版 Hint 融入合并渲染**（按目前观测，有较大概率成立）。
+- **兼容兜底**：出现不兼容时，可在服务器后台控制台执行 `Hint orvs`，把已安装的 Hint 底层插件逐个退回原版显示。
+- 新增**更详细的日志（默认关闭）**：详细记录每一条文字的字号、屏幕位置与所属插件。
+- **默认日志**只记录普通事件与异常事件（崩溃检测）。
+- 修复了约 **80%** 的已知问题。
+
+> 出问题时：① 控制台 `Hint orvs` 退回可疑插件；② 或直接把 HintChorus 移出/删除后重启。
+
+> 目标游戏版本：当前公开分支（14.2.x）。15.0「Megapatch III」正式发布后需重新核对 6 条 UI 通道的补丁落点。
+
+### 新增 — 控制台回退 `Hint orvs`（大小写不敏感）
+
+某个 Hint 插件与本底层不兼容时，**不用改配置文件、不用卸载插件**，在服务器后台控制台输入：
+
+| 命令 | 作用 |
+| --- | --- |
+| `Hint orvs` | 列出已发现的 Hint 插件；只有 1 个时直接切回原生；多个时给编号并要求输入 |
+| `Hint orvs <编号>` | 把该插件切回**游戏原版提示**（原生直通），其余插件不受影响 |
+| `Hint orvs <编号> merge` | 把该插件恢复为合并渲染 |
+| `Hint orvs all` | 全部切回原生 |
+| `Hint orvs reset` | 全部恢复合并 |
+
+- **支持多个 Hint 插件同时存在且互不冲突**：只有被选中的插件走原生，其它仍由合并层托管。
+- 切换只影响本次运行，**不写配置文件**；重启服务器即恢复默认（全部合并）。
+- 所有切换都会写入报告日志，便于事后追查。
+
+### 新增 — 报告日志 / UI 位置日志（默认只开崩溃报告）
+
+日志目录：`configs/<端口>/HintChorus/logs/`。
+
+| 配置键 | 默认 | 说明 |
+| --- | --- | --- |
+| `EnableCrashReportLog` | **开** | 崩溃/异常报告：插件异常、补丁自愈失败、命令异常、启动报告，写入 `report-yyyyMMdd.log` |
+| `EnableDetailedUiLog` | **关** | 详细 UI 日志：每个插件的提示内容、最终屏幕位置、每个信口占几行，写入 `ui-yyyyMMdd.log` |
+| `DetailedUiLogPerPlayer` | **关** | 逐玩家记录最终合成文本（需同时打开 `EnableDetailedUiLog`），IO 开销最大 |
+
+默认只保留报告日志（崩溃检测）；要看每个插件的文字运行情况，必须去配置文件里**显式打开**详细日志。
+
+### 新增 — 新 Hint 写法（零配置，Beta 起可用）
+
+不修改任何配置文件，一条调用即可独立发提示，自动与其它插件隔离：
+
+```csharp
+// 位置字符串（与 {{hc:...}} 同一套语法）
+UiIsolation.SendHint("MyPlugin", "你好", 3f, "top-right");
+
+// 九宫格锚点
+UiIsolation.SendHint("MyPlugin", "你好", HintAnchor.MiddleCenter, -90f, 3f);
+
+// 清除
+UiIsolation.ClearHint("MyPlugin");
+```
+
+下一版本会继续沿用这套写法，并把它作为推荐入口；旧写法（`RegisterHintChannel` / `SetHintPosition` / 文本标记 `{{hc:...}}`）保持兼容。
+
+### 删除 / 弃用
+
+- **删除**：`HintBroker.GlobalEffects`（从未被赋值、始终为 `null`，属于遗留占位）。
+- **弃用**：`layout_mode: compact` —— 功能仍在，但位置会随内容增减而漂移，后续版本将移除；请改用 `rows` 或 `offsets`。
+- **保留**：`HintIsolation.Shim` 兼容垫片（依赖旧程序集名的插件重编后可删）。
+- **命名**：发行文件名不再使用 `alpha-` 前缀，改由版本号与发行页标注阶段。
+
+### 回退（出问题时立即执行）
+
+1. 服务器控制台输入 `Hint orvs`，把可疑插件切回原生；或
+2. 把 `config.yml` 的 `InterceptThirdPartyUi` 改为 `false` 并重启；或
+3. 直接停用/删除 `HintChorus.dll` 与 `0HintChorus.Bootstrap.dll` 后重启，恢复到未安装状态。
+
+### 已知限制
+
+- 详细 UI 日志会周期性写盘，**只建议排障时开启**。
+- `Hint orvs` 的回退状态不持久化（重启重置），避免配置被意外写坏。
+- 15.0 正式版尚未发布；私测 Beta 期间不保证补丁落点稳定。
 
 ### 兼容垫片：HintIsolation.dll（让依赖旧名的插件不必重编）
 

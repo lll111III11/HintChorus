@@ -27,6 +27,16 @@ hint_refresh_interval: 0.75
 hint_resend_leeway: 0.150000006
 # 打印每个玩家的复合 Hint 内容(排障用)
 hint_debug_log: false
+
+# ── 日志 ──────────────────────────────────────────────────────────────────
+# 崩溃 / 异常报告日志(默认开): 插件异常、补丁自愈失败、命令异常、启动报告
+#   写入 configs/<端口>/HintChorus/logs/report-yyyyMMdd.log —— 默认保留的唯一日志功能
+enable_crash_report_log: true
+# 详细 UI 日志(默认关): 每个插件的提示内容、最终屏幕位置、每个信口占几行
+#   写入 configs/<端口>/HintChorus/logs/ui-yyyyMMdd.log —— 排障时才打开, IO 开销明显
+enable_detailed_ui_log: false
+# 详细 UI 日志 · 逐玩家记录最终合成文本(默认关; 需要同时打开 enable_detailed_ui_log)
+detailed_ui_log_per_player: false
 # 内容未变时跳过重发(默认开): 一个字没变就绝不重发, 消除 UI 闪烁与后台卡顿; 关掉会退回'每轮都重发'的旧行为
 suppress_unchanged_resend: true
 # 输入摘要快筛(默认开): 本轮渲染输入的结构摘要没变就连字符串合成都整段跳过, 比'内容未变跳过重发'更早一步

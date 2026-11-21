@@ -12,6 +12,17 @@
 > automáticamente desde la pila de llamadas — un plugin que simplemente llama a `SendHint` / `SendBroadcast`
 > funciona tal cual y deja de pisar a los demás.
 
+> **Beta 1.1.0 (2026-11-21)** — HintChorus entra en Beta: puede usarse en servidores de producción normales, pero conviene vigilarlo.
+>
+> - Se recortaron rutas de interceptación innecesarias y se **intentó integrar los hints nativos del juego en el render combinado** (según lo observado, funciona en la mayoría de los casos).
+> - **Red de seguridad**: ejecuta `Hint orvs` en la consola del servidor para devolver la capa o capas de hints instaladas a la visualización nativa, una por una.
+> - **Registro detallado (desactivado por defecto)**: tamaño de fuente, posición en pantalla y plugin propietario de cada línea.
+> - Por defecto solo se registran eventos normales y excepciones (detección de fallos).
+> - Se corrigieron cerca del **80 %** de los errores conocidos.
+>
+> Si hay problemas: ① `Hint orvs` para revertir el plugin sospechoso; ② o quitar/eliminar HintChorus y reiniciar.
+> Versión objetivo: rama pública actual 14.2.x; los puntos de parche se revisarán tras el lanzamiento de 15.0 «Megapatch III».
+
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
 
 ## Descarga
@@ -20,15 +31,15 @@
 
 | | |
 | --- | --- |
-| Descarga directa (el archivo lleva el prefijo `alpha-`) | [`alpha-HintChorus.dll`](../../alpha-HintChorus.dll) |
+| Descarga directa (versión beta) | [`HintChorus.dll`](../../HintChorus.dll) |
 | Página de versiones (recomendado) | [Releases](https://github.com/lll111III11/HintChorus/releases/latest) |
 
-El prefijo `alpha-` solo indica la fase de desarrollo : el **nombre de ensamblado sigue siendo `HintChorus`**,
+Desde la Beta, los archivos de versión ya no llevan el prefijo `alpha-`: el **nombre de ensamblado sigue siendo `HintChorus`**,
 así que renombrar el archivo no cambia nada de la carga.
 
 Instalación :
 
-1. Coloque `alpha-HintChorus.dll` en `plugins/global/`
+1. Coloque `HintChorus.dll` en `plugins/global/`
 2. Inicie el servidor (el primer arranque escribe `0HintChorus.Bootstrap.dll` y pide un reinicio — es deliberado)
 3. Si lo necesita, edite `configs/<puerto>/HintChorus/config.yml` (**las claves van en snake_case** ; ver [`docs/default-config.yml`](../default-config.yml))
 

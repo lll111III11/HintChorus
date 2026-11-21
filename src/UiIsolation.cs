@@ -260,4 +260,63 @@ public static class UiIsolation
 	{
 		return Service.ClearHintPosition(pluginId);
 	}
+
+	/// <summary>
+	/// <b>新 Hint 写法(Beta / 零配置)</b> —— 一条调用完成「建信口 + 设位置 + 发文本」,
+	/// <b>不需要修改任何配置文件</b>, 也不会与其它 Hint 插件冲突。
+	/// <para>例: <c>UiIsolation.SendHint("MyPlugin", "你好", 3f, "top-right");</c></para>
+	/// <para>内部会为该插件分配独立信口; 同一个 pluginId 反复调用只会更新内容, 不会堆叠。</para>
+	/// </summary>
+	/// <param name="moduleId">插件标识(建议用程序集名)。</param>
+	/// <param name="text">提示文本(支持 TMP 富文本)。</param>
+	/// <param name="duration">保留秒数。</param>
+	/// <param name="positionSpec">可选位置字符串, 语法同 <c>{{hc:...}}</c>, 如 <c>top-right</c> / <c>pos=750,align=left</c>。</param>
+	/// <param name="priority">信口优先级(越小越靠上)。</param>
+	public static IHintChannel? SendHint(string moduleId, string text, float duration = 2f,
+		string? positionSpec = null, byte priority = 128)
+	{
+		if (string.IsNullOrWhiteSpace(moduleId) || string.IsNullOrEmpty(text))
+		{
+			return null;
+		}
+		if (!string.IsNullOrWhiteSpace(positionSpec))
+		{
+			SetHintPosition(moduleId, positionSpec);
+		}
+
+		IHintChannel? channel = GetHintChannel(moduleId);
+		if (channel == null)
+		{
+			channel = RegisterHintChannel(moduleId, moduleId, text, duration, priority);
+		}
+		else
+		{
+			channel.SetText(text);
+			channel.Duration = duration;
+		}
+		return channel;
+	}
+
+	/// <summary>
+	/// <b>新 Hint 写法(Beta / 零配置)</b> —— 用九宫格锚点代替位置字符串。
+	/// <para>例: <c>UiIsolation.SendHint("MyPlugin", "你好", HintAnchor.TopRight, 0f, 3f);</c></para>
+	/// </summary>
+	public static IHintChannel? SendHint(string moduleId, string text, HintAnchor anchor,
+		float offsetUnits = 0f, float duration = 2f, byte priority = 128)
+	{
+		SetHintPosition(moduleId, anchor, offsetUnits);
+		return SendHint(moduleId, text, duration, null, priority);
+	}
+
+	/// <summary>清除一个零配置信口的文本(信口本身保留, 位置不会丢)。</summary>
+	public static bool ClearHint(string moduleId)
+	{
+		IHintChannel? channel = GetHintChannel(moduleId);
+		if (channel == null)
+		{
+			return false;
+		}
+		channel.SetText(string.Empty);
+		return true;
+	}
 }
