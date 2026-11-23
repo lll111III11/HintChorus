@@ -3,6 +3,22 @@
 本项目已从 **alpha** 进入 **beta**：可以进入正常的生产服务器，但仍需**谨慎使用**；
 一旦出现异常，请立即按本文末尾的「回退」步骤退回上一版本或关闭插件。
 
+## beta 1.1.2 (2026-11-23)
+
+### Release headline / 发布标题
+
+**HintChorus Beta 1.1.2 — Patch Shield**
+
+- **New: Patch Shield.** Some hint frameworks (e.g. HintServiceMeow) call `Harmony.Unpatch(HintDisplay.Show, HarmonyPatchType.All)` when they install, removing every other plugin's patches from the method — priority no longer matters once you are off the table. The shield checks `HintDisplay.Show` every **0.25 s**; if our prefix is gone it reinstalls immediately and re-sends the composite to every player.
+- Verified against a real HarmonyX harness: (A) priority alone loses, (B) hooking `Harmony.Unpatch` does not fire, (C) detect-and-reinstall wins.
+- The shield only reinstalls our own patches; it never blocks other plugins from unloading or patching normally.
+
+### 更新速览
+
+- **新增「补丁护盾」**：部分 Hint 框架（如 HintServiceMeow）安装时会执行 `Harmony.Unpatch(HintDisplay.Show, HarmonyPatchType.All)`，把别人挂在该方法上的补丁整体摘掉 —— 补丁不在表里，优先级再高也没用。护盾每 **0.25 秒**检查一次，发现我们的前缀被摘掉就立刻重装，并向所有玩家重发复合块。
+- 用真实 HarmonyX 沙盒验证：只靠优先级会输；给 `Harmony.Unpatch` 挂后置钩子不会触发；**检测后立即重装有效**。
+- 护盾只重装自己的补丁，不阻止其它插件正常卸载或打补丁。
+
 ## beta 1.1.1 (2026-11-23)
 
 ### Release headline / 发布标题

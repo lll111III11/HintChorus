@@ -14,11 +14,12 @@
 
 # HintChorus
 
-> ## Beta 1.1.1 — Snapshot Rollback & Takeover
+> ## Beta 1.1.2 — Snapshot Rollback & Takeover + Patch Shield
 >
 > **HintChorus is now in Beta.** It can be used on regular production servers, but please keep an eye on it.
 >
-> - **New: Snapshot Rollback & Takeover.** Third-party hints are recorded as per-player snapshots before absorption or suppression. When another hint plugin modifies the hint channel after us, HintChorus rolls it back through the snapshot and takes the patch back over.
+> - **New: Patch Shield.** Some hint frameworks call `Harmony.Unpatch(HintDisplay.Show, HarmonyPatchType.All)` when they install, removing every other plugin's patches — priority is meaningless once you are off the table. The shield checks every **0.25 s** and reinstalls immediately, then re-sends the composite.
+> - **Snapshot Rollback & Takeover.** Third-party hints are recorded as per-player snapshots before absorption or suppression. When another hint plugin modifies the hint channel after us, HintChorus rolls it back through the snapshot and takes the patch back over.
 >   - Path 1 — **contention first**: `HintDisplay.Show` runs at the highest Harmony priority, so mainstream hint plugins never get control of the channel.
 >   - Path 2 — **rollback after the fact**: if another plugin already took the channel first, a postfix fallback detects that our prefix was skipped, pushes the snapshot back out, and re-takes over everything.
 > - **`Hint orvs` mainstream detection**: no mainstream hint plugin → the command says so and offers option **1** = restore vanilla + replay pre-override data. Mainstream plugins present → numbered per-plugin rollback, hot-applying the last recorded data per player.
@@ -31,9 +32,9 @@
 >
 > ---
 >
-> **HintChorus 1.1.1 版本更新：新增「快照拦回」。**
+> **HintChorus 1.1.2 版本更新：快照拦回 + 补丁护盾。**
 >
-> 第三方提示在被吸收或压制之前，会先按玩家记录快照。外部 Hint 插件在我们之后修改提示通道时，会通过快照强行退回并重新接管补丁。实现有两种方式：抢占在先（最高优先级，抢在主流插件之前接管），或事后拦回（对方已抢先时，由 Postfix 按快照退回再整体接管）。此外，`Hint orvs` 会先检测主流插件：没有就明确提示并提供编号 1 = 退回原生 + 恢复覆盖前数据；有就按编号单独回退并热应用其最后数据。
+> 第三方提示在被吸收或压制之前，会先按玩家记录快照。外部 Hint 插件在我们之后修改提示通道时，会通过快照强行退回并重新接管补丁。部分框架会用 `Unpatch All` 清场，护盾每 0.25 秒检查一次，发现我们的补丁被摘掉就立刻重装并重发 UI。
 >
 > 完整发布稿见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
@@ -80,7 +81,13 @@
 
 ---
 
-## Beta 1.1.1 新增 (What's new)
+## Beta 1.1.2 新增 (What's new)
+
+### A. 补丁护盾（Patch Shield）
+
+部分 Hint 框架安装时会执行 `Harmony.Unpatch(HintDisplay.Show, HarmonyPatchType.All)`，把别人挂在该方法上的补丁整体摘掉。补丁一旦不在表里，优先级再高也没用。
+
+护盾每 **0.25 秒**检查一次 `HintDisplay.Show` 上是否还有本底层的补丁；发现被摘掉就立即重装，并向所有玩家重发复合块。它只重装自己的补丁，不阻止其它插件正常卸载。
 
 ### 0. 快照拦回（Snapshot Rollback & Takeover）
 

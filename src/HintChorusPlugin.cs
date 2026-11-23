@@ -222,6 +222,8 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 
 	private CoroutineHandle _maintenanceLoop;
 
+	private CoroutineHandle _shieldLoop;
+
 	public override string Name => "HintChorus";
 
 	public override string Description => "动态 UI 隔离底层: 拦截并归因第三方 UI 调用, 按 UiId 分配独立信口, 支持多 UI 表面";
@@ -257,6 +259,9 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			if (base.Config.InterceptThirdPartyUi)
 			{
 				UiInterception.Instance.Install();
+				// 护盾: 外部框架(如 HintServiceMeow)用 Unpatch All 清场时, 0.25 秒内装回来。
+				PatchShield.Install();
+				_shieldLoop = Timing.RunCoroutine(ShieldRoutine(), Segment.Update);
 			}
 			HintFallback.ResetAll();
 			HintTakeover.Clear();
@@ -264,7 +269,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			_maintenanceLoop = Timing.RunCoroutine(MaintenanceRoutine(), Segment.Update);
 			UiLog.WriteStartupReport(BuildStartupReport());
 			StartupLog.Info("[HintChorus] Enable 完成 → 外部插件可经 UiIsolation / IUiIsolation 注册通道、文本源、SSS 端口");
-			StartupLog.Info("[HintChorus] beta 1.1.1: 可进生产服务器但请谨慎; 强接管已启用, 出问题在控制台输入 Hint orvs 回退到原生提示");
+			StartupLog.Info("[HintChorus] beta 1.1.2: 快照拦回 + 补丁护盾(0.25 秒重装); 出问题在控制台输入 Hint orvs 回退");
 		}
 		catch (Exception ex)
 		{
@@ -315,6 +320,8 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
 		Timing.KillCoroutines(new CoroutineHandle[1] { _guardianLoop });
 		Timing.KillCoroutines(new CoroutineHandle[1] { _maintenanceLoop });
+		Timing.KillCoroutines(new CoroutineHandle[1] { _shieldLoop });
+		PatchShield.Uninstall();
 		HintCommand.Unregister();
 		HintFallback.ResetAll();
 		HintTakeover.Clear();
@@ -340,6 +347,22 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			catch (Exception ex)
 			{
 				Logger.Error((object)("[HintChorus] SSS 守卫检查异常: " + ex));
+			}
+		}
+	}
+
+	private static IEnumerator<float> ShieldRoutine()
+	{
+		while (true)
+		{
+			yield return Timing.WaitForSeconds(0.25f);
+			try
+			{
+				PatchShield.Tick();
+			}
+			catch (Exception ex)
+			{
+				Logger.Error((object)("[HintChorus] 补丁护盾检查异常: " + ex));
 			}
 		}
 	}

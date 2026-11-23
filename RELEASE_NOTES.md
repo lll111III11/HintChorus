@@ -1,10 +1,10 @@
-# HintChorus Beta 1.1.1 — Snapshot Rollback & Takeover
+# HintChorus Beta 1.1.2 — Patch Shield
 
 > 发布标题 / Release title:
-> **HintChorus Beta 1.1.1 — Snapshot Rollback & Takeover**
+> **HintChorus Beta 1.1.2 — Patch Shield**
 >
 > 中文副标题 / Chinese subtitle:
-> **HintChorus 1.1.1 版本更新：新增「快照拦回」**
+> **HintChorus 1.1.2 版本更新：新增「补丁护盾」**
 
 ---
 
@@ -12,21 +12,28 @@
 
 **Beta status** — HintChorus is still Beta. Usable on regular production servers, but keep an eye on it. If anything goes wrong, run `Hint orvs native`, or remove/delete HintChorus and restart.
 
-### New: Snapshot Rollback & Takeover
+### New: Patch Shield
 
-Third-party hint calls are now recorded as per-player snapshots **before** they are absorbed or suppressed: text, duration and owning plugin. When another hint plugin modifies the hint channel after us, HintChorus rolls the channel back through that snapshot and takes the patch back over.
+Some hint frameworks (for example HintServiceMeow) call `Harmony.Unpatch(HintDisplay.Show, HarmonyPatchType.All)` while installing. That removes **every other plugin's patches** from the method — once you are off the table, Harmony priority no longer means anything.
 
-Two implementation paths:
+The shield checks `HintDisplay.Show` every **0.25 seconds**. If our prefix is missing it reinstalls immediately and re-sends the composite to every player, so the UI comes back in the same frame instead of staying blank.
 
-1. **Contention first** — `HintDisplay.Show` is patched at the highest Harmony priority, so the takeover runs before mainstream hint plugins and they are not given control of the channel.
-2. **Rollback after the fact** — if another plugin already took the channel first, a postfix fallback detects that our prefix was skipped, pushes the snapshot back out for that player, and re-takes over the whole channel.
+Verified against a real HarmonyX harness:
+
+| Strategy | Result |
+| --- | --- |
+| Priority only (`int.MaxValue`) | Loses — removed by `Unpatch All` |
+| Hook `Harmony.Unpatch` with a postfix | Never fires (Harmony's internal path bypasses it) |
+| Detect-and-reinstall | Wins — our prefix runs first after reinstall |
+
+The shield only reinstalls our own patches. It never blocks another plugin from unloading or patching normally.
 
 ### Also in this release
 
-- **`Hint orvs` mainstream detection**: no mainstream hint plugin detected → the command says so and offers option **1** = restore vanilla and replay the pre-override data. Mainstream plugins present → listed by number; selecting one rolls that plugin back to vanilla and hot-applies its last recorded data per player; `merge` restores it.
-- New sub-commands: `Hint orvs native`, `Hint orvs all`, `Hint orvs reset`.
-- New config key: `ForceTakeover` (default `true`). Turn it off to go back to observe-and-yield behaviour.
-- Multiple hint plugins can still coexist without conflicts.
+- **Snapshot Rollback & Takeover**: third-party hints are recorded per player before absorption; if another plugin modifies the channel after us, HintChorus rolls it back through the snapshot and re-takes over.
+- **`Hint orvs` mainstream detection**: no mainstream hint plugin → option **1** = restore vanilla + replay pre-override data. Mainstream plugins present → numbered per-plugin rollback with hot-applied last data.
+- Existing commands: `Hint orvs native`, `Hint orvs all`, `Hint orvs reset`.
+- Multiple hint plugins can coexist without conflicts.
 
 ### Rollback
 
@@ -34,27 +41,33 @@ Two implementation paths:
 - Or remove/delete `HintChorus.dll` (and `0HintChorus.Bootstrap.dll`) and restart the server.
 
 > Target build: current public branch 14.2.x. Patch targets will be re-verified after SCP:SL 15.0 “Megapatch III” ships.
-> Release asset: **`HintChorus.dll`** (1.1.1.0).
+> Release asset: **`HintChorus.dll`** (1.1.2.0).
 
 ---
 
 ## 中文（辅助）
 
-**版本更新：新增「快照拦回」。**
+**版本更新：新增「补丁护盾」。**
 
-本版本新增快照拦回功能。第三方提示在被吸收或压制之前，会先按玩家记录一份快照（文本、时长、所属插件）。当外部 Hint 插件在我们之后修改了提示通道时，HintChorus 会通过这份快照把通道退回，并重新接管补丁。
+部分 Hint 框架（例如 HintServiceMeow）在安装时会执行 `Harmony.Unpatch(HintDisplay.Show, HarmonyPatchType.All)`，把别人挂在这个方法上的补丁**整体摘掉**。补丁一旦不在表里，Harmony 优先级再高也没有意义。
 
-具体实现有两种方式：
+护盾每 **0.25 秒**检查一次 `HintDisplay.Show` 上是否还有本底层的补丁；发现被摘掉就立即重装，并向所有玩家重发复合块 —— UI 在同一帧内回来，而不是一直空白。
 
-1. **抢占在先**：把 `HintDisplay.Show` 挂在 Harmony 最高优先级，抢在主流 Hint 插件之前接管，不让它们拿到提示通道。
-2. **事后拦回**：如果对方已经抢先接管，则由 Postfix 兜底发现我们的前缀被跳过，按快照把该玩家这一份重新下发，再整体接管回来。
+用真实 HarmonyX 沙盒验证过：
 
-其它更新：
+| 策略 | 结果 |
+| --- | --- |
+| 只靠优先级（`int.MaxValue`） | 输 —— 被 `Unpatch All` 摘掉 |
+| 给 `Harmony.Unpatch` 挂后置钩子 | 不触发（Harmony 内部路径绕过） |
+| 检测到被摘掉后立即重装 | 赢 —— 重装后我们的前缀先执行 |
 
-- **`Hint orvs` 主流插件检测**：没有检测到主流 Hint 插件时，明确告诉服主，并提供编号 **1** = 退回原生并恢复覆盖前数据；检测到主流插件时按编号列出，选中后单独回退并把该插件最后一条数据热应用；`merge` 恢复合并。
-- 新增子命令：`Hint orvs native`、`Hint orvs all`、`Hint orvs reset`。
-- 新配置：`ForceTakeover`（默认开）。关掉即退回“只观测、遇冲突让路”的行为。
-- 多个 Hint 插件依然可以同时存在、互不冲突。
+护盾只重装自己的补丁，不阻止其它插件正常卸载或打补丁。
+
+其它内容：
+
+- **快照拦回**：第三方提示在被吸收前按玩家记录快照；外部插件改动提示通道后，通过快照退回并重新接管。
+- **`Hint orvs` 主流插件检测**：没有主流插件时提供编号 **1** = 退回原生 + 恢复覆盖前数据；有则按编号单独回退并热应用其最后数据。
+- **多个 Hint 插件依然可以共存、互不冲突。**
 
 ### 退回方式
 
@@ -62,4 +75,4 @@ Two implementation paths:
 - 或者直接移出/删除 `HintChorus.dll`（以及 `0HintChorus.Bootstrap.dll`）后重启服务器。
 
 > 目标版本：当前公开分支 14.2.x；15.0「Megapatch III」正式发布后会重新核对拦截落点。
-> 本次发布资产请使用 **`HintChorus.dll`**（1.1.1.0）。
+> 本次发布资产请使用 **`HintChorus.dll`**（1.1.2.0）。
