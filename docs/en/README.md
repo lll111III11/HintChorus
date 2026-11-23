@@ -1,4 +1,4 @@
-<!-- language tabs -->
+﻿<!-- language tabs -->
 ## Language / 语言
 
 | Language | Entry |
@@ -22,11 +22,12 @@
 > channel into **independent slots**, one per caller, attributed automatically from the call stack —
 > so a plugin that just calls `SendHint` / `SendBroadcast` works as-is, and stops clobbering everyone else.
 
-> **Beta 1.1.1 — Snapshot Rollback & Takeover**
+> **Beta 1.1.2 — Patch Arbiter, Snapshot Rollback & Takeover**
 >
 > HintChorus is in Beta: usable on regular production servers, but keep an eye on it.
 >
-> - **New: Snapshot Rollback & Takeover.** Third-party hints are recorded as per-player snapshots before absorption or suppression. When another hint plugin modifies the hint channel after us, HintChorus rolls it back through the snapshot and takes the patch back over.
+> - **New: Patch Arbiter.** Harmony's five uninstall entry points are instrumented. If a framework clears a method with `Unpatch All`, our patches are restored synchronously in the same call stack and the UI is re-sent; a 0.25 s shield stays as a backstop. Other plugins can still unload and patch normally.
+> - **Snapshot Rollback & Takeover.** Third-party hints are recorded as per-player snapshots before absorption or suppression. When another hint plugin modifies the hint channel after us, HintChorus rolls it back through the snapshot and takes the patch back over.
 >   - Path 1 — contention first: `HintDisplay.Show` runs at the highest Harmony priority, so mainstream hint plugins never get control of the channel.
 >   - Path 2 — rollback after the fact: if another plugin already took the channel first, a postfix fallback detects that our prefix was skipped, pushes the snapshot back out, and re-takes over.
 > - **Compatibility fallback**: `Hint orvs` detects mainstream hint plugins. None found → option **1** = restore vanilla + replay. Found → numbered per-plugin rollback with hot-applied last data.
@@ -35,6 +36,14 @@
 >
 > If something breaks: ① run `Hint orvs native` to roll back; ② or remove/delete HintChorus and restart.
 > Target build: current public branch 14.2.x; patch targets will be re-verified after 15.0 "Megapatch III" ships.
+
+> **Language note**: the runtime embeds only the five UN languages (`en` / `zh` / `fr` / `ru` / `es`); the other 20+ languages are provided as external translations and docs, falling back to English when a line is missing. See [languages.md](../languages.md).
+
+## Concise / Detailed
+
+- **Concise**: HintChorus splits the game's single hint channel into per-caller isolated slots with zero plugin changes; it includes patch arbitration, a load-first `0.dll`, and `Hint orvs` rollback.
+- **Detailed**: HintChorus is a server-side dynamic UI isolation layer for SCP:SL. It intercepts hints, broadcasts, console, CASSIE, admin chat and hit markers, attributes each call to its caller and gives it an independent slot. The patch arbiter restores this layer synchronously after external clears; `0.dll` loads before other plugins; a first-run setup wizard and safe update check are included.
+- **First run**: the server console wizard asks about auto update, detailed logs and writing the config. Commands: `Hc setup`, `Hc setup 1 on|off`, `Hc setup 2 on|off`, `Hc setup 3 yes|no`, `Hc setup 4 on|off`, `Hc setup done`, `Hc setup skip`.
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
 ![Platform](https://img.shields.io/badge/SCP%3ASL-LabAPI-blue)
@@ -161,3 +170,4 @@ Ecosystem neighbours — **not** dependencies of this project; linked so you can
 **CC0-1.0** — public domain dedication, no conditions attached: see [`LICENSE`](../LICENSE).
 Third-party content and referenced ideas are excluded from that dedication and listed separately in
 [`THIRD-PARTY.md`](../THIRD-PARTY.md).
+

@@ -25,6 +25,14 @@ internal static class HintDisplayShowPatch
 	[HarmonyPriority(int.MaxValue)]
 	private static bool Prefix(HintDisplay __instance, Hint hint)
 	{
+		if (UiInterception.Instance.AllowExternalTakeover)
+		{
+			// 已由服务器控制台指令让出通道: 不拦截, 但标记"本轮我们是有意放行",
+			// 让 Postfix 不要误判为"被外部前缀跳过"而强行接管。
+			_prefixRan = true;
+			return true;
+		}
+
 		_prefixRan = true;
 		try
 		{

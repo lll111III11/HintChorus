@@ -14,9 +14,13 @@ internal static class BootstrapInstaller
 {
 	internal const string ResourceName = "HintChorus.Bootstrap.dll";
 
-	internal const string FileName = "0HintChorus.Bootstrap.dll";
+	/// <summary>最短文件名: 在 LabAPI 的目录枚举里排到所有插件之前。</summary>
+	internal const string FileName = "0.dll";
 
-	internal static string TargetPath => Path.Combine(PathManager.Plugins.FullName, "global", "0HintChorus.Bootstrap.dll");
+	/// <summary>旧版引导器文件名, 释放新版时顺手清掉, 避免同一引导器执行两次。</summary>
+	private const string LegacyFileName = "0HintChorus.Bootstrap.dll";
+
+	internal static string TargetPath => Path.Combine(PathManager.Plugins.FullName, "global", FileName);
 
 	internal static bool EnsureReleased(out string detail)
 	{
@@ -30,6 +34,7 @@ internal static class BootstrapInstaller
 				return false;
 			}
 			string targetPath = TargetPath;
+			DeleteLegacy(targetPath);
 			if (File.Exists(targetPath) && IsSameContent(targetPath, array))
 			{
 				detail = "引导器已是当前版本: " + targetPath;
@@ -46,6 +51,26 @@ internal static class BootstrapInstaller
 			detail = "释放引导器失败: " + ex.Message;
 			Logger.Error((object)("[HintChorus] " + detail));
 			return false;
+		}
+	}
+
+	private static void DeleteLegacy(string targetPath)
+	{
+		try
+		{
+			string directory = Path.GetDirectoryName(targetPath);
+			if (directory == null)
+			{
+				return;
+			}
+			string legacy = Path.Combine(directory, LegacyFileName);
+			if (File.Exists(legacy))
+			{
+				File.Delete(legacy);
+			}
+		}
+		catch (Exception)
+		{
 		}
 	}
 

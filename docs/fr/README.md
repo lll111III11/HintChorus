@@ -1,4 +1,4 @@
-<!-- language tabs -->
+﻿<!-- language tabs -->
 **Langue / 语言 / Language :** [中文（主）](../../README.md) ｜ [English](../en/README.md) ｜ **Français** ｜ [Русский](../ru/README.md) ｜ [Español](../es/README.md) ｜ [多语言 / Multilingual](../languages.md)
 
 ---
@@ -12,14 +12,23 @@
 > automatiquement depuis la pile d'appels — un plugin qui appelle simplement `SendHint` / `SendBroadcast`
 > fonctionne tel quel et cesse d'écraser les autres.
 
-> **Beta 1.1.1 (2026-11-23) — Snapshot Rollback & Takeover**
+> **Beta 1.1.2 (2026-11-23) — Patch Arbiter, Snapshot Rollback & Takeover**
 >
+> - **Nouveau : arbitre de patches (Patch Arbiter).** Les cinq points de désinstallation de Harmony sont instrumentés. Si un framework vide une méthode avec `Unpatch All`, nos patches sont restaurés dans la même pile d'appels et l'UI est renvoyée ; un filet de sécurité vérifie toutes les 0,25 s. Les autres plugins peuvent toujours se décharger et patcher normalement.
 > - **Nouveau : retour par instantané (Snapshot Rollback & Takeover).** Les hints tiers sont enregistrés sous forme d'instantanés par joueur avant absorption. Si un autre plugin de hints modifie le canal après nous, HintChorus le rétablit via l'instantané et reprend le patch : soit en passant en premier avec la priorité Harmony la plus élevée, soit via un repli postfix lorsque notre préfixe a été ignoré.
 > - **`Hint orvs`** détecte les plugins de hints courants : aucun trouvé → option **1** = retour au natif + rejeu des données ; sinon liste numérotée avec application à chaud des dernières données.
 > - Journal détaillé désactivé par défaut ; journal par défaut = événements et exceptions.
 >
 > En cas de problème : `Hint orvs native`, ou retirer/supprimer HintChorus et redémarrer.
 > Version cible : branche publique actuelle 14.2.x ; les points de patch seront revérifiés après la sortie de 15.0 « Megapatch III ».
+
+> **Note linguistique** : le runtime n'intègre que les cinq langues de l'ONU (`en` / `zh` / `fr` / `ru` / `es`) ; les 20+ autres langues sont fournies en traductions/docs externes et retombent sur l'anglais si une ligne manque. Voir [languages.md](../languages.md).
+
+## Concis / Détaillé
+
+- **Concis** : HintChorus transforme l'unique canal de hints en emplacements isolés par appelant, sans modification des plugins ; il inclut l'arbitrage des patches, le chargement prioritaire `0.dll` et le retour `Hint orvs`.
+- **Détaillé** : HintChorus est une couche d'isolation UI côté serveur pour SCP:SL. Elle intercepte hints, broadcasts, console, CASSIE, chat admin et marqueurs de touche, attribue chaque appel à son appelant et lui donne un emplacement indépendant. L'arbitre restaure cette couche dans la même pile après un nettoyage externe ; `0.dll` se charge avant les autres plugins ; un assistant de première configuration et une vérification de mise à jour sécurisée sont inclus.
+- **Premier démarrage** : l'assistant dans la console serveur propose mise à jour auto, journal détaillé et écriture de la configuration. Commandes : `Hc setup`, `Hc setup 1 on|off`, `Hc setup 2 on|off`, `Hc setup 3 yes|no`, `Hc setup 4 on|off`, `Hc setup done`, `Hc setup skip`.
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
 
@@ -130,3 +139,4 @@ Les contenus tiers sont exclus de cette dédicace et listés dans [`THIRD-PARTY.
 - [**RueI**](https://github.com/pawslee/RueI) — framework d'indications CC0 ; origine de l'idée « calculer un décalage »
 - [**HintServiceMeow**](https://github.com/MeowServer/HintServiceMeow) — framework d'indications MIT, place chaque indication par coordonnées
 - [**LabAPI**](https://github.com/northwood-studios/LabAPI) — l'API serveur sur laquelle ce projet repose
+

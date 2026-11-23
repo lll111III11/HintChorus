@@ -6,6 +6,10 @@ using CommandSystem;
 using HintChorus.Core.Broker;
 using HintChorus.Core.Compat;
 using HintChorus.Core.Diagnostics;
+using HintChorus.Core.Interception;
+using HintChorus.Core.Localization;
+using HintChorus.Core.Setup;
+using HintChorus.Core.Updates;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
@@ -39,22 +43,32 @@ internal sealed class HintCommand : ICommand, IUsageProvider
 
     public string[] Aliases => new[] { "hc" };
 
-    public string Description => "HintChorus 控制台: Hint orvs 检测主流插件并切回原生提示";
+    public string Description => "HintChorus 服务器控制台: Hint orvs 检测主流插件并切回原生提示";
 
     public string[] Usage => new[]
     {
-        "Hint orvs              —— 检测主流插件并列出编号(无主流时编号 1 = 退回原生)",
-        "Hint orvs <编号>       —— 把该插件切回原生直通, 并热应用其最后一条数据",
-        "Hint orvs <编号> merge —— 把该插件恢复为合并渲染",
-        "Hint orvs native       —— 整体退回原生, 恢复覆盖前数据",
-        "Hint orvs all          —— 全部退回原生并恢复覆盖前数据",
-        "Hint orvs reset        —— 退出原生模式, 全部恢复合并"
+        SetupText.Get("helpOrvs", LocaleService.Language),
+        SetupText.Get("helpPick", LocaleService.Language),
+        SetupText.Get("helpMerge", LocaleService.Language),
+        SetupText.Get("helpNative", LocaleService.Language),
+        SetupText.Get("helpAll", LocaleService.Language),
+        SetupText.Get("helpReset", LocaleService.Language),
+        SetupText.Get("helpYield", LocaleService.Language),
+        SetupText.Get("helpTake", LocaleService.Language),
+        SetupText.Get("helpSetup", LocaleService.Language),
+        SetupText.Get("helpUpdate", LocaleService.Language)
     };
 
     public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
     {
         try
         {
+            if (!IsServerConsole(sender))
+            {
+                response = "[HintChorus] 该命令只允许在服务器终端控制台执行。";
+                return false;
+            }
+
             if (arguments.Count == 0)
             {
                 response = BuildHelp();
@@ -62,6 +76,17 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             }
 
             string sub = Arg(arguments, 0);
+
+            if (sub.Equals("setup", StringComparison.OrdinalIgnoreCase))
+            {
+                return SetupWizard.Handle(Slice(arguments, 1), out response);
+            }
+
+            if (sub.Equals("update", StringComparison.OrdinalIgnoreCase))
+            {
+                return UpdateService.HandleCommand(out response);
+            }
+
             if (!sub.Equals("orvs", StringComparison.OrdinalIgnoreCase))
             {
                 response = "[HintChorus] 未知子命令: " + sub + "\n" + BuildHelp();
@@ -74,6 +99,25 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             }
 
             string target = Arg(arguments, 1);
+
+            if (target.Equals("yield", StringComparison.OrdinalIgnoreCase))
+            {
+                UiInterception.Instance.AllowExternalTakeover = true;
+                response = "[HintChorus] 已让出提示通道: 外部 Hint 插件现在可以接管。\n输入 Hint orvs take 收回。";
+                UiLog.Detail("COMMAND", "yield by " + SafeSender(sender));
+                return true;
+            }
+
+            if (target.Equals("take", StringComparison.OrdinalIgnoreCase))
+            {
+                UiInterception.Instance.AllowExternalTakeover = false;
+                UiInterception.Instance.Repair();
+                HintBroker.Instance.MarkDirty();
+                response = "[HintChorus] 已收回提示通道: 本底层重新接管, 并重发 UI。";
+                UiLog.Detail("COMMAND", "take by " + SafeSender(sender));
+                return true;
+            }
+
             if (target.Equals("native", StringComparison.OrdinalIgnoreCase))
             {
                 int replayed = HintTakeover.EnterNativeMode(true);
@@ -264,12 +308,12 @@ internal sealed class HintCommand : ICommand, IUsageProvider
     private static string BuildHelp()
     {
         StringBuilder builder = new StringBuilder();
-        builder.AppendLine("[HintChorus] 控制台命令(大小写不敏感):");
+        builder.AppendLine(SetupText.Get("helpHeader", LocaleService.Language));
         foreach (string line in Instance.Usage)
         {
             builder.Append("  ").AppendLine(line);
         }
-        builder.Append("说明: 支持多个 Hint 插件共存; 某个插件出问题时用 orvs 单独回退, 其余插件不受影响。");
+        builder.Append(SetupText.Get("helpFooter", LocaleService.Language));
         return builder.ToString();
     }
 
@@ -282,6 +326,15 @@ internal sealed class HintCommand : ICommand, IUsageProvider
         return args.Array[args.Offset + index] ?? string.Empty;
     }
 
+    private static ArraySegment<string> Slice(ArraySegment<string> args, int start)
+    {
+        if (args.Array == null || start >= args.Count)
+        {
+            return new ArraySegment<string>(Array.Empty<string>());
+        }
+        return new ArraySegment<string>(args.Array, args.Offset + start, args.Count - start);
+    }
+
     private static string SafeSender(ICommandSender? sender)
     {
         try
@@ -291,6 +344,32 @@ internal sealed class HintCommand : ICommand, IUsageProvider
         catch (Exception)
         {
             return "(unknown)";
+        }
+    }
+
+    /// <summary>
+    /// 只允许服务器终端控制台。RA 面板的 <c>RemoteAdmin.PlayerCommandSender</c>、
+    /// 查询接口的 <c>Query.QueryCommandSender</c> 以及玩家客户端控制台一律拒绝。
+    /// </summary>
+    private static bool IsServerConsole(ICommandSender? sender)
+    {
+        if (sender == null)
+        {
+            return false;
+        }
+        try
+        {
+            if (string.Equals(sender.GetType().FullName, "GameCore.ConsoleCommandSender", StringComparison.Ordinal))
+            {
+                return true;
+            }
+            CommandSender? commandSender = sender as CommandSender;
+            return commandSender != null
+                && string.Equals(commandSender.SenderId, "GAME CONSOLE", StringComparison.Ordinal);
+        }
+        catch (Exception)
+        {
+            return false;
         }
     }
 

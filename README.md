@@ -14,11 +14,11 @@
 
 # HintChorus
 
-> ## Beta 1.1.2 — Snapshot Rollback & Takeover + Patch Shield
+> ## Beta 1.1.2 — Patch Arbiter, Snapshot Rollback & Takeover
 >
 > **HintChorus is now in Beta.** It can be used on regular production servers, but please keep an eye on it.
 >
-> - **New: Patch Shield.** Some hint frameworks call `Harmony.Unpatch(HintDisplay.Show, HarmonyPatchType.All)` when they install, removing every other plugin's patches — priority is meaningless once you are off the table. The shield checks every **0.25 s** and reinstalls immediately, then re-sends the composite.
+> - **New: Patch Arbiter.** Harmony's five uninstall entry points are instrumented, so no framework can strip this layer by clearing a method. If a plugin calls `Unpatch All`, our patches are restored **synchronously in the same call stack**, then the UI is re-sent. A 0.25 s shield stays as a backstop. Other plugins can still unload and patch normally.
 > - **Snapshot Rollback & Takeover.** Third-party hints are recorded as per-player snapshots before absorption or suppression. When another hint plugin modifies the hint channel after us, HintChorus rolls it back through the snapshot and takes the patch back over.
 >   - Path 1 — **contention first**: `HintDisplay.Show` runs at the highest Harmony priority, so mainstream hint plugins never get control of the channel.
 >   - Path 2 — **rollback after the fact**: if another plugin already took the channel first, a postfix fallback detects that our prefix was skipped, pushes the snapshot back out, and re-takes over everything.
@@ -32,9 +32,9 @@
 >
 > ---
 >
-> **HintChorus 1.1.2 版本更新：快照拦回 + 补丁护盾。**
+> **HintChorus 1.1.2 版本更新：补丁仲裁层 + 快照拦回。**
 >
-> 第三方提示在被吸收或压制之前，会先按玩家记录快照。外部 Hint 插件在我们之后修改提示通道时，会通过快照强行退回并重新接管补丁。部分框架会用 `Unpatch All` 清场，护盾每 0.25 秒检查一次，发现我们的补丁被摘掉就立刻重装并重发 UI。
+> 第三方提示在被吸收或压制之前，会先按玩家记录快照。外部 Hint 插件在我们之后修改提示通道时，会通过快照强行退回并重新接管补丁。部分框架会用 `Unpatch All` 清场：仲裁层挂住 Harmony 的卸载入口，在同一个调用栈内把本底层补丁装回去，再重发 UI；护盾每 0.25 秒兜底一次。
 >
 > 完整发布稿见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
@@ -49,6 +49,14 @@
 > 一句话：游戏只给了一个「提示条」通道，谁后发谁覆盖。本插件把这个通道变成**多个互不干扰的信口**，
 > 并且**按调用方自动归因** —— 插件照原来的样子写 `SendHint` / `SendBroadcast`，丢进去就能用。
 > (In one line: the game exposes a single hint channel, and whoever writes last overwrites everyone else. This plugin turns that channel into **multiple isolated slots** and performs **per-caller attribution**, so plugins keep calling `SendHint` / `SendBroadcast` exactly as before.)
+
+## 简洁 / 详细（多语言版见 docs）
+
+> **语言说明**：运行时只内嵌联合国五种语言（`zh` / `en` / `fr` / `ru` / `es`）；其余 20+ 语言以外部译文与文档形式提供，缺行回退英文。详见 [docs/languages.md](docs/languages.md)。
+
+- **简洁**：HintChorus 把游戏的单条提示通道拆成按调用方隔离的信口，插件无需改代码；内置补丁仲裁、`0.dll` 抢加载与 `Hint orvs` 回退。
+- **详细**：HintChorus 是 SCP:SL 服务器端的动态 UI 隔离底层。它拦截 Hint、广播、控制台、CASSIE、管理端聊天与命中标记六条通道，按调用方自动归因并分配独立信口；补丁仲裁层会在外部清场后同步恢复本底层补丁；`0.dll` 以最短文件名抢在其它插件之前加载；另含首次运行配置向导、安全更新检查与 15.0 模板层骨架。
+- **首次运行**：服务器终端会进入配置向导，按本地语言询问自动更新、详细日志与是否写入配置。命令：`Hc setup`、`Hc setup 1 on|off`、`Hc setup 2 on|off`、`Hc setup 3 yes|no`、`Hc setup done`、`Hc setup skip`。
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
 ![Platform](https://img.shields.io/badge/SCP%3ASL-LabAPI-blue)
@@ -83,11 +91,29 @@
 
 ## Beta 1.1.2 新增 (What's new)
 
-### A. 补丁护盾（Patch Shield）
+### A. 补丁仲裁层（Patch Arbiter）
 
-部分 Hint 框架安装时会执行 `Harmony.Unpatch(HintDisplay.Show, HarmonyPatchType.All)`，把别人挂在该方法上的补丁整体摘掉。补丁一旦不在表里，优先级再高也没用。
+本插件自带一套补丁管理中间层：Harmony 的 5 个卸载入口（`Harmony.Unpatch` 两个重载、`Harmony.UnpatchAll`、`PatchProcessor.Unpatch` 两个重载）全部受控。外部框架用 `Unpatch All` 清场后，只要受保护的方法上少了本底层的补丁，仲裁层会**在同一个调用栈内**恢复，并让 Broker 重发 UI。
 
-护盾每 **0.25 秒**检查一次 `HintDisplay.Show` 上是否还有本底层的补丁；发现被摘掉就立即重装，并向所有玩家重发复合块。它只重装自己的补丁，不阻止其它插件正常卸载。
+它只恢复自己的补丁，不阻止其它插件正常卸载或打补丁。仲裁层自身的钩子被整表清空（如 `UnpatchAll(null)`）后，也会在恢复过程中自动补回。
+
+护盾每 **0.25 秒**再做一次自检，覆盖调用点被 JIT 内联等极端情况。两层都在 `Hint orvs` 回退时一并停用。
+
+### A2. 抢占与让出（Load First / Yield）
+
+- 抢加载引导器以最短文件名 **`0.dll`** 释放到 `plugins/global/`，配合 `LoadPriority.Highest`，在 LabAPI 的目录枚举里排在所有插件之前，先把拦截补丁装好；主 DLL 仍为 `plugins/global/HintChorus.dll`。
+- 默认**拒绝**外部接管：外部框架清场会被仲裁层在同一调用栈内恢复。
+- 只有服务器终端控制台输入 `Hint orvs yield` 才让出提示通道，`Hint orvs take` 收回；重启自动回到拒绝。
+- `Hint` / `hc` 只注册在服务器终端控制台并校验发送方类型，**RA 面板、查询接口、玩家客户端控制台都无法执行**。
+
+### A3. 首次运行配置向导与安全更新
+
+- 本次版本首次启动时，等所有启动文本输出完（约 6 秒），服务器终端会进入配置向导；每个版本只引导一次。
+- 向导按本地语言询问：是否开启自动更新、是否开启详细 UI 日志、是否现在写入配置、是否在更新后回合结束重启（RNR）。每选择一项，都会用当地语言显示该项的说明。
+- 命令：`Hc setup`、`Hc setup 1 on|off`、`Hc setup 2 on|off`、`Hc setup 3 yes|no`、`Hc setup 4 on|off`、`Hc setup done`、`Hc setup skip`；只接受服务器终端控制台。
+- 语言 / 时区 / 地区自动探测：有网时用公网 IP + 网络时区，并用 HTTP 时间校验本地时钟；无网时用本地时区/时间戳；地区探测失败回退英文。配置里可手动指定 `language`，或设 `network_locale: off` 关闭网络探测。
+- 安全更新：`Hc update` 立即检查 GitHub 最新版本；开启 `auto_update` 时默认只下载到 `HintChorus.dll.new`，**不覆盖正在运行的 DLL**。
+- RNR：开启 `rnr_after_update` 后，下载完成会尝试替换 `HintChorus.dll`，然后设置“本回合结束后重启”，由游戏在回合结束时彻底重启并加载新版本。
 
 ### 0. 快照拦回（Snapshot Rollback & Takeover）
 
@@ -112,6 +138,8 @@
 | `Hint orvs <编号> merge` | 恢复该插件为合并渲染 |
 | `Hint orvs native` / `all` | 整体 / 全部退回原生并恢复覆盖前数据 |
 | `Hint orvs reset` | 退出原生模式，全部恢复合并 |
+| `Hint orvs yield` | 让出提示通道，允许外部 Hint 插件接管（仅本次运行） |
+| `Hint orvs take` | 收回提示通道，恢复本底层接管（默认） |
 
 本插件**支持多个 Hint 插件同时存在且互不冲突**；回退只影响被选中的插件，不写配置文件，重启即恢复默认。
 
@@ -140,6 +168,18 @@ UiIsolation.ClearHint("MyPlugin");
 旧写法（`RegisterHintChannel` / `SetHintPosition` / 文本标记 `{{hc:...}}`）保持兼容。
 
 ---
+
+## 15.0 规划（草案）
+
+我们有一个计划：把 Hint 的显示方式改为"按模板对应显示"，而不是固定排版。
+
+- 模板由后续版本释放，本次更新不包含；
+- 当前已落骨架：`0.dll` 会把映射组件与程序表释放到 `dependencies\global`，只有配置了 `Template` 才会预热解析，默认不改变显示；
+- 服务器配置里需要指定使用哪个模板（可以理解为使用哪种语言/文案方案，例如 `zh`、`en`，或自定义名称）；
+- 也可以自定义模板：填写自定义模板的名字后，就会使用该模板；
+- 模板的具体样式：**敬请期待**。
+
+范围只涉及提示的排版与显示，不改变玩法；默认不启用，不配置就保持现在的行为。
 
 ## 它解决什么问题 (What problem it solves)
 

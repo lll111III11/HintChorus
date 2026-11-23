@@ -1,4 +1,4 @@
-<!-- language tabs -->
+﻿<!-- language tabs -->
 **Idioma / 语言 / Language :** [中文（主）](../../README.md) ｜ [English](../en/README.md) ｜ [Français](../fr/README.md) ｜ [Русский](../ru/README.md) ｜ **Español** ｜ [多语言 / Multilingual](../languages.md)
 
 ---
@@ -12,14 +12,23 @@
 > automáticamente desde la pila de llamadas — un plugin que simplemente llama a `SendHint` / `SendBroadcast`
 > funciona tal cual y deja de pisar a los demás.
 
-> **Beta 1.1.1 (2026-11-23) — Snapshot Rollback & Takeover**
+> **Beta 1.1.2 (2026-11-23) — Patch Arbiter, Snapshot Rollback & Takeover**
 >
+> - **Nuevo: árbitro de parches (Patch Arbiter).** Los cinco puntos de desinstalación de Harmony están instrumentados. Si un framework vacía un método con `Unpatch All`, nuestros parches se restauran en la misma pila de llamadas y la UI se reenvía; un escudo cada 0,25 s actúa como respaldo. Los demás plugins pueden seguir descargándose y parcheando con normalidad.
 > - **Nuevo: retorno por instantánea (Snapshot Rollback & Takeover).** Los hints de terceros se guardan como instantáneas por jugador antes de absorberse. Si otro plugin de hints modifica el canal después de nosotros, HintChorus lo revierte mediante la instantánea y vuelve a tomar el parche: entrando primero con la máxima prioridad de Harmony, o con un respaldo postfix cuando se omitió nuestro prefijo.
 > - **`Hint orvs`** detecta plugins de hints populares: ninguno → opción **1** = volver a nativo + reproducir datos; si hay, lista numerada con aplicación en caliente de los últimos datos.
 > - Registro detallado desactivado por defecto; el registro normal solo guarda eventos y excepciones.
 >
 > Si hay problemas: `Hint orvs native`, o quitar/eliminar HintChorus y reiniciar.
 > Versión objetivo: rama pública actual 14.2.x; los puntos de parche se revisarán tras el lanzamiento de 15.0 «Megapatch III».
+
+> **Nota de idiomas**: el runtime solo incluye los cinco idiomas de la ONU (`en` / `zh` / `fr` / `ru` / `es`); los otros 20+ idiomas son traducciones/documentos externos y recurren al inglés si falta una línea. Ver [languages.md](../languages.md).
+
+## Breve / Detallado
+
+- **Breve**: HintChorus convierte el único canal de hints en ranuras aisladas por llamador sin cambiar los plugins; incluye arbitraje de parches, carga prioritaria de `0.dll` y reversión `Hint orvs`.
+- **Detallado**: HintChorus es una capa de aislamiento de UI del lado del servidor para SCP:SL. Intercepta hints, broadcasts, consola, CASSIE, chat de administración y marcadores de impacto, atribuye cada llamada a su emisor y le asigna una ranura independiente. El árbitro restaura la capa en la misma pila tras un vaciado externo; `0.dll` se carga antes que los demás plugins; incluye asistente de primera configuración y comprobación segura de actualizaciones.
+- **Primer inicio**: el asistente en la consola del servidor pregunta por actualización automática, registro detallado y escritura de la configuración. Comandos: `Hc setup`, `Hc setup 1 on|off`, `Hc setup 2 on|off`, `Hc setup 3 yes|no`, `Hc setup 4 on|off`, `Hc setup done`, `Hc setup skip`.
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
 
@@ -131,3 +140,4 @@ Los contenidos de terceros quedan fuera de esta dedicación y se listan en [`THI
 - [**RueI**](https://github.com/pawslee/RueI) — framework de avisos CC0 ; origen de la idea « calcular un desplazamiento »
 - [**HintServiceMeow**](https://github.com/MeowServer/HintServiceMeow) — framework de avisos MIT, coloca cada aviso por coordenadas
 - [**LabAPI**](https://github.com/northwood-studios/LabAPI) — la API de servidor sobre la que se apoya este proyecto
+

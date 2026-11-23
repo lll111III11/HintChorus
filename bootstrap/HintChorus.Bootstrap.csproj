@@ -4,7 +4,7 @@
 	<!--
 	  HintChorus 抢先引导器(0 前缀)。
 	  由主项目 HintChorus.dll 在运行时从内嵌资源释放为
-	  plugins\global\0HintChorus.Bootstrap.dll —— 文件名以 0 开头,
+	  plugins\global\0.dll —— 最短文件名,
 	  在 LabAPI 按同优先级枚举时会排在前面, 从而抢先 Enable。
 	  本工程刻意保持极小依赖(只引用 LabApi), 避免引导阶段出现解析问题。
 	-->
@@ -42,6 +42,21 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- 映射组件: 由 0.dll 释放到 dependencies\global, 下一次重启由 LabAPI 预加载 -->
+		<EmbeddedResource Include="..\mapping\bin\$(Configuration)\net48\HintChorus.Mapping.dll">
+			<LogicalName>HintChorus.Mapping.dll</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\mapping\bin\$(Configuration)\net48\template-map.ini">
+			<LogicalName>HintChorus.Mapping.template-map.ini</LogicalName>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- 只保证构建顺序, 不作为程序集引用 -->
+		<ProjectReference Include="..\mapping\HintChorus.Mapping.csproj" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 </Project>

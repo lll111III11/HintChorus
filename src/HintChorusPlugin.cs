@@ -7,7 +7,11 @@ using HintChorus.Core.Broker;
 using HintChorus.Core.Diagnostics;
 using HintChorus.Core.Enums;
 using HintChorus.Core.Interception;
+using HintChorus.Core.Localization;
 using HintChorus.Core.ServerSpecific;
+using HintChorus.Core.Setup;
+using HintChorus.Core.Templates;
+using HintChorus.Core.Updates;
 using LabApi.Features;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
@@ -41,6 +45,24 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 
 		[Description("详细 UI 日志 · 逐玩家记录最终合成文本(默认关; 需要同时打开 EnableDetailedUiLog 才生效)")]
 		public bool DetailedUiLogPerPlayer { get; set; }
+
+		[Description("自动更新(默认关): 只检查并下载到 HintChorus.dll.new, 绝不覆盖正在运行的 DLL")]
+		public bool AutoUpdate { get; set; }
+
+		[Description("更新后回合结束重启(RNR, 默认关): 自动更新下载并替换 DLL 后, 等当前回合结束再彻底重启服务器加载新版本")]
+		public bool RnrAfterUpdate { get; set; }
+
+		[Description("界面/控制台语言: auto=跟随系统; 可填 zh/en/fr/ru/es; 检测不到地区时回退英文")]
+		public string Language { get; set; } = "auto";
+
+		[Description("时区(配置向导自动写入, 仅记录): auto=自动检测")]
+		public string Timezone { get; set; } = "auto";
+
+		[Description("地区(配置向导自动写入, 仅记录): auto=自动检测; 检测不到时语言回退英文")]
+		public string Region { get; set; } = "auto";
+
+		[Description("网络语言/时区探测: auto=有网时用公网 IP + 网络时区校验, 无网回退本地; off=只用本地")]
+		public string NetworkLocale { get; set; } = "auto";
 
 		[Description("内容未变时跳过重发(默认开): 一个字没变就绝不重发, 消除 UI 闪烁与后台卡顿; 关掉会退回'每轮都重发'的旧行为")]
 		public bool SuppressUnchangedResend { get; set; } = true;
@@ -205,7 +227,10 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		[Description("对讲机显示屏: 间隔内被反复改写时的回滚阈值(秒)。0 = 只观测不改写(默认); 大于 0 才会真的回滚")]
 		public float IntercomThrottleInterval { get; set; }
 
-		[Description("释放并启用 0 前缀抢先引导器(0HintChorus.Bootstrap.dll): 让底层抢在其它插件前加载")]
+		[Description("Hint 显示模板(默认空=不启用, 保持现有排版; 可填 zh/en 或自定义模板名; 自定义模板放 configs/<端口>/HintChorus/templates/<名字>.ini)")]
+		public string Template { get; set; } = string.Empty;
+
+		[Description("释放并启用抢加载引导器(0.dll): 最短文件名 + 最高优先级, 让底层抢在其它插件前加载")]
 		public bool EnableBootstrapFirstLoader { get; set; } = true;
 
 		[Description("启用 SSS 端口隔离核心")]
@@ -223,6 +248,10 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 	private CoroutineHandle _maintenanceLoop;
 
 	private CoroutineHandle _shieldLoop;
+
+	private CoroutineHandle _setupLoop;
+
+	private CoroutineHandle _updateLoop;
 
 	public override string Name => "HintChorus";
 
@@ -259,17 +288,36 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			if (base.Config.InterceptThirdPartyUi)
 			{
 				UiInterception.Instance.Install();
-				// 护盾: 外部框架(如 HintServiceMeow)用 Unpatch All 清场时, 0.25 秒内装回来。
+				// 仲裁层: 挂住 Harmony 的卸载入口, 外部清场后在同一调用栈内恢复本底层。
+				PatchArbiter.Install();
+				// 模板层(默认关): 读取映射组件的程序表并预热, 不改变现有排版。
+				TemplateBridge.Install(base.Config.Template);
+				// 护盾: 覆盖被 JIT 内联等极端情况, 0.25 秒内装回来。
 				PatchShield.Install();
 				_shieldLoop = Timing.RunCoroutine(ShieldRoutine(), Segment.Update);
 			}
 			HintFallback.ResetAll();
 			HintTakeover.Clear();
 			HintCommand.EnsureRegistered();
+			// 有网时用公网 IP + 网络时区校验; 无网回退本地时区/时间戳。
+			NetworkLocaleProbe.Enabled = !string.Equals(base.Config.NetworkLocale, "off", StringComparison.OrdinalIgnoreCase);
+			NetworkLocaleProbe.Start();
+			LocaleService.Initialize(base.Config);
+			// 首次运行配置向导: 等启动文本全部输出完再进入。
+			SetupWizard.Initialize(base.Config, SaveConfig);
+			UpdateService.Initialize(base.Config);
+			if (SetupWizard.ShouldRun())
+			{
+				_setupLoop = Timing.RunCoroutine(SetupRoutine(), Segment.Update);
+			}
+			if (base.Config.AutoUpdate)
+			{
+				_updateLoop = Timing.RunCoroutine(UpdateRoutine(), Segment.Update);
+			}
 			_maintenanceLoop = Timing.RunCoroutine(MaintenanceRoutine(), Segment.Update);
 			UiLog.WriteStartupReport(BuildStartupReport());
 			StartupLog.Info("[HintChorus] Enable 完成 → 外部插件可经 UiIsolation / IUiIsolation 注册通道、文本源、SSS 端口");
-			StartupLog.Info("[HintChorus] beta 1.1.2: 快照拦回 + 补丁护盾(0.25 秒重装); 出问题在控制台输入 Hint orvs 回退");
+			StartupLog.Info("[HintChorus] beta 1.1.2: 抢加载 0.dll + 补丁仲裁层(同步恢复) + 快照拦回 + 护盾(0.25 秒兜底); 出问题在控制台输入 Hint orvs 回退");
 		}
 		catch (Exception ex)
 		{
@@ -286,8 +334,10 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			+ "\n端口: " + LabApi.Features.Wrappers.Server.Port
 			+ "\n合并核心: " + base.Config.EnableHintChorus
 			+ " | 第三方拦截: " + base.Config.InterceptThirdPartyUi
+			+ " | 补丁仲裁: " + PatchArbiter.IsInstalled
 			+ " | 强接管: " + base.Config.ForceTakeover
 			+ " | 排版: " + base.Config.LayoutMode
+			+ "\n模板: " + TemplateBridge.Status
 			+ "\n日志: 报告=" + base.Config.EnableCrashReportLog
 			+ " | 详细UI=" + base.Config.EnableDetailedUiLog
 			+ " | 逐玩家=" + base.Config.DetailedUiLogPerPlayer
@@ -321,11 +371,14 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		Timing.KillCoroutines(new CoroutineHandle[1] { _guardianLoop });
 		Timing.KillCoroutines(new CoroutineHandle[1] { _maintenanceLoop });
 		Timing.KillCoroutines(new CoroutineHandle[1] { _shieldLoop });
+		Timing.KillCoroutines(new CoroutineHandle[1] { _setupLoop });
+		Timing.KillCoroutines(new CoroutineHandle[1] { _updateLoop });
 		PatchShield.Uninstall();
 		HintCommand.Unregister();
 		HintFallback.ResetAll();
 		HintTakeover.Clear();
 		SssForceRewrite.Uninstall();
+		PatchArbiter.Uninstall();
 		UiInterception.Instance.Uninstall();
 		HintBroker.Instance.Stop();
 		SssRegistry.Terminate();
@@ -364,6 +417,37 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			{
 				Logger.Error((object)("[HintChorus] 补丁护盾检查异常: " + ex));
 			}
+		}
+	}
+
+	private static IEnumerator<float> SetupRoutine()
+	{
+		yield return Timing.WaitForSeconds(6f);
+		try
+		{
+			SetupWizard.Start();
+		}
+		catch (Exception ex)
+		{
+			Logger.Error((object)("[HintChorus] 配置向导启动异常: " + ex));
+		}
+	}
+
+	private static IEnumerator<float> UpdateRoutine()
+	{
+		yield return Timing.WaitForSeconds(15f);
+		while (true)
+		{
+			try
+			{
+				UpdateService.CheckInBackground();
+			}
+			catch (Exception ex)
+			{
+				Logger.Error((object)("[HintChorus] 更新检查启动异常: " + ex));
+			}
+			// 每 6 小时检查一次; 有新版本且开启 RNR 时会安排回合结束重启
+			yield return Timing.WaitForSeconds(21600f);
 		}
 	}
 

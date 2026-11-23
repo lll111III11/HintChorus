@@ -11,8 +11,8 @@ namespace HintChorus.Bootstrap;
 /// <b>HintChorus 抢先引导器(0 前缀)。</b>
 ///
 /// <para>本插件由主 DLL <c>HintChorus.dll</c> 从内嵌资源释放为
-/// <c>plugins\global\0HintChorus.Bootstrap.dll</c>。文件名以 <c>0</c> 开头,
-/// 在 LabAPI "同优先级按枚举顺序"的规则下排在前面, 加上
+/// <c>plugins\global\0.dll</c>。文件名是最短的 <c>0.dll</c>,
+/// 在 LabAPI "同优先级按枚举顺序"的规则下排在最前面, 加上
 /// <see cref="LoadPriority.Highest"/>, 从而<b>最先 Enable</b>。</para>
 ///
 /// <para>三步流程(与需求一一对应):</para>
@@ -44,6 +44,10 @@ public sealed class BootstrapPlugin : Plugin
     {
         BootstrapState state = BootstrapState.Load();
         state.MarkRun();
+
+        // ── 释放映射组件到 dependencies(下一次重启由 LabAPI 预加载) ──
+        string mappingDetail = MappingInstaller.EnsureReleased();
+        Logger.Info("[HintChorus] " + mappingDetail);
 
         // ── 第 2 步: 提示与改写参数 ──
         if (state.Prompted == 0)

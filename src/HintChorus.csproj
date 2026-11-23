@@ -100,9 +100,9 @@
 
 	<ItemGroup>
 		<!-- ══════════════════════════════════════════════════════════════
-		     抢占最先头: 把 0 前缀引导器的构建产物作为嵌入资源打进本程序集,
+		     抢占最先头: 把抢加载引导器的构建产物作为嵌入资源打进本程序集,
 		     运行时由 BootstrapInstaller 释放为
-		     plugins\global\0HintChorus.Bootstrap.dll
+		     plugins\global\0.dll
 		     ══════════════════════════════════════════════════════════════ -->
 		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\bootstrap\bin\$(Configuration)\net48\HintChorus.Bootstrap.dll">
 			<LogicalName>HintChorus.Bootstrap.dll</LogicalName>

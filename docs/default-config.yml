@@ -4,7 +4,7 @@
 # 键名与默认值**一字未改**，直接取自 用 LabAPI 自己的 YamlConfigParser.Serializer
 # 序列化编译好的 HintChorus.dll 里 HintChorusPlugin.PluginConfig 的输出；
 # 本文件只做了重新分组与补小标题（便于阅读），所以它是 config.yml 的可靠对照。
-# 共 61 个配置项。
+# 共 68 个配置项。
 #
 # 真实路径： %APPDATA%\SCP Secret Laboratory\LabAPI\configs\<端口>\HintChorus\config.yml
 #   （注意是 configs\<端口>\ 这一层，例如 configs\7777\HintChorus\config.yml）
@@ -37,6 +37,20 @@ enable_crash_report_log: true
 enable_detailed_ui_log: false
 # 详细 UI 日志 · 逐玩家记录最终合成文本(默认关; 需要同时打开 enable_detailed_ui_log)
 detailed_ui_log_per_player: false
+
+# ── 首次运行配置向导 / 安全更新 ─────────────────────────────────────────────
+# 自动更新(默认关): 只检查并下载到 HintChorus.dll.new, 绝不覆盖正在运行的 DLL
+auto_update: false
+# 更新后回合结束重启(RNR, 默认关): 下载并替换 DLL 后, 等当前回合结束再彻底重启服务器加载新版本
+rnr_after_update: false
+# 界面/控制台语言: auto=跟随系统, 或 zh/en/fr/ru/es; 探测不到地区时回退英文
+language: auto
+# 时区(配置向导写入, 仅记录): auto=自动检测
+timezone: auto
+# 地区(配置向导写入, 仅记录): auto=自动检测; 探测不到时语言回退英文
+region: auto
+# 网络语言/时区探测: auto=有网时用公网 IP + 网络时区校验, 无网回退本地; off=只用本地
+network_locale: auto
 # 内容未变时跳过重发(默认开): 一个字没变就绝不重发, 消除 UI 闪烁与后台卡顿; 关掉会退回'每轮都重发'的旧行为
 suppress_unchanged_resend: true
 # 输入摘要快筛(默认开): 本轮渲染输入的结构摘要没变就连字符串合成都整段跳过, 比'内容未变跳过重发'更早一步
@@ -59,6 +73,11 @@ volatile_rows: 3
 rows_per_plugin: 1
 # 常驻区最多补几行空位(只限制空行数量, 有内容的行永远不会丢)
 persistent_rows_max: 8
+
+# ── 模板显示(15.0 规划, 默认不启用) ────────────────────────────────────────
+# 留空 = 保持现有排版; 可填 zh / en, 或自定义模板名
+# 自定义模板: configs/<端口>/HintChorus/templates/<名字>.ini (同名覆盖内置)
+template: ""
 
 # ── 位置(兼容原有写法 / 自有写法 / 自动排版) ───────────────────────────────
 # 兼容原有写法(默认开): 插件文本里已自带位置标签(<voffset>/<pos>/<align>/<line-height> 等)时,

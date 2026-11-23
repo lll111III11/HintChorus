@@ -7,17 +7,33 @@
 
 ### Release headline / 发布标题
 
-**HintChorus Beta 1.1.2 — Patch Shield**
+**HintChorus Beta 1.1.2 — Patch Arbiter & Shield**
 
-- **New: Patch Shield.** Some hint frameworks (e.g. HintServiceMeow) call `Harmony.Unpatch(HintDisplay.Show, HarmonyPatchType.All)` when they install, removing every other plugin's patches from the method — priority no longer matters once you are off the table. The shield checks `HintDisplay.Show` every **0.25 s**; if our prefix is gone it reinstalls immediately and re-sends the composite to every player.
-- Verified against a real HarmonyX harness: (A) priority alone loses, (B) hooking `Harmony.Unpatch` does not fire, (C) detect-and-reinstall wins.
-- The shield only reinstalls our own patches; it never blocks other plugins from unloading or patching normally.
+- **New: Patch Arbiter.** HintChorus now manages its patches through its own middle layer instead of trusting Harmony priority. All five Harmony uninstall entry points (`Harmony.Unpatch` ×2, `Harmony.UnpatchAll`, `PatchProcessor.Unpatch` ×2) are instrumented: when a framework clears a method with `Unpatch All`, our patches are restored **synchronously in the same call stack** and the composite is re-sent.
+- The arbiter only restores its own patches — other plugins can still unload and patch normally. If the arbiter's own hooks are wiped by `UnpatchAll(null)`, they are reinstalled during the same restore pass.
+- **Patch Shield stays as the backstop**: a 0.25 s self-check covers JIT-inlined call sites and any path that bypasses the arbiter.
+- **Load-first bootstrap is now `0.dll`** (shortest name + `LoadPriority.Highest`), so it is enumerated before every other plugin and installs the interception first.
+- **External takeover is denied by default.** Only the server terminal console can run `Hint orvs yield` to hand the hint channel to another framework; `Hint orvs take` reclaims it. `Hint` / `hc` are registered on the server console only and validate the sender type — Remote Admin, the query interface and the player client console are rejected.
+- **15.0 template-layer skeleton (off by default).** `0.dll` releases `HintChorus.Mapping.dll` + `template-map.ini` into `dependencies/global`; setting `Template` in the config resolves the template and warms the display-layer probe. No rendering change yet.
+- **First-run setup wizard (server console, localized zh/en/fr/ru/es).** After startup it asks about auto update, detailed logs, writing the config and RNR (restart at round end after replacing the DLL); each answer prints a localized explanation.
+- **Safe update check.** `Hc update` checks the latest GitHub release; with `auto_update` enabled it only downloads to `HintChorus.dll.new` by default. With `rnr_after_update` enabled it replaces the DLL and sets the game to restart at the end of the current round.
+- **Locale detection.** With network access, language/timezone are resolved from the public IP and network time zone, verified against the HTTP Date header; offline it falls back to the local timezone/clock. If the region cannot be detected, the language falls back to English. `network_locale: off` disables network probing.
+- **Five-language runtime is complete.** The setup wizard, update messages and `Hint` command help are all localized in `zh` / `en` / `fr` / `ru` / `es`. The other 20+ languages are external translation files/docs only; every doc states that the runtime embeds only these five.
+- Verified against a real HarmonyX harness: HSM-style `Unpatch(Show, All)` + takeover prefix → our layer is restored and runs first, HSM's prefix is skipped; `UnpatchAll(null)` → restored; targeted removal of our ID → restored; removing another plugin's own patches → no false restore.
 
 ### 更新速览
 
-- **新增「补丁护盾」**：部分 Hint 框架（如 HintServiceMeow）安装时会执行 `Harmony.Unpatch(HintDisplay.Show, HarmonyPatchType.All)`，把别人挂在该方法上的补丁整体摘掉 —— 补丁不在表里，优先级再高也没用。护盾每 **0.25 秒**检查一次，发现我们的前缀被摘掉就立刻重装，并向所有玩家重发复合块。
-- 用真实 HarmonyX 沙盒验证：只靠优先级会输；给 `Harmony.Unpatch` 挂后置钩子不会触发；**检测后立即重装有效**。
-- 护盾只重装自己的补丁，不阻止其它插件正常卸载或打补丁。
+- **新增「补丁仲裁层」**：不再只依赖 Harmony 优先级，本插件用自己的中间层管理补丁。Harmony 的 5 个卸载入口全部受控；外部框架用 `Unpatch All` 清场后，本底层补丁会**在同一个调用栈内**恢复，并重发复合块。
+- 仲裁层只恢复自己的补丁，不影响其它插件正常卸载或打补丁；仲裁层自身的钩子被整表清空（`UnpatchAll(null)`）后会在恢复过程中自动补回。
+- **护盾保留为兜底**：每 0.25 秒自检一次，覆盖调用点被 JIT 内联等极端情况。
+- **抢加载引导器改为最短文件名 `0.dll`**（配合 `LoadPriority.Highest`），在目录枚举里排在所有插件之前，先把拦截层装好。
+- **默认拒绝外部接管**：只有服务器终端控制台可以执行 `Hint orvs yield` 让出提示通道，`Hint orvs take` 收回；`Hint` / `hc` 只注册在服务器控制台并校验发送方类型，RA 面板、查询接口、玩家客户端控制台一律拒绝。
+- **15.0 模板层骨架（默认关闭）**：`0.dll` 会把 `HintChorus.Mapping.dll` + `template-map.ini` 释放到 `dependencies/global`；配置 `Template` 后才会解析模板并预热显示层探测，不改变现有渲染。
+- **首次运行配置向导（服务器终端，zh/en/fr/ru/es）**：启动文本输出完后询问自动更新、详细日志、是否写入配置、是否在更新后回合结束重启（RNR）；每选择一项都会用当地语言显示说明。
+- **安全更新检查**：`Hc update` 检查 GitHub 最新版本；开启 `auto_update` 时默认只下载到 `HintChorus.dll.new`；开启 `rnr_after_update` 后会替换 DLL 并设置本回合结束后重启。
+- **本地语言探测**：有网时用公网 IP + 网络时区，并用 HTTP Date 校验本地时钟；无网时回退本地时区/时间戳；地区探测失败时语言回退英文；`network_locale: off` 可关闭网络探测。
+- **五大语言运行时已补全**：向导、更新提示与 `Hint` 命令帮助全部覆盖 `zh` / `en` / `fr` / `ru` / `es`。其余 20+ 语言仅以外部译文/文档形式提供；每份文档都明确写明运行时只内嵌这五种。
+- 真实 HarmonyX 沙盒验证：HSM 式清场后本底层恢复且先执行；整表清空会恢复；点名卸载会恢复；卸载别人自己的补丁不会误触发。
 
 ## beta 1.1.1 (2026-11-23)
 

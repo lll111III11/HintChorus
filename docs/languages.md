@@ -4,6 +4,13 @@ title: 多语言 / Multilingual
 
 # 多语言 / Multilingual
 
+> **运行时语言政策 / Runtime language policy**
+>
+> - 插件运行时（首次向导、控制台命令、更新提示）**只内嵌联合国五种语言**：`en` / `zh` / `fr` / `ru` / `es`。
+> - 其余 20+ 种语言只以**外部译文文件**和**文档**形式提供，DLL 内不包含；运行时不会声称内置这些语言。
+> - 所有语言的外部译文与文档与中文/英文同步推进；缺行时逐条回退英文，绝不输出半成品。
+> - 新增运行时字符串必须先补齐 `en` + `zh`，再同步 `fr` / `ru` / `es`；文档语言可以先行扩充。
+
 **HintChorus** 的界面文本语言覆盖策略：
 
 - **DLL 内嵌 5 种联合国常用语**：`en` / `zh` / `fr` / `ru` / `es` —— 开箱即用，永远可用；
@@ -63,6 +70,9 @@ Nur <color=yellow>[max_item_count] Gegenstände</color> können getragen werden.
 - **Français** — [docs/fr/README.md](fr/README.md)
 - **Русский** — [docs/ru/README.md](ru/README.md)
 - **Español** — [docs/es/README.md](es/README.md)
+
+完整文档目前提供上述五种；其余语言以 [`translations/`](translations/) 的外部译文为主，
+文档内容按同一份英文底稿同步推进，运行时仍然只内嵌五种联合国语言。
 
 ## 位置写法规范 / Position syntax spec（UN-5）
 

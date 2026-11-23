@@ -11,15 +11,16 @@ using UnityEngine;
 namespace HintChorus.Core.Interception;
 
 /// <summary>
-/// <b>补丁护盾</b> —— 对「外部框架直接 Unpatch 清场」的对抗层。
+/// <b>补丁护盾</b> —— 仲裁层之后的兜底层。
 ///
 /// <para>HintServiceMeow 这类框架在安装时会执行
 /// <c>Harmony.Unpatch(HintDisplay.Show, HarmonyPatchType.All)</c>，
 /// 把别人挂在这个方法上的补丁<b>整体摘掉</b>；优先级再高也不在表里，等于没有。</para>
 ///
-/// <para>实测（真实 HarmonyX 沙盒）：给 <c>Harmony.Unpatch</c> 挂后置钩子不会触发，
-/// 所以唯一可靠的路线是<b>快速检测 + 立即重装</b>。本类每 0.25 秒检查一次
-/// <c>HintDisplay.Show</c> 上是否还有本底层的补丁，没有就立刻重装并重发 UI。</para>
+/// <para>一线防御是 <see cref="PatchArbiter"/>（同步仲裁，挂住 Harmony 的全部卸载入口）。
+/// 本类负责兜底：每 0.25 秒让仲裁层自检一次，覆盖调用点被 JIT 内联、
+/// 整表被 <c>UnpatchAll(null)</c> 清空等极端情况；若仲裁层未启用，则退化为
+/// 直接检查 <c>HintDisplay.Show</c> 并重装。</para>
 ///
 /// <para>它只做「发现被摘就装回去」，不阻止任何插件正常卸载，也不会和其它框架抢着卸载。</para>
 /// </summary>
@@ -115,6 +116,20 @@ internal static class PatchShield
             return;
         }
         _nextCheck = now + CheckInterval;
+
+        if (UiInterception.Instance.AllowExternalTakeover)
+        {
+            return;
+        }
+
+        try
+        {
+            PatchArbiter.Verify();
+        }
+        catch (Exception ex)
+        {
+            UiLog.Report("ArbiterVerify", ex);
+        }
 
         if (_hintShow == null)
         {

@@ -63,6 +63,12 @@ public sealed class UiInterception : IUiInterception
 	/// <summary>强接管(默认开): 外部前缀抢先吞掉提示时, 立即把本底层的 UI 重新盖回去。</summary>
 	public bool ForceTakeover { get; set; } = true;
 
+	/// <summary>
+	/// 让出提示通道(默认关): 为 true 时本底层不拦截 <c>HintDisplay.Show</c>, 外部 Hint 插件可以接管。
+	/// 只能由服务器终端控制台的 <c>Hint orvs yield</c> 打开, <c>Hint orvs take</c> 收回; 重启自动回到关闭。
+	/// </summary>
+	public bool AllowExternalTakeover { get; set; }
+
 	public bool BroadcastEnabled { get; set; } = true;
 
 	public bool BlockThirdPartyBroadcastClear { get; set; } = true;
@@ -164,25 +170,34 @@ public sealed class UiInterception : IUiInterception
 		UiIdRegistry.Load();
 		ApplyConfig();
 		_harmony = new Harmony("com.labapi.HintChorus.interception");
-		Type[] surfacePatchTypes = SurfacePatchTypes;
-		foreach (Type type in surfacePatchTypes)
+		PatchArbiter.Suspend();
+		try
 		{
-			try
+			Type[] surfacePatchTypes = SurfacePatchTypes;
+			foreach (Type type in surfacePatchTypes)
 			{
-				_harmony.CreateClassProcessor(type).Patch();
+				try
+				{
+					_harmony.CreateClassProcessor(type).Patch();
+				}
+				catch (Exception ex)
+				{
+					Logger.Error((object)("[HintChorus] 安装表面补丁 " + type.Name + " 失败: " + ex.Message));
+				}
 			}
-			catch (Exception ex)
+			NetworkSentinel.Enabled = NetworkSentinelEnabled;
+			NetworkSentinel.Intercept = NetworkSentinelIntercept;
+			if (NetworkSentinelEnabled)
 			{
-				Logger.Error((object)("[HintChorus] 安装表面补丁 " + type.Name + " 失败: " + ex.Message));
+				NetworkPatches.Install(_harmony);
 			}
 		}
-		NetworkSentinel.Enabled = NetworkSentinelEnabled;
-		NetworkSentinel.Intercept = NetworkSentinelIntercept;
-		if (NetworkSentinelEnabled)
+		finally
 		{
-			NetworkPatches.Install(_harmony);
+			PatchArbiter.Resume();
 		}
 		IsInstalled = true;
+		PatchArbiter.Capture();
 		StartupLog.Info("[HintChorus] 拦截层已安装 —— 提示条 + 屏幕广播 + 玩家控制台 + CASSIE + 管理端聊天 + 命中标记 六条 UI 通道被接管, LabAPI 与 EXILED 两套框架的写法均按【调用方 + 注册点】自动分配独立 UiId 信口");
 	}
 
@@ -190,10 +205,18 @@ public sealed class UiInterception : IUiInterception
 	{
 		if (IsInstalled)
 		{
-			if (_harmony != null)
+			PatchArbiter.Suspend();
+			try
 			{
-				NetworkPatches.Uninstall(_harmony);
-				_harmony.UnpatchAll("com.labapi.HintChorus.interception");
+				if (_harmony != null)
+				{
+					NetworkPatches.Uninstall(_harmony);
+					_harmony.UnpatchAll("com.labapi.HintChorus.interception");
+				}
+			}
+			finally
+			{
+				PatchArbiter.Resume();
 			}
 			_harmony = null;
 			IsInstalled = false;
@@ -319,24 +342,33 @@ public sealed class UiInterception : IUiInterception
 		{
 			return;
 		}
-		_harmony.UnpatchAll("com.labapi.HintChorus.interception");
-		Type[] surfacePatchTypes = SurfacePatchTypes;
-		foreach (Type type in surfacePatchTypes)
+		PatchArbiter.Suspend();
+		try
 		{
-			try
+			_harmony.UnpatchAll("com.labapi.HintChorus.interception");
+			Type[] surfacePatchTypes = SurfacePatchTypes;
+			foreach (Type type in surfacePatchTypes)
 			{
-				_harmony.CreateClassProcessor(type).Patch();
+				try
+				{
+					_harmony.CreateClassProcessor(type).Patch();
+				}
+				catch (Exception ex)
+				{
+					Logger.Error((object)("[HintChorus] 自愈重装补丁 " + type.Name + " 失败: " + ex.Message));
+				}
 			}
-			catch (Exception ex)
+			if (NetworkSentinelEnabled)
 			{
-				Logger.Error((object)("[HintChorus] 自愈重装补丁 " + type.Name + " 失败: " + ex.Message));
+				NetworkPatches.Uninstall(_harmony);
+				NetworkPatches.Install(_harmony);
 			}
 		}
-		if (NetworkSentinelEnabled)
+		finally
 		{
-			NetworkPatches.Uninstall(_harmony);
-			NetworkPatches.Install(_harmony);
+			PatchArbiter.Resume();
 		}
+		PatchArbiter.Capture();
 		Logger.Warn((object)"[HintChorus] 检测到拦截补丁被外部摘掉, 已自动补回(自愈)");
 	}
 }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- 纯 .NET Framework 4.8 类库: 不引用 LabAPI / 游戏程序集, 才能安全地放在 dependencies 里预加载 -->
+		<TargetFramework>net48</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<AssemblyName>HintChorus.Mapping</AssemblyName>
+		<RootNamespace>HintChorus.Mapping</RootNamespace>
+		<Version>0.1.0</Version>
+		<PlatformTarget>x64</PlatformTarget>
+		<Nullable>annotations</Nullable>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- 程序表: 名字 -> 语言/布局/说明; 随 DLL 一起释放到 dependencies\global -->
+		<EmbeddedResource Include="template-map.ini">
+			<LogicalName>HintChorus.Mapping.template-map.ini</LogicalName>
+		</EmbeddedResource>
+		<None Include="template-map.ini" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+</Project>
