@@ -8,12 +8,12 @@ title: HintChorus
 
 > Dynamic UI isolation layer for SCP:SL — one independent hint slot per caller, no plugin changes needed.
 
-> **Beta 1.1.1 — If another hint plugin jumps the queue, it gets kicked back out.**
+> **Beta 1.1.1 — Snapshot Rollback & Takeover**
 >
-> HintChorus is in Beta: usable on regular production servers, but keep an eye on it. `HintDisplay.Show` now runs at Harmony `int.MaxValue` priority with a postfix fallback, so a foreign prefix that swallows the call no longer leaves the screen blank. Third-party hints are snapshotted before absorption and can be replayed per player. `Hint orvs` detects mainstream plugins: if none exist it offers option **1** = restore vanilla + replay; otherwise it lists them by number and hot-applies the chosen plugin's last data.
+> HintChorus is in Beta: usable on regular production servers, but keep an eye on it. Third-party hints are snapshotted per player before absorption. When another hint plugin modifies the hint channel after us, HintChorus rolls it back through the snapshot and re-takes over — either by running at the highest Harmony priority first, or by a postfix fallback when the prefix was skipped. `Hint orvs` detects mainstream plugins: if none exist it offers option **1** = restore vanilla + replay; otherwise it lists them by number and hot-applies the chosen plugin's last data.
 > If something breaks, run `Hint orvs native` or remove/delete HintChorus.
 >
-> **HintChorus 1.1.1：敢站它前面的，直接一脚踹掉。** 已可应用于正常的生产服务器，但仍需观察使用。强接管 + 覆盖前快照；`Hint orvs` 先检测主流插件，没有就提供编号 1 直接退回原生并恢复覆盖前数据；有就按编号单独回退并热应用其最后数据。
+> **HintChorus 1.1.1 版本更新：新增「快照拦回」。** 第三方提示在被吸收前先按玩家记录快照；外部 Hint 插件在我们之后修改提示通道时，通过快照退回并重新接管。实现分两种：抢占在先（最高优先级，抢在主流插件之前接管）与事后拦回（对方已抢先时按快照退回再整体接管）。`Hint orvs` 会先检测主流插件：没有就提供编号 1 退回原生并恢复覆盖前数据。
 
 ## 语言 / Language
 

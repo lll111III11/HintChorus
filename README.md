@@ -14,13 +14,14 @@
 
 # HintChorus
 
-> ## Beta 1.1.1 — If another hint plugin jumps the queue, it gets kicked back out.
+> ## Beta 1.1.1 — Snapshot Rollback & Takeover
 >
 > **HintChorus is now in Beta.** It can be used on regular production servers, but please keep an eye on it.
 >
-> - **Force takeover (default on)**: `HintDisplay.Show` runs at `int.MaxValue` Harmony priority, with a postfix fallback. If another plugin's prefix swallows the call, HintChorus immediately re-sends its composite instead of disappearing.
-> - **Pre-override snapshots**: third-party hints are recorded before absorption/suppression; rollback can replay the exact data.
-> - **Compatibility fallback**: run `Hint orvs` in the server console. No mainstream hint plugin → it says so and offers option **1** = restore vanilla + replay pre-override data. Mainstream plugins present → numbered per-plugin rollback, hot-applying the last recorded data per player.
+> - **New: Snapshot Rollback & Takeover.** Third-party hints are recorded as per-player snapshots before absorption or suppression. When another hint plugin modifies the hint channel after us, HintChorus rolls it back through the snapshot and takes the patch back over.
+>   - Path 1 — **contention first**: `HintDisplay.Show` runs at the highest Harmony priority, so mainstream hint plugins never get control of the channel.
+>   - Path 2 — **rollback after the fact**: if another plugin already took the channel first, a postfix fallback detects that our prefix was skipped, pushes the snapshot back out, and re-takes over everything.
+> - **`Hint orvs` mainstream detection**: no mainstream hint plugin → the command says so and offers option **1** = restore vanilla + replay pre-override data. Mainstream plugins present → numbered per-plugin rollback, hot-applying the last recorded data per player.
 > - **Detailed logging (off by default)**: font size, screen position and owning plugin for every line of text. Enable `EnableDetailedUiLog` in the config to inspect each plugin's text behaviour.
 > - **Default logging** keeps ordinary events and exceptions only (crash detection).
 > - Multiple hint plugins can coexist without conflicts.
@@ -30,9 +31,9 @@
 >
 > ---
 >
-> **HintChorus 1.1.1：敢站它前面的，直接一脚踹掉。**
+> **HintChorus 1.1.1 版本更新：新增「快照拦回」。**
 >
-> 已可应用于正常的生产服务器，但仍需观察使用。`HintDisplay.Show` 提到最高优先级并加 Postfix 兜底：别的插件前缀把提示吞掉时，立即强制重发复合块；第三方提示在吸收/压制前先记录快照，回退时可原样热应用。`Hint orvs` 会先检测主流插件：没有就明确提示，并提供编号 1 = 退回原生 + 恢复覆盖前数据；有就按编号单独回退并热应用其最后数据。出问题时用 `Hint orvs native`，或直接移出/删除 HintChorus。
+> 第三方提示在被吸收或压制之前，会先按玩家记录快照。外部 Hint 插件在我们之后修改提示通道时，会通过快照强行退回并重新接管补丁。实现有两种方式：抢占在先（最高优先级，抢在主流插件之前接管），或事后拦回（对方已抢先时，由 Postfix 按快照退回再整体接管）。此外，`Hint orvs` 会先检测主流插件：没有就明确提示并提供编号 1 = 退回原生 + 恢复覆盖前数据；有就按编号单独回退并热应用其最后数据。
 >
 > 完整发布稿见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
@@ -81,12 +82,15 @@
 
 ## Beta 1.1.1 新增 (What's new)
 
-### 0. 强接管：敢站前面的，直接踹掉
+### 0. 快照拦回（Snapshot Rollback & Takeover）
 
-`HintDisplay.Show` 现在挂在 Harmony **最高优先级 `int.MaxValue`** 上，并附带 Postfix 兜底：
+第三方提示在被吸收或压制之前，会先按玩家记录一份快照（文本、时长、所属插件）。外部 Hint 插件在我们之后修改了提示通道时，HintChorus 会通过快照把通道退回，并重新接管补丁。
 
-- 别的 Hint 插件用更高优先级前缀返回 `false`，会把我们的前缀整段跳过 —— 这时 Postfix 会立刻强制重发本底层的复合块。
-- 插件提示在被吸收/压制之前，先按玩家记录**覆盖前快照**（文本、时长、所属插件）；回退时可原样热应用。
+具体实现有两种方式：
+
+1. **抢占在先**：`HintDisplay.Show` 挂在 Harmony 最高优先级，抢在主流 Hint 插件之前接管，不让它们拿到提示通道。
+2. **事后拦回**：如果对方已经抢先接管，则由 Postfix 兜底发现我们的前缀被跳过，按快照把该玩家这一份重新下发，再整体接管回来。
+
 - 开关：配置项 `ForceTakeover`（默认开）。关掉退回“只观测、遇冲突让路”。
 
 ### 1. 控制台回退：`Hint orvs`（大小写不敏感）

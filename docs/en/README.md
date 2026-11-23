@@ -22,12 +22,13 @@
 > channel into **independent slots**, one per caller, attributed automatically from the call stack —
 > so a plugin that just calls `SendHint` / `SendBroadcast` works as-is, and stops clobbering everyone else.
 
-> **Beta 1.1.1 — If another hint plugin jumps the queue, it gets kicked back out.**
+> **Beta 1.1.1 — Snapshot Rollback & Takeover**
 >
 > HintChorus is in Beta: usable on regular production servers, but keep an eye on it.
 >
-> - **Force takeover (default on)**: `HintDisplay.Show` runs at Harmony `int.MaxValue` priority with a postfix fallback. A foreign prefix that swallows the call no longer leaves the screen blank — the composite is re-sent immediately.
-> - **Pre-override snapshots**: third-party hints are recorded before absorption/suppression and can be replayed per player.
+> - **New: Snapshot Rollback & Takeover.** Third-party hints are recorded as per-player snapshots before absorption or suppression. When another hint plugin modifies the hint channel after us, HintChorus rolls it back through the snapshot and takes the patch back over.
+>   - Path 1 — contention first: `HintDisplay.Show` runs at the highest Harmony priority, so mainstream hint plugins never get control of the channel.
+>   - Path 2 — rollback after the fact: if another plugin already took the channel first, a postfix fallback detects that our prefix was skipped, pushes the snapshot back out, and re-takes over.
 > - **Compatibility fallback**: `Hint orvs` detects mainstream hint plugins. None found → option **1** = restore vanilla + replay. Found → numbered per-plugin rollback with hot-applied last data.
 > - **Detailed log (off by default)**: font size, screen position and owning plugin for every line of text.
 > - Default logging keeps normal events and exceptions only (crash detection).

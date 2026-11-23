@@ -1,10 +1,10 @@
-# HintChorus Beta 1.1.1 — If another hint plugin jumps the queue, it gets kicked back out.
+# HintChorus Beta 1.1.1 — Snapshot Rollback & Takeover
 
 > 发布标题 / Release title:
-> **HintChorus Beta 1.1.1 — If another hint plugin jumps the queue, it gets kicked back out.**
+> **HintChorus Beta 1.1.1 — Snapshot Rollback & Takeover**
 >
 > 中文副标题 / Chinese subtitle:
-> **HintChorus 1.1.1：敢站它前面的，直接一脚踹掉。**
+> **HintChorus 1.1.1 版本更新：新增「快照拦回」**
 
 ---
 
@@ -12,14 +12,19 @@
 
 **Beta status** — HintChorus is still Beta. Usable on regular production servers, but keep an eye on it. If anything goes wrong, run `Hint orvs native`, or remove/delete HintChorus and restart.
 
-### What's changed
+### New: Snapshot Rollback & Takeover
 
-- **Force takeover (default on)**: `HintDisplay.Show` now runs at Harmony priority `int.MaxValue`, and a postfix fallback is attached. If another hint plugin's prefix swallows the call so our prefix never runs, HintChorus immediately re-sends its composite block instead of leaving the screen blank.
-- **Pre-override snapshots**: every third-party hint is recorded *before* it is absorbed or suppressed (text, duration, owning plugin, per player). Rollback can replay that exact data.
-- **`Hint orvs` mainstream detection**:
-  - No mainstream hint plugin detected → the command says so explicitly and offers option **1** = restore vanilla and replay the pre-override data.
-  - Mainstream plugins present → they are listed by number. Picking one rolls that plugin back to vanilla and **hot-applies its last recorded data per player**; `merge` restores it.
-  - New sub-commands: `Hint orvs native` (global vanilla + replay), `Hint orvs all` (all plugins vanilla + replay), `Hint orvs reset` (back to merged).
+Third-party hint calls are now recorded as per-player snapshots **before** they are absorbed or suppressed: text, duration and owning plugin. When another hint plugin modifies the hint channel after us, HintChorus rolls the channel back through that snapshot and takes the patch back over.
+
+Two implementation paths:
+
+1. **Contention first** — `HintDisplay.Show` is patched at the highest Harmony priority, so the takeover runs before mainstream hint plugins and they are not given control of the channel.
+2. **Rollback after the fact** — if another plugin already took the channel first, a postfix fallback detects that our prefix was skipped, pushes the snapshot back out for that player, and re-takes over the whole channel.
+
+### Also in this release
+
+- **`Hint orvs` mainstream detection**: no mainstream hint plugin detected → the command says so and offers option **1** = restore vanilla and replay the pre-override data. Mainstream plugins present → listed by number; selecting one rolls that plugin back to vanilla and hot-applies its last recorded data per player; `merge` restores it.
+- New sub-commands: `Hint orvs native`, `Hint orvs all`, `Hint orvs reset`.
 - New config key: `ForceTakeover` (default `true`). Turn it off to go back to observe-and-yield behaviour.
 - Multiple hint plugins can still coexist without conflicts.
 
@@ -35,22 +40,21 @@
 
 ## 中文（辅助）
 
-**HintChorus 1.1.1：敢站它前面的，直接一脚踹掉。**
+**版本更新：新增「快照拦回」。**
 
-本次更新加入**更强势的补丁接管（内存层）**：`HintDisplay.Show` 提到 Harmony 最高优先级 `int.MaxValue`，并加 Postfix 兜底。别的插件的前缀把调用吞掉、导致我们的前缀根本没跑时，会立即强制重发本底层的复合块 —— 不再出现“别的插件一站前面，UI 直接不显示”。
+本版本新增快照拦回功能。第三方提示在被吸收或压制之前，会先按玩家记录一份快照（文本、时长、所属插件）。当外部 Hint 插件在我们之后修改了提示通道时，HintChorus 会通过这份快照把通道退回，并重新接管补丁。
 
-**覆盖前数据**：第三方提示在被吸收或压制之前，先按玩家记录文本、时长与所属插件。需要回退时，把这份记录原样热应用回去。
+具体实现有两种方式：
 
-**`Hint orvs` 行为更新**：
+1. **抢占在先**：把 `HintDisplay.Show` 挂在 Harmony 最高优先级，抢在主流 Hint 插件之前接管，不让它们拿到提示通道。
+2. **事后拦回**：如果对方已经抢先接管，则由 Postfix 兜底发现我们的前缀被跳过，按快照把该玩家这一份重新下发，再整体接管回来。
 
-- 执行后先检测当前是否存在主流 Hint 插件。
-- 一个都没有时，用中文明确告诉服主“未检测到主流插件”，并提供编号 **1** 的选项：**直接退回原生，并恢复覆盖前的数据**。
-- 检测到主流插件时，按编号列出；选择某个编号后，将该插件单独退回原生，并把它在各玩家上的最后一条数据热应用。
-- 新增：`Hint orvs native`（整体退回原生 + 回放）、`Hint orvs all`（全部插件退回 + 回放）、`Hint orvs reset`（退出原生、全部恢复合并）。
+其它更新：
 
-**新配置**：`ForceTakeover`（默认开）。关掉即退回“只观测、遇冲突让路”的旧行为。
-
-**多个 Hint 插件依然可以同时塞入、互不冲突**；某个插件出问题也可以单独退回。
+- **`Hint orvs` 主流插件检测**：没有检测到主流 Hint 插件时，明确告诉服主，并提供编号 **1** = 退回原生并恢复覆盖前数据；检测到主流插件时按编号列出，选中后单独回退并把该插件最后一条数据热应用；`merge` 恢复合并。
+- 新增子命令：`Hint orvs native`、`Hint orvs all`、`Hint orvs reset`。
+- 新配置：`ForceTakeover`（默认开）。关掉即退回“只观测、遇冲突让路”的行为。
+- 多个 Hint 插件依然可以同时存在、互不冲突。
 
 ### 退回方式
 

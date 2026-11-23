@@ -12,15 +12,13 @@
 > automatiquement depuis la pile d'appels — un plugin qui appelle simplement `SendHint` / `SendBroadcast`
 > fonctionne tel quel et cesse d'écraser les autres.
 
-> **Beta 1.1.0 (2026-11-21)** — HintChorus passe en Beta : utilisable sur un serveur de production normal, mais à surveiller.
+> **Beta 1.1.1 (2026-11-23) — Snapshot Rollback & Takeover**
 >
-> - Réduction des chemins d'interception inutiles et **intégration expérimentale des hints natifs du jeu dans le rendu composite** (fonctionne dans la plupart des cas observés).
-> - **Filet de sécurité** : exécutez `Hint orvs` dans la console du serveur pour remettre la ou les couches de hints installées en affichage natif, une par une.
-> - **Journal détaillé (désactivé par défaut)** : taille de police, position à l'écran et plugin propriétaire pour chaque ligne.
-> - Par défaut, seuls les événements normaux et les exceptions sont journalisés (détection de plantage).
-> - Environ **80 %** des bugs connus corrigés.
+> - **Nouveau : retour par instantané (Snapshot Rollback & Takeover).** Les hints tiers sont enregistrés sous forme d'instantanés par joueur avant absorption. Si un autre plugin de hints modifie le canal après nous, HintChorus le rétablit via l'instantané et reprend le patch : soit en passant en premier avec la priorité Harmony la plus élevée, soit via un repli postfix lorsque notre préfixe a été ignoré.
+> - **`Hint orvs`** détecte les plugins de hints courants : aucun trouvé → option **1** = retour au natif + rejeu des données ; sinon liste numérotée avec application à chaud des dernières données.
+> - Journal détaillé désactivé par défaut ; journal par défaut = événements et exceptions.
 >
-> En cas de problème : ① `Hint orvs` pour revenir au hint natif du plugin suspect ; ② ou retirer/supprimer HintChorus et redémarrer.
+> En cas de problème : `Hint orvs native`, ou retirer/supprimer HintChorus et redémarrer.
 > Version cible : branche publique actuelle 14.2.x ; les points de patch seront revérifiés après la sortie de 15.0 « Megapatch III ».
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)

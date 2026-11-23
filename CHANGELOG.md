@@ -7,21 +7,23 @@
 
 ### Release headline / 发布标题
 
-**HintChorus Beta 1.1.1 — If another hint plugin jumps the queue, it gets kicked back out.**
+**HintChorus Beta 1.1.1 — Snapshot Rollback & Takeover**
 
-- **Force takeover (default on)**: `HintDisplay.Show` now runs at `int.MaxValue` Harmony priority, with a postfix fallback. If another plugin's prefix swallows the call and our prefix never runs, HintChorus immediately re-sends its composite instead of disappearing.
-- **Pre-override snapshots**: every third-party hint is recorded before it is absorbed or suppressed, so rollback can replay the exact data.
-- **`Hint orvs` mainstream detection**: when no mainstream hint plugin is present, the command says so and offers option **1** = restore vanilla and replay the pre-override data. When mainstream plugins are present, it lists them by number; selecting one rolls that plugin back and hot-applies its last recorded data per player.
+- **New: Snapshot Rollback & Takeover.** Third-party hints are recorded as per-player snapshots before absorption or suppression. When another hint plugin modifies the hint channel after us, HintChorus rolls it back through the snapshot and takes the patch back over.
+  - Path 1 — contention first: `HintDisplay.Show` runs at the highest Harmony priority, so mainstream hint plugins never get control of the channel.
+  - Path 2 — rollback after the fact: if another plugin already took the channel first, a postfix fallback detects that our prefix was skipped, pushes the snapshot back out, and re-takes over.
+- **`Hint orvs` mainstream detection**: no mainstream hint plugin → the command says so and offers option **1** = restore vanilla + replay pre-override data. Mainstream plugins present → numbered per-plugin rollback with hot-applied last data.
 - New config: `ForceTakeover`. New commands: `Hint orvs native`, `Hint orvs all`, `Hint orvs reset`.
-- Note: this intentionally outranks conflicting hint plugins. If it causes trouble, run `Hint orvs native`, or remove `HintChorus.dll`.
+
+Full bilingual release notes: [RELEASE_NOTES.md](RELEASE_NOTES.md)
 
 ### 更新速览
 
-- **强接管（默认开）**：`HintDisplay.Show` 提到 Harmony 最高优先级 `int.MaxValue`，并加 Postfix 兜底。别的插件的前缀把调用吞掉、导致我们的前缀没跑时，立即强制重发复合块，不再出现“UI 直接不显示”。
-- **覆盖前快照**：第三方提示在吸收/压制之前先记录；回退时可以原样热应用回去。
-- **`Hint orvs` 主流插件检测**：没有主流 Hint 插件时明确告诉服主，并提供编号 **1** = 整体退回原生 + 恢复覆盖前数据；有主流插件时按编号列出，选中后单独回退并把该插件最后一条数据热应用。
+- **新增「快照拦回」**：第三方提示在吸收/压制前先按玩家记录快照；外部插件在我们之后修改提示通道时，通过快照强行退回并重新接管补丁。
+  - 方式一：抢占在先 —— `HintDisplay.Show` 使用最高 Harmony 优先级，抢在主流插件之前接管。
+  - 方式二：事后拦回 —— 对方已抢先时，由 Postfix 发现前缀被跳过，按快照退回后再整体接管。
+- **`Hint orvs` 主流插件检测**：没有主流 Hint 插件时明确提示，并提供编号 **1** = 整体退回原生 + 恢复覆盖前数据；有主流插件时按编号列出，选中后单独回退并热应用其最后一条数据。
 - 新配置：`ForceTakeover`；新命令：`Hint orvs native`、`Hint orvs all`、`Hint orvs reset`。
-- 注意：这是**故意抢在冲突插件前面**的强接管。若反而出问题，用 `Hint orvs native` 退回，或直接移出/删除 `HintChorus.dll`。
 
 ## beta 1.1.0 (2026-11-21)
 
