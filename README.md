@@ -10,6 +10,10 @@
 | Español | [docs/es/README.md](docs/es/README.md) |
 | **多语言 / Multilingual**（全部 22 种语言 + 翻译文件） | [docs/languages.md](docs/languages.md) |
 
+> **官网 / Official website**：<https://37ljd8kpov0ck30769t.traesite.cn> （EN / 中文 / Русский）
+> **无限期测试 / Indefinite testing**：HintChorus 即将进入无限期测试期。在此期间，不再会有任何更新上传至 GitHub；官网与插件站为权威参考，当前版本仍可下载。
+> **Indefinite testing**：HintChorus is entering an indefinite testing period. No further updates will be uploaded to GitHub during this time; the website and plugin page remain the authoritative references, and the current version stays downloadable.
+
 ---
 
 # HintChorus
