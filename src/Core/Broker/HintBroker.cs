@@ -32,6 +32,12 @@ public sealed class HintBroker : IHintBroker
 		public long LastSignature;
 
 		public bool HasSignature;
+
+		/// <summary>上一次真正下发的复合块时长(热应用/恢复诊断用)。</summary>
+		public float LastDuration;
+
+		/// <summary>下一次渲染强制重发, 跳过"内容未变跳过重发"与输入摘要快筛。</summary>
+		public bool ForceNext;
 	}
 
 	private sealed class TransientHint
@@ -413,6 +419,52 @@ public sealed class HintBroker : IHintBroker
 		}
 	}
 
+	/// <summary>
+	/// <b>强制重发</b>某个玩家: 跳过"内容未变跳过重发"与输入摘要快筛, 下一轮立刻把复合块重新盖回去。
+	/// <para>用于强接管: 别的插件抢先把提示口占掉时, 不等续期, 立即重新下发。</para>
+	/// </summary>
+	public void ForceResend(ReferenceHub? hub)
+	{
+		if (hub == null)
+		{
+			return;
+		}
+		lock (_sync)
+		{
+			if (!_states.TryGetValue(hub, out PlayerState state))
+			{
+				state = new PlayerState();
+				_states.Add(hub, state);
+			}
+			state.ForceNext = true;
+			state.NextSendAt = 0f;
+			state.LastSignature = 0L;
+			state.HasSignature = false;
+			_dirty.Add(hub);
+		}
+	}
+
+	/// <summary>取某个玩家上一次真正下发的复合块(诊断/命令用)。</summary>
+	public bool TryGetLastComposed(ReferenceHub? hub, out string text, out float duration)
+	{
+		text = string.Empty;
+		duration = 0f;
+		if (hub == null)
+		{
+			return false;
+		}
+		lock (_sync)
+		{
+			if (_states.TryGetValue(hub, out PlayerState state) && !string.IsNullOrEmpty(state.LastText))
+			{
+				text = state.LastText;
+				duration = state.LastDuration;
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public bool RegisterChannel(HintChannel channel)
 	{
 		if (channel == null)
@@ -573,6 +625,24 @@ public sealed class HintBroker : IHintBroker
 			return;
 		}
 		float time = Time.time;
+		if (full)
+		{
+			try
+			{
+				List<ReferenceHub> alive = new List<ReferenceHub>();
+				foreach (Player player in Player.ReadyList)
+				{
+					if (player != null && player.ReferenceHub != null)
+					{
+						alive.Add(player.ReferenceHub);
+					}
+				}
+				HintTakeover.Prune(alive);
+			}
+			catch (Exception)
+			{
+			}
+		}
 		RenderUnit[] units;
 		TransientHint[] transients;
 		bool dirtyAll;
@@ -657,8 +727,17 @@ public sealed class HintBroker : IHintBroker
 		{
 			return;
 		}
+		bool force;
+		lock (_sync)
+		{
+			force = _states.TryGetValue(hub, out PlayerState forced) && forced.ForceNext;
+			if (force)
+			{
+				forced.ForceNext = false;
+			}
+		}
 		long num = 0L;
-		if (InputSignatureEnabled)
+		if (InputSignatureEnabled && !force)
 		{
 			num = ComputeInputSignature(hub, units, transients);
 			lock (_sync)
@@ -705,7 +784,7 @@ public sealed class HintBroker : IHintBroker
 				value3 = new PlayerState();
 				_states.Add(hub, value3);
 			}
-			if (SuppressUnchangedResend && value3.LastText == composite && now < value3.NextSendAt)
+			if (SuppressUnchangedResend && !force && value3.LastText == composite && now < value3.NextSendAt)
 			{
 				SuppressedResends++;
 				if (InputSignatureEnabled)
@@ -716,6 +795,7 @@ public sealed class HintBroker : IHintBroker
 				return;
 			}
 			value3.LastText = composite;
+			value3.LastDuration = duration;
 			value3.NextSendAt = now + Mathf.Max(0.5f, duration - _leeway);
 			if (InputSignatureEnabled)
 			{

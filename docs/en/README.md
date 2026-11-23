@@ -22,17 +22,17 @@
 > channel into **independent slots**, one per caller, attributed automatically from the call stack —
 > so a plugin that just calls `SendHint` / `SendBroadcast` works as-is, and stops clobbering everyone else.
 
-> **Beta 1.1.0 — “Wait, is it really entering beta?” … “Yep, it really is!”**
+> **Beta 1.1.1 — If another hint plugin jumps the queue, it gets kicked back out.**
 >
-> HintChorus is now in Beta: usable on regular production servers, but keep an eye on it.
+> HintChorus is in Beta: usable on regular production servers, but keep an eye on it.
 >
-> - Trimmed unnecessary hint-interception paths and **experimentally merged the game's native hints into the composite render** (works in most observed cases).
-> - **Compatibility fallback**: run `Hint orvs` in the server console to return the installed hint framework(s) to the vanilla display, one by one.
+> - **Force takeover (default on)**: `HintDisplay.Show` runs at Harmony `int.MaxValue` priority with a postfix fallback. A foreign prefix that swallows the call no longer leaves the screen blank — the composite is re-sent immediately.
+> - **Pre-override snapshots**: third-party hints are recorded before absorption/suppression and can be replayed per player.
+> - **Compatibility fallback**: `Hint orvs` detects mainstream hint plugins. None found → option **1** = restore vanilla + replay. Found → numbered per-plugin rollback with hot-applied last data.
 > - **Detailed log (off by default)**: font size, screen position and owning plugin for every line of text.
 > - Default logging keeps normal events and exceptions only (crash detection).
-> - Fixed about **80%** of the known bugs.
 >
-> If something breaks: ① run `Hint orvs` to roll back the suspect plugin; ② or remove/delete HintChorus and restart.
+> If something breaks: ① run `Hint orvs native` to roll back; ② or remove/delete HintChorus and restart.
 > Target build: current public branch 14.2.x; patch targets will be re-verified after 15.0 "Megapatch III" ships.
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)

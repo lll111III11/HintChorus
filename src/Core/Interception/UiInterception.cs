@@ -60,6 +60,9 @@ public sealed class UiInterception : IUiInterception
 
 	public bool HintEnabled { get; set; } = true;
 
+	/// <summary>强接管(默认开): 外部前缀抢先吞掉提示时, 立即把本底层的 UI 重新盖回去。</summary>
+	public bool ForceTakeover { get; set; } = true;
+
 	public bool BroadcastEnabled { get; set; } = true;
 
 	public bool BlockThirdPartyBroadcastClear { get; set; } = true;
@@ -210,6 +213,10 @@ public sealed class UiInterception : IUiInterception
 	{
 		HintSurfaceIsolation instance = HintSurfaceIsolation.Instance;
 		instance.Enabled = HintEnabled;
+		instance.ForceTakeover = ForceTakeover;
+		instance.ForceNative = false;
+		HintTakeover.LeaveNativeMode();
+		HintTakeover.ForceEnabled = ForceTakeover;
 		instance.AutoAttribute = AutoAttribute;
 		instance.NativePolicy = NativePolicy;
 		instance.SlotPriority = HintSlotPriority;

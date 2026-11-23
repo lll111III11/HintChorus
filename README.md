@@ -14,24 +14,25 @@
 
 # HintChorus
 
-> ## Beta 1.1.0 — “Wait, is it really entering beta?” … “Yep, it really is!”
+> ## Beta 1.1.1 — If another hint plugin jumps the queue, it gets kicked back out.
 >
 > **HintChorus is now in Beta.** It can be used on regular production servers, but please keep an eye on it.
 >
-> - Trimmed unnecessary hint-interception paths, and **experimentally merged the game's native hints into the composite render** (works in most observed cases).
-> - **Compatibility fallback**: run `Hint orvs` in the server backend console to return the installed hint framework(s) to the vanilla display, one by one. If several are found, it lists them and asks you to pick one by number.
+> - **Force takeover (default on)**: `HintDisplay.Show` runs at `int.MaxValue` Harmony priority, with a postfix fallback. If another plugin's prefix swallows the call, HintChorus immediately re-sends its composite instead of disappearing.
+> - **Pre-override snapshots**: third-party hints are recorded before absorption/suppression; rollback can replay the exact data.
+> - **Compatibility fallback**: run `Hint orvs` in the server console. No mainstream hint plugin → it says so and offers option **1** = restore vanilla + replay pre-override data. Mainstream plugins present → numbered per-plugin rollback, hot-applying the last recorded data per player.
 > - **Detailed logging (off by default)**: font size, screen position and owning plugin for every line of text. Enable `EnableDetailedUiLog` in the config to inspect each plugin's text behaviour.
 > - **Default logging** keeps ordinary events and exceptions only (crash detection).
-> - Fixed about **80%** of the known bugs. Multiple hint plugins can coexist without conflicts.
+> - Multiple hint plugins can coexist without conflicts.
 >
-> If something breaks: run `Hint orvs`, or remove/delete HintChorus and restart.
+> If something breaks: run `Hint orvs native`, or remove/delete HintChorus and restart.
 > Target build: current public branch 14.2.x; patch targets will be re-verified after 15.0 “Megapatch III”.
 >
 > ---
 >
-> **HintChorus 要进入 Beta 了，真的假的？我去，真的！**
+> **HintChorus 1.1.1：敢站它前面的，直接一脚踹掉。**
 >
-> 已可应用于正常的生产服务器，但仍需观察使用。本次更新精简了不必要的 Hint 拦截，并尝试性把原版 Hint 融入到渲染中；新增 `Hint orvs` 控制台回退、详细 UI 日志（默认关闭）；默认日志只记录普通事件与异常事件；修复了约 80% 的已知问题。出问题时可用 `Hint orvs` 退回，或直接移出/删除 HintChorus。
+> 已可应用于正常的生产服务器，但仍需观察使用。`HintDisplay.Show` 提到最高优先级并加 Postfix 兜底：别的插件前缀把提示吞掉时，立即强制重发复合块；第三方提示在吸收/压制前先记录快照，回退时可原样热应用。`Hint orvs` 会先检测主流插件：没有就明确提示，并提供编号 1 = 退回原生 + 恢复覆盖前数据；有就按编号单独回退并热应用其最后数据。出问题时用 `Hint orvs native`，或直接移出/删除 HintChorus。
 >
 > 完整发布稿见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
@@ -78,7 +79,15 @@
 
 ---
 
-## Beta 1.1.0 新增 (What's new in beta)
+## Beta 1.1.1 新增 (What's new)
+
+### 0. 强接管：敢站前面的，直接踹掉
+
+`HintDisplay.Show` 现在挂在 Harmony **最高优先级 `int.MaxValue`** 上，并附带 Postfix 兜底：
+
+- 别的 Hint 插件用更高优先级前缀返回 `false`，会把我们的前缀整段跳过 —— 这时 Postfix 会立刻强制重发本底层的复合块。
+- 插件提示在被吸收/压制之前，先按玩家记录**覆盖前快照**（文本、时长、所属插件）；回退时可原样热应用。
+- 开关：配置项 `ForceTakeover`（默认开）。关掉退回“只观测、遇冲突让路”。
 
 ### 1. 控制台回退：`Hint orvs`（大小写不敏感）
 
@@ -86,10 +95,12 @@
 
 | 命令 | 作用 |
 | --- | --- |
-| `Hint orvs` | 列出已发现的 Hint 插件；只有 1 个时自动切换；多个时按编号选择 |
-| `Hint orvs <编号>` | 只把这个插件切回**游戏原版提示**，其它插件继续由合并层托管 |
+| `Hint orvs` | 先检测主流插件：一个都没有时明确提示，并给出编号 1 = 整体退回原生；有则按编号列出 |
+| `Hint orvs 1` | 无主流插件时：退回原生，并恢复覆盖前数据 |
+| `Hint orvs <编号>` | 只把这个插件切回**游戏原版提示**，并热应用它最后一条数据 |
 | `Hint orvs <编号> merge` | 恢复该插件为合并渲染 |
-| `Hint orvs all` / `reset` | 全部切回原生 / 全部恢复合并 |
+| `Hint orvs native` / `all` | 整体 / 全部退回原生并恢复覆盖前数据 |
+| `Hint orvs reset` | 退出原生模式，全部恢复合并 |
 
 本插件**支持多个 Hint 插件同时存在且互不冲突**；回退只影响被选中的插件，不写配置文件，重启即恢复默认。
 

@@ -8,12 +8,12 @@ title: HintChorus
 
 > Dynamic UI isolation layer for SCP:SL — one independent hint slot per caller, no plugin changes needed.
 
-> **Beta 1.1.0 — “Wait, is it really entering beta?” … “Yep, it really is!”**
+> **Beta 1.1.1 — If another hint plugin jumps the queue, it gets kicked back out.**
 >
-> HintChorus is now in Beta: usable on regular production servers, but keep an eye on it. Trimmed unnecessary hint-interception paths and experimentally merged native hints into the composite render. New `Hint orvs` console fallback, detailed UI log (off by default), about 80% of known bugs fixed. Multiple hint plugins can coexist without conflicts.
-> If something breaks, run `Hint orvs` or remove/delete HintChorus.
+> HintChorus is in Beta: usable on regular production servers, but keep an eye on it. `HintDisplay.Show` now runs at Harmony `int.MaxValue` priority with a postfix fallback, so a foreign prefix that swallows the call no longer leaves the screen blank. Third-party hints are snapshotted before absorption and can be replayed per player. `Hint orvs` detects mainstream plugins: if none exist it offers option **1** = restore vanilla + replay; otherwise it lists them by number and hot-applies the chosen plugin's last data.
+> If something breaks, run `Hint orvs native` or remove/delete HintChorus.
 >
-> **HintChorus 要进入 Beta 了，真的假的？我去，真的！** 已可应用于正常的生产服务器，但仍需观察使用；出问题时用 `Hint orvs` 退回，或直接移出/删除 HintChorus。
+> **HintChorus 1.1.1：敢站它前面的，直接一脚踹掉。** 已可应用于正常的生产服务器，但仍需观察使用。强接管 + 覆盖前快照；`Hint orvs` 先检测主流插件，没有就提供编号 1 直接退回原生并恢复覆盖前数据；有就按编号单独回退并热应用其最后数据。
 
 ## 语言 / Language
 

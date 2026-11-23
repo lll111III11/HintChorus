@@ -51,6 +51,7 @@ internal static class BootstrapConfigurator
 		instance.AutoAttribute = config.AutoAttributeThirdPartyUi;
 		instance.NativePolicy = config.NativeHintPolicy;
 		instance.HintEnabled = config.InterceptHints;
+		instance.ForceTakeover = config.ForceTakeover;
 		instance.HintSlotPriority = config.HintSlotPriority;
 		instance.HintShowLabels = config.HintShowLabels;
 		instance.NativeHintTranslate = config.TranslateNativeHints;

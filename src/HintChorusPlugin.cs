@@ -103,6 +103,9 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		[Description("接管提示条表面(HintDisplay.Show)")]
 		public bool InterceptHints { get; set; } = true;
 
+		[Description("强接管(默认开): 其它插件的 Hint 补丁抢先吞掉提示口、导致本底层 UI 直接不显示时, 用最高优先级前缀 + Postfix 兜底强制把复合块重新盖回去; 关掉退回只观测/让路")]
+		public bool ForceTakeover { get; set; } = true;
+
 		[Description("提示条信口优先级(64/96/128/160/192, 越小越靠上)")]
 		public byte HintSlotPriority { get; set; } = 128;
 
@@ -256,11 +259,12 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 				UiInterception.Instance.Install();
 			}
 			HintFallback.ResetAll();
+			HintTakeover.Clear();
 			HintCommand.EnsureRegistered();
 			_maintenanceLoop = Timing.RunCoroutine(MaintenanceRoutine(), Segment.Update);
 			UiLog.WriteStartupReport(BuildStartupReport());
 			StartupLog.Info("[HintChorus] Enable 完成 → 外部插件可经 UiIsolation / IUiIsolation 注册通道、文本源、SSS 端口");
-			StartupLog.Info("[HintChorus] beta 1.1.0: 可进生产服务器但请谨慎; 出问题在控制台输入 Hint orvs 回退到原生提示");
+			StartupLog.Info("[HintChorus] beta 1.1.1: 可进生产服务器但请谨慎; 强接管已启用, 出问题在控制台输入 Hint orvs 回退到原生提示");
 		}
 		catch (Exception ex)
 		{
@@ -277,6 +281,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			+ "\n端口: " + LabApi.Features.Wrappers.Server.Port
 			+ "\n合并核心: " + base.Config.EnableHintChorus
 			+ " | 第三方拦截: " + base.Config.InterceptThirdPartyUi
+			+ " | 强接管: " + base.Config.ForceTakeover
 			+ " | 排版: " + base.Config.LayoutMode
 			+ "\n日志: 报告=" + base.Config.EnableCrashReportLog
 			+ " | 详细UI=" + base.Config.EnableDetailedUiLog
@@ -312,6 +317,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		Timing.KillCoroutines(new CoroutineHandle[1] { _maintenanceLoop });
 		HintCommand.Unregister();
 		HintFallback.ResetAll();
+		HintTakeover.Clear();
 		SssForceRewrite.Uninstall();
 		UiInterception.Instance.Uninstall();
 		HintBroker.Instance.Stop();

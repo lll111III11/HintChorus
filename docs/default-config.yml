@@ -95,6 +95,8 @@ native_hint_policy: Isolate
 # ── 提示条表面 (HintDisplay.Show) ─────────────────────────────────────────
 # 接管提示条表面(HintDisplay.Show)
 intercept_hints: true
+# 强接管(默认开): 其它插件的 Hint 补丁抢先吞掉提示口时, 用最高优先级前缀 + Postfix 兜底强制把复合块盖回去
+force_takeover: true
 # 提示条信口优先级(64/96/128/160/192, 越小越靠上)
 hint_slot_priority: 128
 # 提示条信口是否显示 [来源] 标签(默认关, 保持插件原本观感)

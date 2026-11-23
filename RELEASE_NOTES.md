@@ -1,58 +1,61 @@
-# HintChorus Beta 1.1.0 — “Wait, is it really entering beta?” … “Yep, it really is!”
+# HintChorus Beta 1.1.1 — If another hint plugin jumps the queue, it gets kicked back out.
 
 > 发布标题 / Release title:
-> **HintChorus Beta 1.1.0 — “Wait, is it really entering beta?” … “Yep, it really is!”**
+> **HintChorus Beta 1.1.1 — If another hint plugin jumps the queue, it gets kicked back out.**
 >
 > 中文副标题 / Chinese subtitle:
-> **HintChorus 要进入 Beta 了，真的假的？我去，真的！**
+> **HintChorus 1.1.1：敢站它前面的，直接一脚踹掉。**
 
 ---
 
 ## English (primary)
 
-**Beta status** — HintChorus is now in Beta. It can be used on regular production servers, but please keep an eye on it. If anything goes wrong, roll back the installed hint framework(s) through the server console, or remove/delete HintChorus.
+**Beta status** — HintChorus is still Beta. Usable on regular production servers, but keep an eye on it. If anything goes wrong, run `Hint orvs native`, or remove/delete HintChorus and restart.
 
 ### What's changed
 
-- Trimmed unnecessary hint-interception paths, and **experimentally merged the game's native hints into the composite render** (based on current observations, it works in most cases).
-- **Compatibility fallback**: if something is incompatible, run `Hint orvs` in the server backend console to return the installed hint framework(s) to the vanilla display, one by one. If several are found, it lists them and asks you to pick one by number.
-- **Detailed logging (off by default)**: records the font size and screen position of every line of text, plus the plugin that owns it. To inspect every plugin's text behaviour, enable `EnableDetailedUiLog` in the config file.
-- **Default logging** keeps ordinary events and exceptions only (crash detection).
-- Fixed about **80%** of the known bugs.
-- Multiple hint plugins can now coexist without conflicts.
+- **Force takeover (default on)**: `HintDisplay.Show` now runs at Harmony priority `int.MaxValue`, and a postfix fallback is attached. If another hint plugin's prefix swallows the call so our prefix never runs, HintChorus immediately re-sends its composite block instead of leaving the screen blank.
+- **Pre-override snapshots**: every third-party hint is recorded *before* it is absorbed or suppressed (text, duration, owning plugin, per player). Rollback can replay that exact data.
+- **`Hint orvs` mainstream detection**:
+  - No mainstream hint plugin detected → the command says so explicitly and offers option **1** = restore vanilla and replay the pre-override data.
+  - Mainstream plugins present → they are listed by number. Picking one rolls that plugin back to vanilla and **hot-applies its last recorded data per player**; `merge` restores it.
+  - New sub-commands: `Hint orvs native` (global vanilla + replay), `Hint orvs all` (all plugins vanilla + replay), `Hint orvs reset` (back to merged).
+- New config key: `ForceTakeover` (default `true`). Turn it off to go back to observe-and-yield behaviour.
+- Multiple hint plugins can still coexist without conflicts.
 
 ### Rollback
 
-- Console: `Hint orvs` → choose the suspect plugin by number; or `Hint orvs all` / `Hint orvs reset`.
+- Console: `Hint orvs` / `Hint orvs native` / `Hint orvs reset`.
 - Or remove/delete `HintChorus.dll` (and `0HintChorus.Bootstrap.dll`) and restart the server.
 
 > Target build: current public branch 14.2.x. Patch targets will be re-verified after SCP:SL 15.0 “Megapatch III” ships.
-> Download asset for this release: **`HintChorus.dll`** (the old `alpha-HintIsolation.dll` / `alpha-HintChorus.dll` names are no longer used).
+> Release asset: **`HintChorus.dll`** (1.1.1.0).
 
 ---
 
 ## 中文（辅助）
 
-**HintChorus 要进入 Beta 了，真的假的？**
+**HintChorus 1.1.1：敢站它前面的，直接一脚踹掉。**
 
-我去，真的！
+本次更新加入**更强势的补丁接管（内存层）**：`HintDisplay.Show` 提到 Harmony 最高优先级 `int.MaxValue`，并加 Postfix 兜底。别的插件的前缀把调用吞掉、导致我们的前缀根本没跑时，会立即强制重发本底层的复合块 —— 不再出现“别的插件一站前面，UI 直接不显示”。
 
-本次更新删减了不必要的 Hint 拦截，以及尝试性地将原版的 Hint 融入到渲染中（按照目前发现来看的话，有概率）。
+**覆盖前数据**：第三方提示在被吸收或压制之前，先按玩家记录文本、时长与所属插件。需要回退时，把这份记录原样热应用回去。
 
-本次更新也包含了：如果出现不兼容情况，可以退回原本已安装的 Hint 底层插件（通过服务器后台控制台）。
+**`Hint orvs` 行为更新**：
 
-增加了更详细的日志（默认关闭），它会详细记录每一个文字大小以及位置信息。
+- 执行后先检测当前是否存在主流 Hint 插件。
+- 一个都没有时，用中文明确告诉服主“未检测到主流插件”，并提供编号 **1** 的选项：**直接退回原生，并恢复覆盖前的数据**。
+- 检测到主流插件时，按编号列出；选择某个编号后，将该插件单独退回原生，并把它在各玩家上的最后一条数据热应用。
+- 新增：`Hint orvs native`（整体退回原生 + 回放）、`Hint orvs all`（全部插件退回 + 回放）、`Hint orvs reset`（退出原生、全部恢复合并）。
 
-默认情况下的日志会记录普通的事件及异常事件等。
+**新配置**：`ForceTakeover`（默认开）。关掉即退回“只观测、遇冲突让路”的旧行为。
 
-以及修复了 80% 的 bug！
-
-HintChorus 目前已经进入 beta 阶段：可以应用于正常的生产服务器，但仍需观察使用。如出现问题，可以通过指令退回原本已安装的 Hint 插件，或直接移出或删除 HintChorus。
+**多个 Hint 插件依然可以同时塞入、互不冲突**；某个插件出问题也可以单独退回。
 
 ### 退回方式
 
-- 服务器后台控制台输入 `Hint orvs`，按编号选择要退回的插件；或 `Hint orvs all` / `Hint orvs reset`。
+- 服务器后台控制台输入 `Hint orvs`，按编号选择；或 `Hint orvs native` / `Hint orvs reset`。
 - 或者直接移出/删除 `HintChorus.dll`（以及 `0HintChorus.Bootstrap.dll`）后重启服务器。
 
 > 目标版本：当前公开分支 14.2.x；15.0「Megapatch III」正式发布后会重新核对拦截落点。
-> 本次发布资产请使用 **`HintChorus.dll`**（不再使用旧的 `alpha-HintIsolation.dll` / `alpha-HintChorus.dll`）。
+> 本次发布资产请使用 **`HintChorus.dll`**（1.1.1.0）。
