@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using HintChorus.Core.Diagnostics;
+using HintChorus.Core.Localization;
 using LabApi.Features.Console;
 using LabApi.Features.Wrappers;
 using LabApi.Loader.Features.Paths;
@@ -33,7 +34,7 @@ internal static class TemplateBridge
 
     internal static bool IsAvailable => _host != null;
 
-    internal static string Status { get; private set; } = "未启用(未配置模板)";
+    internal static string Status { get; private set; } = "disabled";
 
     internal static string TemplateName { get; private set; } = string.Empty;
 
@@ -42,7 +43,7 @@ internal static class TemplateBridge
         TemplateName = templateName ?? string.Empty;
         if (string.IsNullOrWhiteSpace(TemplateName))
         {
-            Status = "未启用(未配置模板)";
+            Status = Lang.Get("template.disabled");
             return;
         }
 
@@ -51,15 +52,15 @@ internal static class TemplateBridge
             _assembly = FindOrLoad();
             if (_assembly == null)
             {
-                Status = "映射组件未找到(检查 dependencies\\global\\" + DllFileName + ")";
-                Logger.Warn("[HintChorus] 已配置模板 " + TemplateName + ", 但" + Status);
+                Status = Lang.Format("template.missing", DllFileName);
+                Logger.Warn(Lang.Format("template.configuredButMissing", TemplateName, Status));
                 return;
             }
 
             _host = _assembly.GetType(HostTypeName, false);
             if (_host == null)
             {
-                Status = "映射组件缺少入口类型 " + HostTypeName;
+                Status = Lang.Format("template.missingHost", HostTypeName);
                 Logger.Warn("[HintChorus] " + Status);
                 return;
             }
@@ -76,22 +77,24 @@ internal static class TemplateBridge
             string describe = Invoke<string>("Describe", null) ?? string.Empty;
 
             bool found = resolved.StartsWith("OK|", StringComparison.Ordinal);
-            Status = (found ? "已解析 " : "未找到 ") + resolved
+            Status = (found ? "[ok] " : "[missing] ") + resolved
                 + (describe.Length > 0 ? "\n" + describe : string.Empty);
 
             if (found)
             {
-                Logger.Info("[HintChorus] 模板: " + Status);
+                Logger.Info(Lang.Format("template.info", TemplateName, Status));
             }
             else
             {
-                Logger.Warn("[HintChorus] 模板 " + TemplateName + " 不存在, 保持现有排版。可用: "
-                    + (Invoke<string>("ListTemplates", null) ?? "(无)"));
+                Logger.Warn(Lang.Format(
+                    "template.notFound",
+                    TemplateName,
+                    Invoke<string>("ListTemplates", null) ?? "(none)"));
             }
         }
         catch (Exception ex)
         {
-            Status = "模板初始化失败: " + ex.GetType().Name + ": " + ex.Message;
+            Status = Lang.Format("template.initFailed", ex.GetType().Name, ex.Message);
             Logger.Error("[HintChorus] " + Status);
             UiLog.Report("TemplateBridge", ex);
         }

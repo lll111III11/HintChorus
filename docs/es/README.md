@@ -12,7 +12,12 @@
 > automáticamente desde la pila de llamadas — un plugin que simplemente llama a `SendHint` / `SendBroadcast`
 > funciona tal cual y deja de pisar a los demás.
 
-> **Beta 1.1.2 (2026-11-23) — Patch Arbiter, Snapshot Rollback & Takeover**
+> **15.0.0 (2026-11-23) — capa intermedia UI real y paquetes de idioma**
+>
+> - **Paquetes de idioma reales.** Toda la UI de ejecución sale de los paquetes integrados `en/zh/fr/ru/es` (193 claves cada uno). Un archivo `configs/<port>/HintChorus/lang/<code>.lang` sustituye cualquier clave y añade cualquier idioma, con retroceso línea por línea. `Hint lang reload` recarga en caliente.
+> - **Anatomía del pipeline Hint.** [15.0-hint-internals.md](../15.0-hint-internals.md): `HintDisplay.Show` → `HintMessage`, formato binario, 20 parámetros, 3 efectos, `SuppressedReceivers`, lista de verificación 15.0.
+>
+> También incluido (desde 1.1.2):
 >
 > - **Nuevo: árbitro de parches (Patch Arbiter).** Los cinco puntos de desinstalación de Harmony están instrumentados. Si un framework vacía un método con `Unpatch All`, nuestros parches se restauran en la misma pila de llamadas y la UI se reenvía; un escudo cada 0,25 s actúa como respaldo. Los demás plugins pueden seguir descargándose y parcheando con normalidad.
 > - **Nuevo: retorno por instantánea (Snapshot Rollback & Takeover).** Los hints de terceros se guardan como instantáneas por jugador antes de absorberse. Si otro plugin de hints modifica el canal después de nosotros, HintChorus lo revierte mediante la instantánea y vuelve a tomar el parche: entrando primero con la máxima prioridad de Harmony, o con un respaldo postfix cuando se omitió nuestro prefijo.
@@ -22,7 +27,7 @@
 > Si hay problemas: `Hint orvs native`, o quitar/eliminar HintChorus y reiniciar.
 > Versión objetivo: rama pública actual 14.2.x; los puntos de parche se revisarán tras el lanzamiento de 15.0 «Megapatch III».
 
-> **Nota de idiomas**: el runtime solo incluye los cinco idiomas de la ONU (`en` / `zh` / `fr` / `ru` / `es`); los otros 20+ idiomas son traducciones/documentos externos y recurren al inglés si falta una línea. Ver [languages.md](../languages.md).
+> **Nota de idiomas**: la DLL integra cinco paquetes de idioma (`en` / `zh` / `fr` / `ru` / `es`); cualquier otro idioma puede añadirse con `configs/<port>/HintChorus/lang/<code>.lang`, sustituyendo claves una a una y con retroceso por línea. Ver [languages.md](../languages.md).
 
 ## Breve / Detallado
 

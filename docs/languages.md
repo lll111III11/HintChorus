@@ -6,21 +6,67 @@ title: 多语言 / Multilingual
 
 > **运行时语言政策 / Runtime language policy**
 >
-> - 插件运行时（首次向导、控制台命令、更新提示）**只内嵌联合国五种语言**：`en` / `zh` / `fr` / `ru` / `es`。
-> - 其余 20+ 种语言只以**外部译文文件**和**文档**形式提供，DLL 内不包含；运行时不会声称内置这些语言。
-> - 所有语言的外部译文与文档与中文/英文同步推进；缺行时逐条回退英文，绝不输出半成品。
-> - 新增运行时字符串必须先补齐 `en` + `zh`，再同步 `fr` / `ru` / `es`；文档语言可以先行扩充。
+> - DLL 内嵌 **5 个运行时语言包**：`en` / `zh` / `fr` / `ru` / `es`，位于 `src/Resources/langpack/*.lang`。
+> - **任何语言都可以扩展**：把 `<code>.lang` 放进 `configs/<端口>/HintChorus/lang/`，逐 key 覆盖内嵌值；
+>   缺失的 key 按「请求语言 → 语言主代码 → en → zh」逐条回退，绝不输出空文本或半成品。
+> - 外部语言包不需要重新编译，也不需要改代码；`Hint lang reload` 可热重载。
+> - 新增运行时字符串必须先进 `.lang`：`en` + `zh` 必须齐全，`fr` / `ru` / `es` 同步补齐。
+> - 文档语言与运行时语言相互独立；文档可以先行扩充，不影响运行时回退。
+> - `GameHints.txt` 与 `translations/*.txt` 是**原生提示译文**，与运行时语言包是两套体系，见本文下半部分。
 
 **HintChorus** 的界面文本语言覆盖策略：
 
 - **DLL 内嵌 5 种联合国常用语**：`en` / `zh` / `fr` / `ru` / `es` —— 开箱即用，永远可用；
-- **其余语言走外部文件**：从本仓库 [`docs/translations/`](translations/) 下载对应 `<语言代码>.txt`，
-  放进服务器的 `configs/<端口>/HintChorus/translations/` 目录即生效；
+- **任意语言走外部语言包**：在 `configs/<端口>/HintChorus/lang/` 放 `<语言代码>.lang` 即生效；
 - **按玩家自适应**：每个玩家按其客户端语言（`playerPreferences.Language`）自动取对应译文，
   探测不到时回退配置默认（`native_hint_language`，默认 `zh`）；
-- **逐条回退**：某语言缺某一行时，按「该语言 → 英文」的顺序逐条回退，绝不输出半成品。
+- **逐条回退**：某语言缺某一行时，按「该语言 → 英文 → 中文」的顺序逐条回退，绝不输出半成品。
+
+## 运行时语言包格式（15.0.0）
+
+内嵌语言包在 `src/Resources/langpack/`，共 193 个 key，覆盖：首次向导、`Hint` 命令、更新提示、
+模板桥、补丁仲裁/自愈/护盾、合并核心、SSS 端口、文字度量与语言命令。
+
+外部覆盖示例（`configs/7777/HintChorus/lang/zh.lang`）：
+
+```text
+# 只写要覆盖的行即可, 其余仍用内嵌值
+setup.banner = 我的服务器 · HintChorus 向导
+cmd.helpFooter = 多个 Hint 插件可共存; 出问题先用 Hint orvs 单独回退。
+```
+
+新增语言（例如德语）：
+
+```text
+configs/7777/HintChorus/lang/de.lang
+
+setup.banner = HintChorus Ersteinrichtung
+cmd.helpHeader = [HintChorus] Konsolenbefehle (Groß-/Kleinschreibung egal):
+...
+```
+
+- 文件编码：UTF-8（可带 BOM）；
+- 注释：`#` / `;` / `//` 开头；
+- 转义：`\n` `\r` `\t` `\\`；
+- 占位符：`{0}` `{1}`（按顺序保留，不要翻译掉）；
+- 语言代码大小写不敏感，`-` 与 `_` 等价。
+
+控制台命令：
+
+```text
+Hint lang            查看已加载语言包、key 数量与来源
+Hint lang reload     重新读取内嵌 + 外部语言包（不重启）
+Hint lang path       显示外部语言包目录
+```
+
+> **0.dll 的特例**：`0.dll` 是永久 shim，只负责从 `HintChorus.Bootstrap.payload` 载入引导逻辑；
+> 首次重启横幅由 payload 决定，只出现一次。主插件接管后，所有 UI 文本都走语言包。
+> shim 不参与外部语言包覆盖，也不需要随每次更新替换。
 
 ## 语言清单
+
+> 下表「外部文件」指**原生提示译文**（`translations/*.txt`）；运行时 UI 语言包对任意语言都可用
+> `lang/<code>.lang` 扩展，与下表的内嵌/外部列无关。
 
 | 语言代码 | 语言 | 内嵌 DLL | 外部文件 |
 | --- | --- | --- | --- |

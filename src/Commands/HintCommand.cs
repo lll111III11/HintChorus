@@ -16,7 +16,7 @@ using Logger = LabApi.Features.Console.Logger;
 namespace HintChorus.Commands;
 
 /// <summary>
-/// <b>服务器控制台命令 <c>Hint orvs</c></b> —— 插件级原生回退。
+/// <b>服务器控制台命令 <c>Hint</c></b> —— 插件级原生回退 / 配置 / 语言包。
 ///
 /// <para>用途: 某个 Hint 插件与本底层不兼容时, 不必卸载插件、也不必改配置文件,
 /// 直接在<b>服务器后台控制台</b>输入 <c>Hint orvs</c> 即可把指定插件切回游戏原版提示。</para>
@@ -26,8 +26,7 @@ namespace HintChorus.Commands;
 /// <para>支持多个 Hint 插件共存: 只有被选中的插件走原生直通, 其余仍由合并层托管, 互不冲突。
 /// 切换只影响本次运行, 不写配置; 重启即全部恢复默认合并。</para>
 ///
-/// <para>Beta 1.1.1 起: 无主流插件时不再只回一句"没有插件", 而是明确提示, 并提供编号 1 =
-/// 整体退回原生 + 恢复覆盖前数据; 有主流插件时按编号切换, 并把该插件最后一条数据热应用回去。</para>
+/// <para>15.0.0 起新增 <c>Hint lang</c>: 查看内嵌/外部语言包、热重载外置语言文件。</para>
 /// </summary>
 internal sealed class HintCommand : ICommand, IUsageProvider
 {
@@ -43,20 +42,21 @@ internal sealed class HintCommand : ICommand, IUsageProvider
 
     public string[] Aliases => new[] { "hc" };
 
-    public string Description => "HintChorus 服务器控制台: Hint orvs 检测主流插件并切回原生提示";
+    public string Description => Lang.Get("cmd.description");
 
     public string[] Usage => new[]
     {
-        SetupText.Get("helpOrvs", LocaleService.Language),
-        SetupText.Get("helpPick", LocaleService.Language),
-        SetupText.Get("helpMerge", LocaleService.Language),
-        SetupText.Get("helpNative", LocaleService.Language),
-        SetupText.Get("helpAll", LocaleService.Language),
-        SetupText.Get("helpReset", LocaleService.Language),
-        SetupText.Get("helpYield", LocaleService.Language),
-        SetupText.Get("helpTake", LocaleService.Language),
-        SetupText.Get("helpSetup", LocaleService.Language),
-        SetupText.Get("helpUpdate", LocaleService.Language)
+        Lang.Get("cmd.helpOrvs"),
+        Lang.Get("cmd.helpPick"),
+        Lang.Get("cmd.helpMerge"),
+        Lang.Get("cmd.helpNative"),
+        Lang.Get("cmd.helpAll"),
+        Lang.Get("cmd.helpReset"),
+        Lang.Get("cmd.helpYield"),
+        Lang.Get("cmd.helpTake"),
+        Lang.Get("cmd.helpSetup"),
+        Lang.Get("cmd.helpUpdate"),
+        Lang.Get("cmd.helpLang")
     };
 
     public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
@@ -65,7 +65,7 @@ internal sealed class HintCommand : ICommand, IUsageProvider
         {
             if (!IsServerConsole(sender))
             {
-                response = "[HintChorus] 该命令只允许在服务器终端控制台执行。";
+                response = Lang.Get("cmd.consoleOnly");
                 return false;
             }
 
@@ -87,9 +87,14 @@ internal sealed class HintCommand : ICommand, IUsageProvider
                 return UpdateService.HandleCommand(out response);
             }
 
+            if (sub.Equals("lang", StringComparison.OrdinalIgnoreCase))
+            {
+                return HandleLang(Slice(arguments, 1), out response);
+            }
+
             if (!sub.Equals("orvs", StringComparison.OrdinalIgnoreCase))
             {
-                response = "[HintChorus] 未知子命令: " + sub + "\n" + BuildHelp();
+                response = Lang.Format("cmd.unknown", sub, BuildHelp());
                 return false;
             }
 
@@ -103,7 +108,7 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             if (target.Equals("yield", StringComparison.OrdinalIgnoreCase))
             {
                 UiInterception.Instance.AllowExternalTakeover = true;
-                response = "[HintChorus] 已让出提示通道: 外部 Hint 插件现在可以接管。\n输入 Hint orvs take 收回。";
+                response = Lang.Get("cmd.yield");
                 UiLog.Detail("COMMAND", "yield by " + SafeSender(sender));
                 return true;
             }
@@ -113,7 +118,7 @@ internal sealed class HintCommand : ICommand, IUsageProvider
                 UiInterception.Instance.AllowExternalTakeover = false;
                 UiInterception.Instance.Repair();
                 HintBroker.Instance.MarkDirty();
-                response = "[HintChorus] 已收回提示通道: 本底层重新接管, 并重发 UI。";
+                response = Lang.Get("cmd.take");
                 UiLog.Detail("COMMAND", "take by " + SafeSender(sender));
                 return true;
             }
@@ -121,8 +126,7 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             if (target.Equals("native", StringComparison.OrdinalIgnoreCase))
             {
                 int replayed = HintTakeover.EnterNativeMode(true);
-                response = "[HintChorus] 已整体退回原生提示, 恢复 " + replayed
-                    + " 个玩家的覆盖前数据。\n输入 Hint orvs reset 可恢复合并渲染。";
+                response = Lang.Format("cmd.native", replayed);
                 return true;
             }
 
@@ -131,8 +135,7 @@ internal sealed class HintCommand : ICommand, IUsageProvider
                 IReadOnlyList<string> candidates = HintFallback.Candidates();
                 int changed = HintFallback.SetAllNative(true);
                 int replayed = HintTakeover.EnterNativeMode(true);
-                response = "[HintChorus] 已把 " + changed + " 个插件切回原生直通(共发现 " + candidates.Count
-                    + " 个), 并恢复 " + replayed + " 个玩家的覆盖前数据。\n输入 Hint orvs reset 可全部恢复合并。";
+                response = Lang.Format("cmd.all", changed, candidates.Count, replayed);
                 return true;
             }
 
@@ -142,13 +145,13 @@ internal sealed class HintCommand : ICommand, IUsageProvider
                 HintTakeover.LeaveNativeMode();
                 int restored = HintFallback.ResetAll();
                 HintBroker.Instance.MarkDirty();
-                response = "[HintChorus] 已退出原生模式, 恢复 " + restored + " 个插件为合并渲染。";
+                response = Lang.Format("cmd.reset", restored);
                 return true;
             }
 
             if (!int.TryParse(target, out int index))
             {
-                response = "[HintChorus] 编号必须是数字。\n" + BuildHelp();
+                response = Lang.Format("cmd.invalidNumber", BuildHelp());
                 return false;
             }
 
@@ -159,8 +162,7 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             if (noMainstream && index == 1)
             {
                 int replayed = HintTakeover.EnterNativeMode(true);
-                response = "[HintChorus] 未检测到主流插件, 已按编号 1 整体退回原生提示, 恢复 " + replayed
-                    + " 个玩家的覆盖前数据。\n输入 Hint orvs reset 可恢复合并渲染。";
+                response = Lang.Format("cmd.nativeNone", replayed);
                 UiLog.Detail("COMMAND", "native mode by " + SafeSender(sender));
                 return true;
             }
@@ -169,7 +171,7 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             int total = mainstream.Count + others.Count;
             if (position < 1 || position > total)
             {
-                response = "[HintChorus] 编号超出范围: " + index + " (有效范围 " + (1 + offset) + "-" + (total + offset) + ")。";
+                response = Lang.Format("cmd.outOfRange", index, 1 + offset, total + offset);
                 return false;
             }
 
@@ -202,7 +204,7 @@ internal sealed class HintCommand : ICommand, IUsageProvider
                 }
                 HintTakeover.LeaveNativeMode();
                 HintBroker.Instance.MarkDirty();
-                response = "[HintChorus] 已把 " + display + " 恢复为合并渲染。";
+                response = Lang.Format("cmd.mergeOne", display);
             }
             else
             {
@@ -217,12 +219,10 @@ internal sealed class HintCommand : ICommand, IUsageProvider
                 {
                     replayed += HintTakeover.ReplayPlugin(id);
                 }
-                response = "[HintChorus] 已把 " + display + " 切回原生直通, 并热应用 "
-                    + replayed + " 个玩家的最后一条数据。\n其它插件仍由合并层托管; 恢复: Hint orvs "
-                    + index + " merge";
+                response = Lang.Format("cmd.nativeOne", display, replayed, index);
                 if (mainstreamEntry != null && mainstreamEntry.Native)
                 {
-                    response += "\n(该插件此前已是原生直通)";
+                    response += Lang.Get("cmd.alreadyNative");
                 }
             }
             UiLog.Detail("COMMAND", (merge ? "merge " : "native ") + string.Join(",", targets) + " by " + SafeSender(sender));
@@ -231,7 +231,7 @@ internal sealed class HintCommand : ICommand, IUsageProvider
         catch (Exception ex)
         {
             UiLog.Report("HintCommand", ex);
-            response = "[HintChorus] 命令执行异常: " + ex.Message;
+            response = Lang.Format("cmd.execFailed", ex.Message);
             return false;
         }
     }
@@ -248,49 +248,93 @@ internal sealed class HintCommand : ICommand, IUsageProvider
 
         if (mainstream.Count == 0)
         {
-            builder.AppendLine("[HintChorus] 未检测到主流 Hint 插件。");
-            builder.AppendLine("  1) 直接退回原生（恢复覆盖前的数据）");
+            builder.AppendLine(Lang.Get("cmd.list.noMainstream"));
+            builder.AppendLine(Lang.Get("cmd.list.nativeOption"));
             if (others.Count > 0)
             {
-                builder.AppendLine("其他已发现插件:");
+                builder.AppendLine(Lang.Get("cmd.list.others"));
                 for (int i = 0; i < others.Count; i++)
                 {
                     builder.Append("  ").Append(i + 2).Append(") ").Append(others[i])
-                        .Append(HintFallback.IsNative(others[i]) ? "  [原生直通]" : "  [合并中]")
+                        .Append(HintFallback.IsNative(others[i]) ? Lang.Get("cmd.list.stateNative") : Lang.Get("cmd.list.stateMerged"))
                         .AppendLine();
                 }
             }
-            builder.AppendLine("输入 Hint orvs 1 退回原生; 输入 Hint orvs <编号> 单独切换某个插件。");
-            builder.Append("恢复合并: Hint orvs reset");
+            builder.AppendLine(Lang.Get("cmd.list.noMainstreamHint"));
+            builder.Append(Lang.Get("cmd.list.resetHint"));
             response = builder.ToString();
             return true;
         }
 
-        builder.AppendLine("[HintChorus] 已检测到 " + mainstream.Count + " 个主流 Hint 插件"
-            + (HintTakeover.NativeMode ? "（当前处于整体原生模式）" : string.Empty) + ":");
+        builder.AppendLine(Lang.Format(
+            "cmd.list.header",
+            mainstream.Count,
+            HintTakeover.NativeMode ? Lang.Get("cmd.list.nativeModeSuffix") : string.Empty));
         for (int i = 0; i < mainstream.Count; i++)
         {
             MainstreamPlugin plugin = mainstream[i];
             builder.Append("  ").Append(i + 1).Append(") ").Append(plugin.DisplayName)
-                .Append(plugin.Native ? "  [原生直通]" : "  [合并中]")
+                .Append(plugin.Native ? Lang.Get("cmd.list.stateNative") : Lang.Get("cmd.list.stateMerged"))
                 .Append("  (").Append(plugin.Source).Append(')')
                 .AppendLine();
         }
         if (others.Count > 0)
         {
-            builder.AppendLine("其他已发现插件:");
+            builder.AppendLine(Lang.Get("cmd.list.others"));
             for (int i = 0; i < others.Count; i++)
             {
                 int number = mainstream.Count + i + 1;
                 builder.Append("  ").Append(number).Append(") ").Append(others[i])
-                    .Append(HintFallback.IsNative(others[i]) ? "  [原生直通]" : "  [合并中]")
+                    .Append(HintFallback.IsNative(others[i]) ? Lang.Get("cmd.list.stateNative") : Lang.Get("cmd.list.stateMerged"))
                     .AppendLine();
             }
         }
-        builder.AppendLine("输入 Hint orvs <编号> 切换为原生直通并热应用其最后数据; 加 merge 恢复合并。");
-        builder.Append("整体退回原生: Hint orvs native | 全部恢复: Hint orvs reset");
+        builder.AppendLine(Lang.Get("cmd.list.pickHint"));
+        builder.Append(Lang.Get("cmd.list.nativeAllHint"));
         response = builder.ToString();
         return true;
+    }
+
+    /// <summary><c>Hint lang [reload|path]</c> —— 语言包查看与热重载。</summary>
+    private static bool HandleLang(ArraySegment<string> arguments, out string response)
+    {
+        string action = arguments.Count > 0 ? Arg(arguments, 0).ToLowerInvariant() : string.Empty;
+        if (action.Length == 0 || action == "list")
+        {
+            IReadOnlyList<string> languages = LanguagePack.Languages;
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine(Lang.Format("lang.header", languages.Count));
+            foreach (string code in languages)
+            {
+                string source = LanguagePack.SourceOf(code);
+                string sourceText = source == "builtin+external"
+                    ? Lang.Get("lang.sourceBoth")
+                    : source == "external"
+                        ? Lang.Get("lang.sourceExternal")
+                        : Lang.Get("lang.sourceBuiltin");
+                builder.AppendLine(Lang.Format("lang.entry", code, LanguagePack.KeyCount(code), sourceText));
+            }
+            builder.Append(Lang.Format("lang.dir", LanguagePack.DirectoryPath));
+            response = builder.ToString();
+            return true;
+        }
+
+        if (action == "reload")
+        {
+            LanguagePack.Reload();
+            LocaleService.Invalidate();
+            response = Lang.Format("lang.reloaded", LanguagePack.Languages.Count, LanguagePack.Report);
+            return true;
+        }
+
+        if (action == "path" || action == "dir")
+        {
+            response = Lang.Format("lang.dir", LanguagePack.DirectoryPath);
+            return true;
+        }
+
+        response = Lang.Format("lang.unknown", action, Lang.Get("lang.usage"));
+        return false;
     }
 
     private static void BuildEntries(out List<MainstreamPlugin> mainstream, out List<string> others)
@@ -308,12 +352,12 @@ internal sealed class HintCommand : ICommand, IUsageProvider
     private static string BuildHelp()
     {
         StringBuilder builder = new StringBuilder();
-        builder.AppendLine(SetupText.Get("helpHeader", LocaleService.Language));
+        builder.AppendLine(Lang.Get("cmd.helpHeader"));
         foreach (string line in Instance.Usage)
         {
             builder.Append("  ").AppendLine(line);
         }
-        builder.Append(SetupText.Get("helpFooter", LocaleService.Language));
+        builder.Append(Lang.Get("cmd.helpFooter"));
         return builder.ToString();
     }
 
@@ -394,15 +438,15 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             GameCore.Console.ConsoleCommandHandler.RegisterCommand(Instance);
             _registered = true;
             _failedAttempts = 0;
-            UiLog.Detail("COMMAND", "已注册控制台命令 Hint / hc");
-            StartupLog.Info("[HintChorus] 控制台命令已就绪: Hint orvs (大小写不敏感)");
+            UiLog.Detail("COMMAND", "registered console command Hint / hc");
+            StartupLog.Info(Lang.Get("cmd.registered"));
         }
         catch (Exception ex)
         {
             _failedAttempts++;
             if (_failedAttempts <= 3)
             {
-                Logger.Warn("[HintChorus] 注册控制台命令 Hint 失败(每 5 秒重试): " + ex.Message);
+                Logger.Warn(Lang.Format("cmd.registerFailed", ex.Message));
             }
             UiLog.Report("CommandRegister", ex);
         }

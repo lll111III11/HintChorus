@@ -8,7 +8,8 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<AssemblyName>HintChorus</AssemblyName>
 		<RootNamespace>HintChorus</RootNamespace>
-		<Version>1.1.2-beta</Version>
+		<Version>15.0.0-beta</Version>
+		<Deterministic>true</Deterministic>
 		<PlatformTarget>x64</PlatformTarget>
 		<!-- 只允许可空注解, 不因历史代码触发成百条空引用告警 -->
 		<Nullable>annotations</Nullable>
@@ -96,19 +97,38 @@
 		<EmbeddedResource Include="Resources\HintChorus.textwidth.bin">
 			<LogicalName>HintChorus.textwidth.bin</LogicalName>
 		</EmbeddedResource>
+		<!-- 运行时语言包: 内嵌五语, 外部 configs/<端口>/HintChorus/lang/<code>.lang 逐 key 覆盖 -->
+		<EmbeddedResource Include="Resources\langpack\*.lang">
+			<LogicalName>HintChorus.lang.%(Filename).lang</LogicalName>
+		</EmbeddedResource>
 	</ItemGroup>
 
 	<ItemGroup>
 		<!-- ══════════════════════════════════════════════════════════════
-		     抢占最先头: 把抢加载引导器的构建产物作为嵌入资源打进本程序集,
-		     运行时由 BootstrapInstaller 释放为
-		     plugins\global\0.dll
+		     单文件发放: 主 DLL 内嵌 永久 shim + 引导 payload + 映射组件。
+		     首次运行全部释放, 提示重启一次; 重启后 shim 载入 payload,
+		     payload 再做抢先安装。以后只替换 payload, 0.dll 永远不动。
 		     ══════════════════════════════════════════════════════════════ -->
-		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\bootstrap\bin\$(Configuration)\net48\HintChorus.Bootstrap.dll">
-			<LogicalName>HintChorus.Bootstrap.dll</LogicalName>
+		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\bootstrap-shim\bin\$(Configuration)\net48\HintChorus.Shim.dll">
+			<LogicalName>HintChorus.Shim.dll</LogicalName>
 		</EmbeddedResource>
-		<!-- 仅用于保证引导器先于本工程构建, 不作为程序集引用 -->
+		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\bootstrap\bin\$(Configuration)\net48\HintChorus.Bootstrap.Payload.dll">
+			<LogicalName>HintChorus.Bootstrap.Payload.dll</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\mapping\bin\$(Configuration)\net48\HintChorus.Mapping.dll">
+			<LogicalName>HintChorus.Mapping.dll</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="$(MSBuildThisFileDirectory)..\mapping\bin\$(Configuration)\net48\template-map.ini">
+			<LogicalName>HintChorus.Mapping.template-map.ini</LogicalName>
+		</EmbeddedResource>
+		<!-- 仅用于保证构建顺序, 不作为程序集引用 -->
+		<ProjectReference Include="..\mapping\HintChorus.Mapping.csproj"
+		                  ReferenceOutputAssembly="false"
+		                  Private="false" />
 		<ProjectReference Include="..\bootstrap\HintChorus.Bootstrap.csproj"
+		                  ReferenceOutputAssembly="false"
+		                  Private="false" />
+		<ProjectReference Include="..\bootstrap-shim\HintChorus.Shim.csproj"
 		                  ReferenceOutputAssembly="false"
 		                  Private="false" />
 	</ItemGroup>

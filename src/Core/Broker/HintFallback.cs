@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HintChorus.Core.Diagnostics;
 using HintChorus.Core.Interfaces;
+using HintChorus.Core.Localization;
 
 namespace HintChorus.Core.Broker;
 
@@ -63,7 +64,7 @@ public static class HintFallback
             bool changed = native ? NativePlugins.Add(key) : NativePlugins.Remove(key);
             if (changed)
             {
-                UiLog.ReportEvent("FALLBACK", (native ? "切回原生直通: " : "恢复合并渲染: ") + key);
+                UiLog.ReportEvent("FALLBACK", Lang.Format(native ? "fallback.toNative" : "fallback.toMerge", key));
             }
             return changed;
         }
@@ -93,7 +94,7 @@ public static class HintFallback
             if (count > 0)
             {
                 NativePlugins.Clear();
-                UiLog.ReportEvent("FALLBACK", "已恢复全部插件为合并渲染, 共 " + count + " 个");
+                UiLog.ReportEvent("FALLBACK", Lang.Format("fallback.resetAll", count));
             }
             return count;
         }

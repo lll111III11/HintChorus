@@ -1,0 +1,228 @@
+# ══════════════════════════════════════════════════════════════════
+# Языковой пакет HintChorus — Русский
+#
+# Встроен в HintChorus.dll. Чтобы переопределить строку, скопируйте
+# файл в  configs/<порт>/HintChorus/lang/ru.lang  и измените значение.
+# Формат: key = value   Экранирование: \n \r \t \\   Комментарии: # ; //
+# ══════════════════════════════════════════════════════════════════
+
+# ── мастер первой настройки ────────────────────────────────────
+setup.banner = Первичная настройка HintChorus
+setup.detected = Обнаружено: язык={0} | часовой пояс={1} | регион={2}
+setup.detectedExtra = Источник часового пояса: {0} | Проверка времени: {1}
+setup.srcNetwork = публичный IP + сетевой пояс
+setup.srcLocal = локальный пояс
+setup.clockOk = локальное время достоверно
+setup.clockSkew = отклонение {0} с
+setup.q1 = 1) Автообновление: {0}    (Hc setup 1 on / off)
+setup.q2 = 2) Подробный журнал UI: {0}    (Hc setup 2 on / off)
+setup.q3 = 3) Записать конфигурацию сейчас? {0}    (Hc setup 3 yes / no)
+setup.q4 = 4) Перезапуск после раунда после обновления (RNR): {0}    (Hc setup 4 on / off)
+setup.desc1 = Автообновление: проверяет GitHub Releases; при включении скачивает автоматически, но по умолчанию сохраняет только HintChorus.dll.new.
+setup.desc2 = Подробный журнал UI: записывает текст, позицию и итоговый вывод по игрокам в logs/ui-*.log; заметная нагрузка на диск.
+setup.desc3 = Записать конфигурацию: сохраняет текущие настройки в config.yml для следующих запусков.
+setup.desc4 = Перезапуск после раунда (RNR): после скачивания и замены DLL полностью перезапускает сервер по окончании текущего раунда.
+setup.commands = Hc setup done — завершить | Hc setup skip — пропустить
+setup.on = вкл
+setup.off = выкл
+setup.yes = да
+setup.no = нет
+setup.saved = Конфигурация сохранена: {0}
+setup.skipped = Пропущено. Изменений нет.
+setup.done = Настройка завершена.
+setup.restart = Подробный журнал и подобные настройки полностью вступят в силу после перезапуска.
+setup.notActive = Мастер настройки не запущен (уже завершён или ещё не начат).
+setup.usage = Использование: Hc setup | Hc setup 1 on|off | Hc setup 2 on|off | Hc setup 3 yes|no | Hc setup 4 on|off | Hc setup done | Hc setup skip
+setup.failed = сбой настройки: {0}
+setup.notInitialized = конфигурация не инициализирована
+setup.writeConfigFailed = не удалось записать конфигурацию: {0}
+setup.writeStateFailed = не удалось записать состояние мастера: {0}
+
+# ── команды консоли сервера ────────────────────────────────────
+cmd.description = Консоль сервера HintChorus: Hint orvs находит популярные плагины и возвращает нативные подсказки
+cmd.helpHeader = [HintChorus] команды консоли (без учёта регистра):
+cmd.helpOrvs = Hint orvs — найти популярные плагины и показать номера (1 = нативный режим, если их нет)
+cmd.helpPick = Hint orvs <n> — переключить этот плагин на нативный вывод и повторить последние данные
+cmd.helpMerge = Hint orvs <n> merge — вернуть этот плагин в объединённый рендер
+cmd.helpNative = Hint orvs native — всё на нативный вывод и повтор данных
+cmd.helpAll = Hint orvs all — все плагины на нативный вывод и повтор
+cmd.helpReset = Hint orvs reset — выйти из нативного режима и вернуть объединение
+cmd.helpYield = Hint orvs yield — отдать канал внешним плагинам (только на этот запуск)
+cmd.helpTake = Hint orvs take — вернуть канал (по умолчанию)
+cmd.helpSetup = Hc setup — первичная настройка (автообновление / подробный журнал / запись конфига / RNR)
+cmd.helpUpdate = Hc update — проверить последнюю версию GitHub сейчас
+cmd.helpLang = Hint lang [reload|path] — список языковых пакетов, перезагрузка внешних пакетов или путь к папке
+cmd.helpFooter = Примечание: несколько hint-плагинов могут работать вместе; orvs откатывает один, не затрагивая остальные.
+cmd.consoleOnly = [HintChorus] Эта команда разрешена только в консоли терминала сервера.
+cmd.unknown = [HintChorus] Неизвестная подкоманда: {0}\n{1}
+cmd.yield = [HintChorus] Канал подсказок передан: внешние hint-плагины могут им управлять.\nВведите Hint orvs take, чтобы вернуть.
+cmd.take = [HintChorus] Канал подсказок возвращён: этот слой снова управляет и повторно отправил UI.
+cmd.native = [HintChorus] Всё переведено на нативные подсказки; данные до перехвата восстановлены для {0} игроков.\nВведите Hint orvs reset для объединённого рендера.
+cmd.nativeNone = [HintChorus] Популярные плагины не найдены; вариант 1 перевёл всё на нативные подсказки и восстановил данные {0} игроков.\nВведите Hint orvs reset для объединённого рендера.
+cmd.all = [HintChorus] {0} плагинов переведены на нативный вывод (всего найдено {1}); данные восстановлены для {2} игроков.\nВведите Hint orvs reset, чтобы вернуть объединение.
+cmd.reset = [HintChorus] Нативный режим отключён; объединённый рендер восстановлен для {0} плагинов.
+cmd.invalidNumber = [HintChorus] Номер должен быть числом.\n{0}
+cmd.outOfRange = [HintChorus] Номер вне диапазона: {0} (допустимо {1}-{2}).
+cmd.mergeOne = [HintChorus] {0} возвращён в объединённый рендер.
+cmd.nativeOne = [HintChorus] {0} переведён на нативный вывод; последние данные применены для {1} игроков.\nОстальные плагины по-прежнему в слое объединения; вернуть: Hint orvs {2} merge
+cmd.alreadyNative = \n(этот плагин уже был на нативном выводе)
+cmd.execFailed = [HintChorus] Ошибка выполнения команды: {0}
+cmd.registered = [HintChorus] Команда консоли готова: Hint orvs (без учёта регистра)
+cmd.registerFailed = [HintChorus] Не удалось зарегистрировать команду Hint (повтор каждые 5 с): {0}
+cmd.list.noMainstream = [HintChorus] Популярные Hint-плагины не обнаружены.
+cmd.list.nativeOption =   1) Вернуться к нативному (восстановить данные до перехвата)
+cmd.list.others = Другие найденные плагины:
+cmd.list.stateNative =   [нативный]
+cmd.list.stateMerged =   [объединение]
+cmd.list.noMainstreamHint = Введите Hint orvs 1 для нативного режима; Hint orvs <n> для отдельного плагина.
+cmd.list.resetHint = Вернуть объединение: Hint orvs reset
+cmd.list.header = [HintChorus] Обнаружено популярных Hint-плагинов: {0}{1}:
+cmd.list.nativeModeSuffix =  (сейчас глобальный нативный режим)
+cmd.list.pickHint = Введите Hint orvs <n>, чтобы перевести на нативный вывод и повторить данные; добавьте merge для возврата.
+cmd.list.nativeAllHint = Всё на нативный: Hint orvs native | Вернуть всё: Hint orvs reset
+
+# ── проверка обновлений ────────────────────────────────────────
+update.started = Проверка обновлений запущена; результат в консоли.
+update.found = Найдена новая версия: {0} (текущая {1})
+update.none = Уже последняя версия: {0}
+update.failed = Ошибка проверки обновлений: {0}
+update.downloaded = Новая версия загружена в {0}; замените DLL перед перезапуском.
+update.replaced = HintChorus.dll заменён; сервер перезапустится в конце раунда.
+update.replaceFailed = Не удалось заменить работающую DLL (возможно, занята); файл .new сохранён, замените вручную.
+update.rnrScheduled = Запланирован полный перезапуск в конце текущего раунда для загрузки новой версии.
+update.noTag = Проверка обновлений: в ответе нет tag_name
+update.scheduleFailed = Не удалось запланировать перезапуск в конце раунда: {0}
+
+# ── выпуск bootstrap ───────────────────────────────────────────
+bootstrap.missingResource = встроенный ресурс HintChorus.Bootstrap.dll не найден (bootstrap не встроен при сборке?)
+bootstrap.sameVersion = bootstrap уже актуален: {0}
+bootstrap.released = bootstrap выпущен → {0} (вступит в силу после перезапуска)
+bootstrap.failed = не удалось выпустить bootstrap: {0}
+bootstrap.staged = обновление bootstrap сохранено в {0}; остановите сервер и вручную замените {1} (текущий bootstrap продолжает работать). Причина: {2}
+bootstrap.assetsUpdated = активы bootstrap обновлены (shim / payload / mapping); перезапустите сервер для применения
+bootstrap.assetsCurrent = активы bootstrap уже актуальны
+bootstrap.assetsStaged = активы bootstrap сохранены как .new ({0}); остановите сервер, замените .new файлы и перезапустите
+bootstrap.assetsFailed = не удалось выпустить активы bootstrap: {0}
+early.skipped = ранняя установка уже выполнена; пропущено
+early.noConfig = config.yml ещё не создан; установка будет выполнена основным плагином
+early.disabled = перехват отключён в конфигурации; ранняя установка не нужна
+early.installed = [ранняя загрузка] перехват UI установлен до Enable других плагинов (порядок #{0}): hints + broadcast + console + CASSIE + админ-чат + хитмаркер
+early.done = перехват UI установлен раньше других плагинов (порядок #{0})
+early.failed = [HintChorus] Ошибка ранней установки (основной плагин всё равно установится): {0}
+early.exception = исключение ранней установки: {0}
+early.uiReady = [HintChorus] Каналы UI готовы — hints / broadcast / console / CASSIE / админ-чат / хитмаркер + страница настроек
+home.ready = каталог самохостинга готов
+home.created = каталог самохостинга создан
+home.failed = не удалось создать каталог самохостинга
+home.status = [HintChorus] Каталог самохостинга {0}: {1} (модулей: {2}, резолвер сборок подключён)
+home.readyState = готов
+home.createdState = создан
+home.readyModules = каталог самохостинга готов ({0} модулей)
+home.createdModules = каталог самохостинга создан ({0} модулей)
+
+# ── жизненный цикл / отчёт запуска ─────────────────────────────
+plugin.description = Слой изоляции динамического UI: перехватывает и атрибутирует сторонние UI-вызовы, выделяет каналы по UiId, поддерживает несколько поверхностей
+plugin.enableDone = [HintChorus] Enable завершён → внешние плагины могут регистрировать каналы, источники текста и порты SSS через UiIsolation / IUiIsolation
+plugin.betaBanner = [HintChorus] 15.0.0: приоритетная загрузка 0.dll + арбитраж патчей (синхронное восстановление) + откат по снимкам + щит (0,25 с) + встроенные языковые пакеты; при сбое введите Hint orvs
+plugin.enableFailed = [HintChorus] Ошибка Enable: {0}
+plugin.disableDone = [HintChorus] Disable завершён: перехват снят, каналы освобождены, массив SSS восстановлен
+plugin.disableReport = Плагин отключён: перехват снят, состояние отката очищено
+plugin.sssGuardError = [HintChorus] Ошибка сторожа SSS: {0}
+plugin.shieldError = [HintChorus] Ошибка щита патчей: {0}
+plugin.setupStartError = [HintChorus] Ошибка запуска мастера настройки: {0}
+plugin.updateStartError = [HintChorus] Ошибка запуска проверки обновлений: {0}
+plugin.maintenanceError = [HintChorus] Ошибка цикла обслуживания: {0}
+plugin.patchGuardError = [HintChorus] Ошибка самовосстановления патчей: {0}
+plugin.bootstrapBanner1 = [HintChorus] ┌────────────────────────────────────────────────────┐
+plugin.bootstrapBanner2 = [HintChorus] │  Bootstrap выпущен; перезапустите сервер для загрузки первым  │
+plugin.bootstrapBanner3 = [HintChorus] └────────────────────────────────────────────────────┘
+plugin.reportVersion = версия: {0} (beta)
+plugin.reportPort = порт: {0}
+plugin.reportCore = объединение: {0} | перехват сторонних: {1} | арбитраж: {2} | принудительный захват: {3} | вёрстка: {4}
+plugin.reportTemplate = шаблон: {0}
+plugin.reportLanguage = языковые пакеты: {0}
+plugin.reportLogs = журналы: отчёт={0} | подробный UI={1} | по игрокам={2}
+plugin.reportCandidates = найдены Hint-плагины: {0}
+
+# ── мост шаблонов ──────────────────────────────────────────────
+template.disabled = отключено (шаблон не задан)
+template.missing = компонент сопоставления не найден (проверьте dependencies\global\{0})
+template.missingHost = в компоненте сопоставления нет типа входа {0}
+template.configuredButMissing = Шаблон {0} задан, но {1}
+template.notFound = Шаблон {0} не существует; текущая вёрстка сохранена. Доступно: {1}
+template.resolved = шаблон: {0}
+template.info = Шаблон {0} разрешён: {1}
+template.initFailed = ошибка инициализации шаблона: {0}: {1}
+
+# ── арбитр патчей ──────────────────────────────────────────────
+arbiter.installed = [HintChorus] Арбитр патчей готов: все 5 точек снятия Harmony под контролем; после внешней очистки слой восстанавливается в том же стеке вызовов
+arbiter.hookFailed = [HintChorus] Ошибка подключения арбитра: цель или постфикс {0}.{1} не найдены
+arbiter.restoreWarn = [HintChorus] Арбитр: {0} удалил патчи этого слоя; восстановление в том же стеке вызовов
+arbiter.restoreEvent = {0} → перехват восстановлен (восстановление № {1})
+arbiter.uninstallFailed = не удалось снять арбитр: {0}
+
+# ── самовосстановление патчей ──────────────────────────────────
+guard.unresolved = [HintChorus] {0} целей патчей больше не найдены (самовосстановление невозможно; проверьте версию игры): {1}
+guard.gaveUp = [HintChorus] Самовосстановление не удалось {0} раз подряд; автопереустановка приостановлена. Всё ещё отсутствуют: {1} (перезагрузите плагин или перезапустите сервер для сброса)
+guard.repairFailed = [HintChorus] Ошибка переустановки при самовосстановлении (всё ещё отсутствуют: {0}): {1}
+guard.detailTypeMissing = (тип не найден)
+guard.detailEnumFailed = (не удалось перечислить методы)
+guard.detailMethodMissing = (метод не найден; возможно, обновление игры изменило подпись)
+
+# ── щит патчей ─────────────────────────────────────────────────
+shield.reinstalled = [HintChorus] Патч подсказок снят извне; щит сразу переустановил его и повторит UI в следующем цикле
+shield.reinstalledReport = Патч подсказок снят извне; сразу переустановлен и UI отправлен повторно (№ {0})
+shield.failed = [HintChorus] Ошибка переустановки щитом: {0}
+
+# ── откат / перехват ───────────────────────────────────────────
+fallback.toNative = переведено на нативный вывод: {0}
+fallback.toMerge = объединённый рендер восстановлен: {0}
+fallback.resetAll = все плагины возвращены в объединённый рендер (всего {0})
+takeover.replayFailed = [HintChorus] Не удалось применить данные до перехвата: {0}
+takeover.enterNative = нативный режим включён, данные восстановлены для {0} игроков
+takeover.enterNativeNoReplay = нативный режим включён без воспроизведения снимков
+takeover.leaveNative = нативный режим отключён; объединённый рендер и принудительный захват восстановлены
+
+# ── ядро объединения ───────────────────────────────────────────
+broker.started = [HintChorus] Ядро объединённого рендера запущено (обновление {0} с)
+broker.stopped = [HintChorus] Ядро объединённого рендера остановлено
+broker.layoutUnknown = [HintChorus] layout_mode не распознан; используется rows. Варианты: rows / offsets / compact; получено: {0}
+broker.channelExists = [HintChorus] Канал '{0}' уже существует; повторная регистрация отклонена (без перехвата)
+broker.channelRegistered = [HintChorus] Канал '{0}' зарегистрирован независимо
+broker.channelUnloaded = [HintChorus] Канал '{0}' выгружен
+broker.sourceExists = [HintChorus] Источник текста '{0}' уже существует; повторная регистрация отклонена (без перехвата)
+broker.sourceRegistered = [HintChorus] Источник текста '{0}' зарегистрирован независимо
+broker.sourceUnloaded = [HintChorus] Источник текста '{0}' выгружен
+broker.unnamed = (без имени)
+broker.playerRenderError = [HintChorus] Ошибка рендера для игрока (изолирована, остальные не затронуты): {0}
+broker.refreshStepError = [HintChorus] Ошибка шага обновления {0} (пропущен в этом цикле): {1}
+broker.sourceError = [HintChorus] Источник текста '{0}' выбросил исключение (изолировано): {1}
+broker.filterError = [HintChorus] Фильтр приёма канала '{0}' выбросил исключение (изолировано): {1}
+broker.refreshError = [HintChorus] Ошибка обновления подсказок: {0}
+
+# ── реестр SSS ─────────────────────────────────────────────────
+sss.started = [HintChorus] Ядро изоляции портов SSS запущено (анти-перехват={0})
+sss.stopped = [HintChorus] Ядро изоляции портов SSS остановлено
+sss.idConflict = [HintChorus] У регистрации '{0}' конфликт SettingId с другими плагинами; регистрация отклонена: {1}
+sss.moduleRegistered = [HintChorus] Регистрация '{0}' независимо зарегистрировала {1} настроек SSS
+sss.moduleUnloaded = [HintChorus] Настройки SSS регистрации '{0}' выгружены
+sss.overwriteDetected = [HintChorus] Обнаружен плагин, полностью заменивший ServerSpecificSettingsSync.DefinedSettings (это ломает UI других плагинов); выполнено слияние и восстановление
+sss.valueCallbackError = [HintChorus] Обратный вызов значения SSS регистрации '{0}' выбросил исключение (изолировано, другие модули не затронуты): {1}
+sss.statusCallbackError = [HintChorus] Обратный вызов статуса SSS регистрации '{0}' выбросил исключение (изолировано): {1}
+
+# ── метрики текста ─────────────────────────────────────────────
+metrics.missing = [HintChorus] Встроенная таблица метрик HintChorus.textwidth.bin не найдена; вёрстка переходит в оценочный режим
+metrics.magic = [HintChorus] Несовпадение магии таблицы метрик; вёрстка переходит в оценочный режим
+metrics.loadFailed = [HintChorus] Не удалось загрузить таблицу метрик; вёрстка переходит в оценочный режим: {0}
+metrics.loaded = [HintChorus] Метрики текста загружены: {0} символов, палитра {1} ширин, {2:F1} КБ (сжато)
+
+# ── команда языков ─────────────────────────────────────────────
+lang.usage = Использование: Hint lang | Hint lang reload | Hint lang path
+lang.header = [HintChorus] Языковые пакеты (загружено {0}):
+lang.entry =   {0} — {1} ключей ({2})
+lang.sourceBuiltin = встроенный
+lang.sourceExternal = внешний
+lang.sourceBoth = встроенный + внешний
+lang.reloaded = [HintChorus] Языковые пакеты перезагружены: {0} языков. {1}
+lang.unknown = [HintChorus] Неизвестное действие языка: {0}\n{1}
+lang.dir = [HintChorus] Папка внешних языковых пакетов: {0}

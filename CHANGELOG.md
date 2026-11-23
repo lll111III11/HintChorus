@@ -3,6 +3,37 @@
 本项目已从 **alpha** 进入 **beta**：可以进入正常的生产服务器，但仍需**谨慎使用**；
 一旦出现异常，请立即按本文末尾的「回退」步骤退回上一版本或关闭插件。
 
+## 15.0.0 (2026-11-23)
+
+### Release headline / 发布标题
+
+**HintChorus 15.0.0 — UI Middle Layer & Real Language Packs**
+
+- **运行时语言包真正落地。** 用户可见的运行文本（命令、向导、更新、启动、模板、仲裁/自愈/护盾、合并核心、SSS）不再硬编码，统一进入 `src/Resources/langpack/{en,zh,fr,ru,es}.lang`（5 语 × 193 key），编进 `HintChorus.dll`。
+- **任意语言可扩展。** 外部语言包放在 `configs/<端口>/HintChorus/lang/<code>.lang`，逐 key 覆盖内嵌值；缺失 key 按「请求语言 → 语言主代码 → en → zh」回退。不需要重新编译，不需要改代码。
+- **`Hint lang` 命令。** `Hint lang` 查看语言包/key 数量/来源，`Hint lang reload` 热重载，`Hint lang path` 显示目录。
+- **提示管道解剖。** 新增 [docs/15.0-hint-internals.md](docs/15.0-hint-internals.md)：从 `HintDisplay.Show` 到 `HintMessage` 的逐字节线格式、20 种 `HintParameter`、3 种 `HintEffect`、时长倍率语义、`SuppressedReceivers` 官方静音开关，以及 15.0 发布当天的核对清单。
+- **语言代码放宽。** `ServerLocale.Normalize` 不再把未知语言强制改成 `en`；任何 `xx` / `xx_YY` 代码都会保留，由语言包决定是否存在对应译文，再逐条回退。
+- **启动报告新增语言包摘要**：每个语言的 key 数量与来源（builtin / external / both）写入 `logs/report-*.log`。
+- **修复引导器释放失败**：Windows 上正在运行的 `0.dll` / `HintChorus.dll` 是 user-mapped，进程内无法覆盖。现在按程序集版本判断：同版本不重写；确实需要更新但文件被占用时，暂存为 `0.dll.new` / `HintChorus.Mapping.dll.new` 并给出停服替换提示，不再每次启动报错。引导器/映射/主工程全部改为 deterministic 构建，同一份源码重建字节稳定。
+- **单文件发放 + 永久 shim（15.0.0 最终形态）**：主 DLL 内嵌 永久 shim、引导 payload 与映射组件。首次运行全部释放并提示重启一次；重启后 `0.dll`（固定 1.0.0）从 `HintChorus.Bootstrap.payload` 载入真正的引导逻辑，payload 再做抢先安装。以后更新只替换 payload，`0.dll` 永远不动，不再需要手动搬 `.new`。
+- 版本号对齐 15.0.0；既有补丁仲裁、快照拦回、护盾、抢加载 `0.dll`、SSS 端口隔离等能力保持不变。
+
+### 更新速览
+
+- 运行时文案全部迁入语言包（5 语 × 193 key），DLL 内嵌，开箱即用。
+- 外部 `lang/<code>.lang` 可覆盖任意行、可新增任意语言，`Hint lang reload` 热重载。
+- 新增 `Hint lang` / `Hint lang reload` / `Hint lang path`。
+- 新增 `docs/15.0-hint-internals.md`：Hint 线格式、参数/效果类型表、抑制开关与 15.0 核对清单。
+- 语言探测不再把未知语言强制回退英文；没有对应包时仍逐条回退。
+- 启动报告的「语言包」一行会列出每个语言的 key 数与来源。
+
+### 升级说明
+
+- 旧版 `config.yml` 无需修改；`Language` 仍支持 `auto` / `zh` / `en` / `fr` / `ru` / `es`，现在也接受外部语言包代码。
+- 想改文案：复制 `src/Resources/langpack/<code>.lang` 到 `configs/<端口>/HintChorus/lang/<code>.lang`，只保留要改的行，然后 `Hint lang reload`。
+- 语言包解析失败只影响该文件，不会阻止插件加载；缺失 key 显示 `[key]` 并继续运行。
+
 ## beta 1.1.2 (2026-11-23)
 
 ### Release headline / 发布标题

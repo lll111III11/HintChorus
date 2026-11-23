@@ -1,0 +1,228 @@
+# ══════════════════════════════════════════════════════════════════
+# HintChorus 运行时语言包 —— 简体中文
+#
+# 本文件已编入 HintChorus.dll。要覆盖任意一行:
+# 复制到  configs/<端口>/HintChorus/lang/zh.lang  后修改值即可。
+# 格式:  key = value     转义: \n \r \t \\     注释: # ; //
+# ══════════════════════════════════════════════════════════════════
+
+# ── 首次运行配置向导 ─────────────────────────────────────────────
+setup.banner = HintChorus 首次运行配置向导
+setup.detected = 检测到: 语言={0} | 时区={1} | 地区={2}
+setup.detectedExtra = 时区来源: {0} | 时间校验: {1}
+setup.srcNetwork = 公网 IP + 网络时区
+setup.srcLocal = 本地时区
+setup.clockOk = 本地时间可信
+setup.clockSkew = 本地时间偏差 {0} 秒
+setup.q1 = 1) 自动更新: {0}    (Hc setup 1 on / off)
+setup.q2 = 2) 详细 UI 日志: {0}    (Hc setup 2 on / off)
+setup.q3 = 3) 现在写入配置文件? {0}    (Hc setup 3 yes / no)
+setup.q4 = 4) 更新后回合结束重启(RNR): {0}    (Hc setup 4 on / off)
+setup.desc1 = 自动更新: 从 GitHub Releases 检查新版本; 开启后自动下载, 默认只保存为 HintChorus.dll.new。
+setup.desc2 = 详细 UI 日志: 记录每个插件的提示内容、屏幕位置与每玩家合成结果, 写入 logs/ui-*.log; IO 开销明显。
+setup.desc3 = 写入配置: 把当前选择保存到 config.yml, 下次启动继续生效。
+setup.desc4 = 更新后重启(RNR): 下载完成并替换 DLL 后, 等当前回合结束再彻底重启服务器, 加载新版本。
+setup.commands = Hc setup done 完成 | Hc setup skip 跳过
+setup.on = 开
+setup.off = 关
+setup.yes = 是
+setup.no = 否
+setup.saved = 已写入配置: {0}
+setup.skipped = 已跳过, 本次不做修改。
+setup.done = 配置向导完成。
+setup.restart = 详细日志等设置会在下次重启后完全生效。
+setup.notActive = 配置向导未在运行(已完成或尚未开始)。
+setup.usage = 用法: Hc setup | Hc setup 1 on|off | Hc setup 2 on|off | Hc setup 3 yes|no | Hc setup 4 on|off | Hc setup done | Hc setup skip
+setup.failed = 配置失败: {0}
+setup.notInitialized = 配置尚未初始化
+setup.writeConfigFailed = 写入配置失败: {0}
+setup.writeStateFailed = 写入向导状态失败: {0}
+
+# ── 服务器控制台命令 ─────────────────────────────────────────────
+cmd.description = HintChorus 服务器控制台: Hint orvs 检测主流插件并切回原生提示
+cmd.helpHeader = [HintChorus] 控制台命令(大小写不敏感):
+cmd.helpOrvs = Hint orvs — 检测主流插件并列出编号(无主流时编号 1 = 退回原生)
+cmd.helpPick = Hint orvs <编号> — 把该插件切回原生直通, 并热应用其最后一条数据
+cmd.helpMerge = Hint orvs <编号> merge — 恢复该插件为合并渲染
+cmd.helpNative = Hint orvs native — 整体退回原生, 恢复覆盖前数据
+cmd.helpAll = Hint orvs all — 全部退回原生并恢复覆盖前数据
+cmd.helpReset = Hint orvs reset — 退出原生模式, 全部恢复合并
+cmd.helpYield = Hint orvs yield — 让出提示通道, 允许外部 Hint 插件接管(仅本次运行)
+cmd.helpTake = Hint orvs take — 收回提示通道, 恢复本底层接管(默认)
+cmd.helpSetup = Hc setup — 首次运行配置向导(自动更新/详细日志/写入配置/RNR)
+cmd.helpUpdate = Hc update — 立即检查 GitHub 最新版本
+cmd.helpLang = Hint lang [reload|path] — 查看语言包、重载外部语言包或显示语言包目录
+cmd.helpFooter = 说明: 支持多个 Hint 插件共存; 某个插件出问题时用 orvs 单独回退, 其余插件不受影响。
+cmd.consoleOnly = [HintChorus] 该命令只允许在服务器终端控制台执行。
+cmd.unknown = [HintChorus] 未知子命令: {0}\n{1}
+cmd.yield = [HintChorus] 已让出提示通道: 外部 Hint 插件现在可以接管。\n输入 Hint orvs take 收回。
+cmd.take = [HintChorus] 已收回提示通道: 本底层重新接管, 并重发 UI。
+cmd.native = [HintChorus] 已整体退回原生提示, 恢复 {0} 个玩家的覆盖前数据。\n输入 Hint orvs reset 可恢复合并渲染。
+cmd.nativeNone = [HintChorus] 未检测到主流插件, 已按编号 1 整体退回原生提示, 恢复 {0} 个玩家的覆盖前数据。\n输入 Hint orvs reset 可恢复合并渲染。
+cmd.all = [HintChorus] 已把 {0} 个插件切回原生直通(共发现 {1} 个), 并恢复 {2} 个玩家的覆盖前数据。\n输入 Hint orvs reset 可全部恢复合并。
+cmd.reset = [HintChorus] 已退出原生模式, 恢复 {0} 个插件为合并渲染。
+cmd.invalidNumber = [HintChorus] 编号必须是数字。\n{0}
+cmd.outOfRange = [HintChorus] 编号超出范围: {0} (有效范围 {1}-{2})。
+cmd.mergeOne = [HintChorus] 已把 {0} 恢复为合并渲染。
+cmd.nativeOne = [HintChorus] 已把 {0} 切回原生直通, 并热应用 {1} 个玩家的最后一条数据。\n其它插件仍由合并层托管; 恢复: Hint orvs {2} merge
+cmd.alreadyNative = \n(该插件此前已是原生直通)
+cmd.execFailed = [HintChorus] 命令执行异常: {0}
+cmd.registered = [HintChorus] 控制台命令已就绪: Hint orvs (大小写不敏感)
+cmd.registerFailed = [HintChorus] 注册控制台命令 Hint 失败(每 5 秒重试): {0}
+cmd.list.noMainstream = [HintChorus] 未检测到主流 Hint 插件。
+cmd.list.nativeOption =   1) 直接退回原生（恢复覆盖前的数据）
+cmd.list.others = 其他已发现插件:
+cmd.list.stateNative =   [原生直通]
+cmd.list.stateMerged =   [合并中]
+cmd.list.noMainstreamHint = 输入 Hint orvs 1 退回原生; 输入 Hint orvs <编号> 单独切换某个插件。
+cmd.list.resetHint = 恢复合并: Hint orvs reset
+cmd.list.header = [HintChorus] 已检测到 {0} 个主流 Hint 插件{1}:
+cmd.list.nativeModeSuffix = （当前处于整体原生模式）
+cmd.list.pickHint = 输入 Hint orvs <编号> 切换为原生直通并热应用其最后数据; 加 merge 恢复合并。
+cmd.list.nativeAllHint = 整体退回原生: Hint orvs native | 全部恢复: Hint orvs reset
+
+# ── 更新检查 ─────────────────────────────────────────────────────
+update.started = 已开始检查更新, 结果见控制台日志。
+update.found = 发现新版本: {0} (当前 {1})
+update.none = 已是最新版本: {0}
+update.failed = 检查更新失败: {0}
+update.downloaded = 已下载新版本到 {0}; 重启前替换正在使用的 DLL。
+update.replaced = 已替换 HintChorus.dll; 将在回合结束后重启加载新版本。
+update.replaceFailed = 无法替换正在使用的 DLL(可能被占用); 已保留 .new, 请手动替换。
+update.rnrScheduled = 已安排在本次回合结束后重启服务器, 加载新版本。
+update.noTag = 更新检查: 返回内容里没有 tag_name
+update.scheduleFailed = 安排回合结束重启失败: {0}
+
+# ── 引导器释放 ───────────────────────────────────────────────────
+bootstrap.missingResource = 未找到内嵌资源 HintChorus.Bootstrap.dll(构建时未嵌入引导器?)
+bootstrap.sameVersion = 引导器已是当前版本: {0}
+bootstrap.released = 已释放引导器 → {0} (下次重启生效)
+bootstrap.failed = 释放引导器失败: {0}
+bootstrap.staged = 引导器更新已暂存到 {0}; 请停服后手动替换 {1} (当前引导器仍可正常工作)。原因: {2}
+bootstrap.assetsUpdated = 引导资产已更新(shim / payload / 映射); 请重启服务器生效
+bootstrap.assetsCurrent = 引导资产已是最新
+bootstrap.assetsStaged = 引导资产已暂存为 .new ({0}); 请停服后替换 .new 文件再重启
+bootstrap.assetsFailed = 释放引导资产失败: {0}
+early.skipped = 抢先安装此前已完成, 本次跳过
+early.noConfig = 尚未生成 config.yml, 交由主插件自行安装
+early.disabled = 配置中拦截层未开启, 无需抢先安装
+early.installed = [抢先加载] 已在其它插件 Enable 之前装好 UI 拦截补丁(顺序 #{0}): 提示条 + 屏幕广播 + 玩家控制台 + CASSIE + 管理端聊天 + 命中标记
+early.done = 已在其它插件之前安装 UI 拦截补丁(顺序 #{0})
+early.failed = [HintChorus] 抢先安装失败(主插件随后仍会正常安装): {0}
+early.exception = 抢先安装异常: {0}
+early.uiReady = [HintChorus] UI 通道已就绪 —— 提示条 / 广播 / 控制台 / CASSIE / 管理端聊天 / 命中标记 + 设置页
+home.ready = 自宿主目录已就绪
+home.created = 自宿主目录已创建
+home.failed = 自宿主目录创建失败
+home.status = [HintChorus] 自宿主目录{0}: {1} (模块 {2} 个, 装配解析已挂载)
+home.readyState = 已就绪
+home.createdState = 已创建
+home.readyModules = 自宿主目录已就绪(模块 {0} 个)
+home.createdModules = 已创建自宿主目录(模块 {0} 个)
+
+# ── 插件生命周期 / 启动报告 ─────────────────────────────────────
+plugin.description = 动态 UI 隔离底层: 拦截并归因第三方 UI 调用, 按 UiId 分配独立信口, 支持多 UI 表面
+plugin.enableDone = [HintChorus] Enable 完成 → 外部插件可经 UiIsolation / IUiIsolation 注册通道、文本源、SSS 端口
+plugin.betaBanner = [HintChorus] 15.0.0: 抢加载 0.dll + 补丁仲裁层(同步恢复) + 快照拦回 + 护盾(0.25 秒兜底) + 内嵌语言包; 出问题在控制台输入 Hint orvs 回退
+plugin.enableFailed = [HintChorus] Enable 失败: {0}
+plugin.disableDone = [HintChorus] Disable 完成: 拦截层已卸载, 信口已释放, SSS 数组已还原
+plugin.disableReport = 插件已停用: 拦截层卸载、回退状态清空
+plugin.sssGuardError = [HintChorus] SSS 守卫检查异常: {0}
+plugin.shieldError = [HintChorus] 补丁护盾检查异常: {0}
+plugin.setupStartError = [HintChorus] 配置向导启动异常: {0}
+plugin.updateStartError = [HintChorus] 更新检查启动异常: {0}
+plugin.maintenanceError = [HintChorus] 维护循环异常: {0}
+plugin.patchGuardError = [HintChorus] 补丁自愈检查异常: {0}
+plugin.bootstrapBanner1 = [HintChorus] ┌────────────────────────────────────────────────────┐
+plugin.bootstrapBanner2 = [HintChorus] │  引导器已释放, 请重启服务器以便它抢占最先加载位  │
+plugin.bootstrapBanner3 = [HintChorus] └────────────────────────────────────────────────────┘
+plugin.reportVersion = 版本: {0} (beta)
+plugin.reportPort = 端口: {0}
+plugin.reportCore = 合并核心: {0} | 第三方拦截: {1} | 补丁仲裁: {2} | 强接管: {3} | 排版: {4}
+plugin.reportTemplate = 模板: {0}
+plugin.reportLanguage = 语言包: {0}
+plugin.reportLogs = 日志: 报告={0} | 详细UI={1} | 逐玩家={2}
+plugin.reportCandidates = 已发现 Hint 插件: {0}
+
+# ── 模板桥 ───────────────────────────────────────────────────────
+template.disabled = 未启用(未配置模板)
+template.missing = 映射组件未找到(检查 dependencies\global\{0})
+template.missingHost = 映射组件缺少入口类型 {0}
+template.configuredButMissing = 已配置模板 {0}, 但{1}
+template.notFound = 模板 {0} 不存在, 保持现有排版。可用: {1}
+template.resolved = 模板: {0}
+template.info = 模板 {0} 已解析: {1}
+template.initFailed = 模板初始化失败: {0}: {1}
+
+# ── 补丁仲裁层 ───────────────────────────────────────────────────
+arbiter.installed = [HintChorus] 补丁仲裁层已就位: Harmony 的 5 个卸载入口全部受控, 外部清场后会在同一调用栈内恢复本底层
+arbiter.hookFailed = [HintChorus] 仲裁层挂接失败: {0}.{1} 找不到目标或后置
+arbiter.restoreWarn = [HintChorus] 仲裁层: {0} 摘除了本底层的补丁, 正在同一调用栈内恢复
+arbiter.restoreEvent = {0} → 恢复拦截层 (第 {1} 次)
+arbiter.uninstallFailed = 卸载仲裁层失败: {0}
+
+# ── 补丁自愈 ─────────────────────────────────────────────────────
+guard.unresolved = [HintChorus] 有 {0} 个补丁落点已经找不到目标(这部分无法自愈, 请核对游戏版本): {1}
+guard.gaveUp = [HintChorus] 已连续 {0} 次自愈失败, 暂停自动重装以免反复打断补丁; 仍在缺失: {1} (重载插件或重启服务器可重置)
+guard.repairFailed = [HintChorus] 补丁自愈重装失败(仍缺失: {0}): {1}
+guard.detailTypeMissing = (类型不存在)
+guard.detailEnumFailed = (枚举方法失败)
+guard.detailMethodMissing = (方法不存在, 可能是游戏更新改了签名)
+
+# ── 补丁护盾 ─────────────────────────────────────────────────────
+shield.reinstalled = [HintChorus] 提示条补丁被外部摘掉, 护盾立即重装并在下一轮重发 UI
+shield.reinstalledReport = 提示条补丁被外部摘掉, 已立即重装并重发 UI (第 {0} 次)
+shield.failed = [HintChorus] 护盾重装失败: {0}
+
+# ── 插件级回退 / 接管 ────────────────────────────────────────────
+fallback.toNative = 切回原生直通: {0}
+fallback.toMerge = 恢复合并渲染: {0}
+fallback.resetAll = 已恢复全部插件为合并渲染, 共 {0} 个
+takeover.replayFailed = [HintChorus] 热应用覆盖前数据失败: {0}
+takeover.enterNative = 进入原生模式, 已恢复 {0} 个玩家的覆盖前数据
+takeover.enterNativeNoReplay = 进入原生模式, 未回放快照
+takeover.leaveNative = 退出原生模式, 恢复复合渲染与强接管
+
+# ── 合并渲染核心 ─────────────────────────────────────────────────
+broker.started = [HintChorus] 合并渲染核心已启动 (刷新间隔 {0}s)
+broker.stopped = [HintChorus] 合并渲染核心已停止
+broker.layoutUnknown = [HintChorus] layout_mode 取值无法识别, 已改用默认值 rows; 可选 rows / offsets / compact; 收到: {0}
+broker.channelExists = [HintChorus] 通道 '{0}' 已存在, 拒绝重复注册(绝不抢占)
+broker.channelRegistered = [HintChorus] 通道 '{0}' 已独立注册
+broker.channelUnloaded = [HintChorus] 通道 '{0}' 已卸载
+broker.sourceExists = [HintChorus] 文本源 '{0}' 已存在, 拒绝重复注册(绝不抢占)
+broker.sourceRegistered = [HintChorus] 文本源 '{0}' 已独立注册
+broker.sourceUnloaded = [HintChorus] 文本源 '{0}' 已卸载
+broker.unnamed = (未命名)
+broker.playerRenderError = [HintChorus] 单个玩家渲染异常(已隔离, 不影响其它玩家): {0}
+broker.refreshStepError = [HintChorus] 刷新步骤 {0} 异常(已跳过本轮该步): {1}
+broker.sourceError = [HintChorus] 文本源 '{0}' 抛异常(已隔离): {1}
+broker.filterError = [HintChorus] 通道 '{0}' 的接收过滤抛异常(已隔离): {1}
+broker.refreshError = [HintChorus] Hint 刷新异常: {0}
+
+# ── SSS 端口 ─────────────────────────────────────────────────────
+sss.started = [HintChorus] SSS 端口隔离核心已启动 (防劫持={0})
+sss.stopped = [HintChorus] SSS 端口隔离核心已停止
+sss.idConflict = [HintChorus] 注册口 '{0}' 与其它插件存在 SettingId 冲突, 已拒绝注册: {1}
+sss.moduleRegistered = [HintChorus] 注册口 '{0}' 已独立注册 {1} 个 SSS 设置项
+sss.moduleUnloaded = [HintChorus] 注册口 '{0}' 的 SSS 设置项已卸载
+sss.overwriteDetected = [HintChorus] 检测到有插件整体覆盖了 ServerSpecificSettingsSync.DefinedSettings (这会导致其它插件 UI 失效), 已自动合并恢复本核心注册的所有设置项
+sss.valueCallbackError = [HintChorus] 注册口 '{0}' 的 SSS 值回调异常(已隔离, 不影响其它模块): {1}
+sss.statusCallbackError = [HintChorus] 注册口 '{0}' 的 SSS 状态回调异常(已隔离): {1}
+
+# ── 文字度量 ─────────────────────────────────────────────────────
+metrics.missing = [HintChorus] 未找到内嵌度量表 HintChorus.textwidth.bin, 排版将退回估算模式
+metrics.magic = [HintChorus] 度量表魔数不匹配, 排版将退回估算模式
+metrics.loadFailed = [HintChorus] 载入度量表失败, 排版将退回估算模式: {0}
+metrics.loaded = [HintChorus] 文字度量表已载入: {0} 个字符, {1} 色调色板, {2:F1} KB(压缩)
+
+# ── 语言包命令 ───────────────────────────────────────────────────
+lang.usage = 用法: Hint lang | Hint lang reload | Hint lang path
+lang.header = [HintChorus] 语言包(已加载 {0} 种):
+lang.entry =   {0} — {1} 个 key ({2})
+lang.sourceBuiltin = 内嵌
+lang.sourceExternal = 外部
+lang.sourceBoth = 内嵌+外部
+lang.reloaded = [HintChorus] 语言包已重载: {0} 种语言。{1}
+lang.unknown = [HintChorus] 未知语言操作: {0}\n{1}
+lang.dir = [HintChorus] 外部语言包目录: {0}

@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using HintChorus.Core.Localization;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
@@ -44,7 +45,7 @@ public static class TextMetrics
 			using Stream stream = typeof(TextMetrics).Assembly.GetManifestResourceStream("HintChorus.textwidth.bin");
 			if (stream == null)
 			{
-				Logger.Error((object)"[HintChorus] 未找到内嵌度量表 HintChorus.textwidth.bin, 排版将退回估算模式");
+				Logger.Error((object)Lang.Get("metrics.missing"));
 				return false;
 			}
 			using MemoryStream memoryStream = new MemoryStream();
@@ -59,7 +60,7 @@ public static class TextMetrics
 			byte[] array = binaryReader.ReadBytes(4);
 			if (array.Length != 4 || array[0] != 72 || array[1] != 73 || array[2] != 84 || array[3] != 87)
 			{
-				Logger.Error((object)"[HintChorus] 度量表魔数不匹配, 排版将退回估算模式");
+				Logger.Error((object)Lang.Get("metrics.magic"));
 				return false;
 			}
 			binaryReader.ReadByte();
@@ -102,12 +103,12 @@ public static class TextMetrics
 			FullWidthAdvance = DominantWidth();
 			MeanAdvance = ((num == 0) ? 0f : ((float)(num2 / (double)num)));
 			IsLoaded = true;
-			StartupLog.Info($"[HintChorus] 文字度量表已载入: {EntryCount} 个字符, " + $"{PaletteSize} 色调色板, {(float)PackedBytes / 1024f:F1} KB(压缩)");
+			StartupLog.Info(Lang.Format("metrics.loaded", EntryCount, PaletteSize, (float)PackedBytes / 1024f));
 			return true;
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintChorus] 载入度量表失败, 排版将退回估算模式: " + ex.Message));
+			Logger.Error((object)Lang.Format("metrics.loadFailed", ex.Message));
 			return false;
 		}
 	}

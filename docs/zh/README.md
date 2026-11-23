@@ -18,10 +18,10 @@
 
 **定位：纯 API 底层。只提供接口、调度与一个兼容回退命令（`Hint orvs`），不含任何玩家玩法逻辑。**
 
-> **Beta 1.1.1（2026-11-23）版本更新：新增「快照拦回」。**
-> 第三方提示在被吸收或压制之前，会先按玩家记录快照。外部 Hint 插件在我们之后修改提示通道时，会通过快照强行退回并重新接管补丁。
-> 实现有两种方式：抢占在先（最高 Harmony 优先级，抢在主流插件之前接管），或事后拦回（对方已抢先时，由 Postfix 按快照退回再整体接管）。
-> `Hint orvs` 会先检测主流插件：没有就明确提示并提供编号 1 = 退回原生 + 恢复覆盖前数据；有就按编号单独回退并热应用其最后数据。
+> **15.0.0（2026-11-23）版本更新：真正的语言包 + UI 中间层。**
+> 所有运行时文案进入内嵌语言包（`en`/`zh`/`fr`/`ru`/`es`，各 193 个 key）；外部 `configs/<端口>/HintChorus/lang/<code>.lang` 可逐 key 覆盖、可新增任意语言，缺行按「请求语言 → 主代码 → en → zh」回退；`Hint lang reload` 热重载。
+> 新增 [15.0-hint-internals.md](../15.0-hint-internals.md)：`HintDisplay.Show` → `HintMessage` 的逐字节线格式、20 种参数、3 种效果、`SuppressedReceivers` 官方静音开关与 15.0 核对清单。
+> 补丁仲裁、快照拦回、护盾、抢加载 `0.dll` 与 `Hint orvs` 回退保持不变。
 > 出问题时用 `Hint orvs native` 退回，或直接移出/删除 HintChorus 后重启。
 
 ---
@@ -62,8 +62,8 @@ UiId = UUIDv5( "HintChorus.UiId/v1" | UI表面 | 程序集 | 注册点 | [IL偏�
 
 | 步骤 | 实现 |
 | --- | --- |
-| **1. 优先加载** | 主 DLL 内**嵌套**引导器 DLL（嵌入资源），首次加载释放为 `plugins\global\`<br>`0HintChorus.Bootstrap.dll` —— **文件名以 0 开头** |
-| **2. 提示与改写** | 引导器首次运行弹大号控制台横幅（正文：<br>「请重启服务器, 以便让底层启动」），参数 `Prompted` 由 **0 改写为 1**（此后不再提醒） |
+| **1. 优先加载** | 主 DLL 内**嵌套**永久 shim（嵌入资源），首次加载释放为 `plugins\global\`<br>`0.dll` —— 文件名以 0 开头；shim 只负责载入 `HintChorus.Bootstrap.payload` |
+| **2. 提示与改写** | 主 DLL 释放资产后提示重启一次，并把 `Prompted` 置 **1**；重启后 payload 只打印简短激活行，不再重复要求重启 |
 | **3. 驱动辅助** | 下次重启后，引导器以 `0` 前缀 + `LoadPriority.Highest` **最先 Enable**，反射调用主 DLL 抢先安装入口 |
 
 **三层保证，缺一不可：**
@@ -247,7 +247,8 @@ HintChorus/                      主工程
     ├── Utilities/   SafeEvents / HintFormat
     └── Diagnostics/ HintChorusDiagnostics
 
-HintChorus.Bootstrap/            0 前缀引导器工程(被主工程嵌入并释放)
+bootstrap-shim/                  永久 shim 工程(释放为 0.dll, 只载入 payload)
+HintChorus.Bootstrap/            引导 payload 工程(被主工程嵌入并释放为 .payload)
 ```
 
 ---

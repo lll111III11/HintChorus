@@ -107,7 +107,7 @@ internal sealed class ServerLocale
         {
             return string.Empty;
         }
-        string text = value.Trim().ToLowerInvariant();
+        string text = value.Trim().ToLowerInvariant().Replace('-', '_');
         if (text == "auto")
         {
             return string.Empty;
@@ -132,8 +132,45 @@ internal sealed class ServerLocale
         {
             return "en";
         }
+        // 15.0.0: 其它语言代码原样保留, 由 LanguagePack 决定是否存在对应语言包;
+        // 没有语言包时仍逐条回退英文, 不会影响原有五语行为。
+        if (IsLanguageCode(text))
+        {
+            return text;
+        }
         // 不认识的显式语言: 回退英文
         return "en";
+    }
+
+    private static bool IsLanguageCode(string text)
+    {
+        int length = text.Length;
+        if (length < 2 || length > 12)
+        {
+            return false;
+        }
+        bool separator = false;
+        int letters = 0;
+        for (int i = 0; i < length; i++)
+        {
+            char c = text[i];
+            if (c == '_')
+            {
+                if (separator || letters == 0)
+                {
+                    return false;
+                }
+                separator = true;
+                letters = 0;
+                continue;
+            }
+            if (c < 'a' || c > 'z')
+            {
+                return false;
+            }
+            letters++;
+        }
+        return letters > 0;
     }
 
     private static string MapLanguage(CultureInfo? culture)

@@ -16,6 +16,8 @@ namespace HintChorus.Core.Updates;
 ///
 /// <para>只读检查 GitHub 最新 Release; 开启自动更新时也只下载到
 /// <c>plugins/global/HintChorus.dll.new</c>, <b>绝不覆盖正在运行的 DLL</b>。</para>
+///
+/// <para>所有提示文案来自语言包 <c>update.*</c>。</para>
 /// </summary>
 internal static class UpdateService
 {
@@ -39,7 +41,7 @@ internal static class UpdateService
     internal static bool HandleCommand(out string response)
     {
         CheckInBackground();
-        response = SetupText.Get("updateStarted", Language());
+        response = Lang.Get("update.started");
         return true;
     }
 
@@ -53,20 +55,19 @@ internal static class UpdateService
             string asset = Match(json, "\"browser_download_url\"\\s*:\\s*\"([^\"]*HintChorus\\.dll)\"");
             if (tag.Length == 0)
             {
-                Logger.Warn("[HintChorus] 更新检查: 返回内容里没有 tag_name");
+                Logger.Warn("[HintChorus] " + Lang.Get("update.noTag"));
                 return;
             }
 
             Version latest = ParseVersion(tag);
             Version current = ParseVersion(CurrentVersion());
-            string language = Language();
             if (latest <= current)
             {
-                Logger.Info("[HintChorus] " + SetupText.Format("updateNone", language, current));
+                Logger.Info("[HintChorus] " + Lang.Format("update.none", current));
                 return;
             }
 
-            Logger.Warn("[HintChorus] " + SetupText.Format("updateFound", language, latest, current));
+            Logger.Warn("[HintChorus] " + Lang.Format("update.found", latest, current));
             if (_config != null && _config.AutoUpdate && asset.Length > 0)
             {
                 string target = Path.Combine(PathManager.Plugins.FullName, "global", "HintChorus.dll.new");
@@ -74,24 +75,23 @@ internal static class UpdateService
 
                 if (_config.RnrAfterUpdate)
                 {
-                    TryReplaceAndScheduleRestart(target, language);
+                    TryReplaceAndScheduleRestart(target);
                 }
                 else
                 {
-                    Logger.Warn("[HintChorus] " + SetupText.Format("updateDownloaded", language, target));
+                    Logger.Warn("[HintChorus] " + Lang.Format("update.downloaded", target));
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.Warn("[HintChorus] " + SetupText.Format(
-                "updateFailed",
-                Language(),
+            Logger.Warn("[HintChorus] " + Lang.Format(
+                "update.failed",
                 ex.GetType().Name + ": " + ex.Message));
         }
     }
 
-    private static void TryReplaceAndScheduleRestart(string stagingPath, string language)
+    private static void TryReplaceAndScheduleRestart(string stagingPath)
     {
         string livePath = Path.Combine(PathManager.Plugins.FullName, "global", "HintChorus.dll");
         try
@@ -104,11 +104,11 @@ internal static class UpdateService
             catch (Exception)
             {
             }
-            Logger.Warn("[HintChorus] " + SetupText.Get("updateReplaced", language));
+            Logger.Warn("[HintChorus] " + Lang.Get("update.replaced"));
         }
         catch (Exception ex)
         {
-            Logger.Warn("[HintChorus] " + SetupText.Get("updateReplaceFailed", language) + " " + ex.Message);
+            Logger.Warn("[HintChorus] " + Lang.Get("update.replaceFailed") + " " + ex.Message);
             return;
         }
 
@@ -122,11 +122,11 @@ internal static class UpdateService
             catch (Exception)
             {
             }
-            Logger.Warn("[HintChorus] " + SetupText.Get("rnrScheduled", language));
+            Logger.Warn("[HintChorus] " + Lang.Get("update.rnrScheduled"));
         }
         catch (Exception ex)
         {
-            Logger.Warn("[HintChorus] 安排回合结束重启失败: " + ex.Message);
+            Logger.Warn("[HintChorus] " + Lang.Format("update.scheduleFailed", ex.Message));
         }
     }
 
@@ -178,15 +178,5 @@ internal static class UpdateService
     private static string CurrentVersion()
     {
         return typeof(UpdateService).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
-    }
-
-    private static string Language()
-    {
-        string normalized = ServerLocale.Normalize(_config?.Language);
-        if (normalized.Length > 0)
-        {
-            return normalized;
-        }
-        return ServerLocale.Detect(_config?.Language).Language;
     }
 }

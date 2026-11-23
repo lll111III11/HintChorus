@@ -6,6 +6,7 @@ using HintChorus.Core.Enums;
 using HintChorus.Core.Diagnostics;
 using HintChorus.Core.Interfaces;
 using HintChorus.Core.Layout;
+using HintChorus.Core.Localization;
 using HintChorus.Core.Models;
 using HintChorus.Core.Transport;
 using HintChorus.Core.Utilities;
@@ -209,7 +210,7 @@ public sealed class HintBroker : IHintBroker
 		default:
 			if (System.Threading.Interlocked.Increment(ref _layoutModeWarned) == 1)
 			{
-				Logger.Warn("[HintChorus] layout_mode 取值无法识别, 已改用默认值 rows; 可选 rows / offsets / compact; 收到: " + value);
+				Logger.Warn(Lang.Format("broker.layoutUnknown", value));
 			}
 			return LayoutMode.Rows;
 		}
@@ -323,7 +324,7 @@ public sealed class HintBroker : IHintBroker
 			_leeway = Mathf.Max(0f, resendLeeway);
 		}
 		_loop = Timing.RunCoroutine(LoopRoutine(), (Segment)0);
-		StartupLog.Info($"[HintChorus] 合并渲染核心已启动 (刷新间隔 {_refresh}s)");
+		StartupLog.Info(Lang.Format("broker.started", _refresh));
 	}
 
 	public void Stop()
@@ -353,7 +354,7 @@ public sealed class HintBroker : IHintBroker
 			_regionOrder.Clear();
 			_lockedRows.Clear();
 		}
-		StartupLog.Info("[HintChorus] 合并渲染核心已停止");
+		StartupLog.Info(Lang.Get("broker.stopped"));
 	}
 
 	public void ReSort()
@@ -475,14 +476,14 @@ public sealed class HintBroker : IHintBroker
 		{
 			if (_channels.ContainsKey(channel.ModuleId) || _sources.ContainsKey(channel.ModuleId))
 			{
-				Logger.Warn((object)("[HintChorus] 通道 '" + channel.ModuleId + "' 已存在, 拒绝重复注册(绝不抢占)"));
+				Logger.Warn(Lang.Format("broker.channelExists", channel.ModuleId));
 				return false;
 			}
 			_channels.Add(channel.ModuleId, channel);
 			_channelRevision++;
 		}
 		MarkDirty();
-		StartupLog.Info("[HintChorus] 通道 '" + channel.ModuleId + "' 已独立注册");
+		StartupLog.Info(Lang.Format("broker.channelRegistered", channel.ModuleId));
 		return true;
 	}
 
@@ -507,7 +508,7 @@ public sealed class HintBroker : IHintBroker
 			_channelRevision++;
 		}
 		MarkDirty();
-		StartupLog.Info("[HintChorus] 通道 '" + moduleId + "' 已卸载");
+		StartupLog.Info(Lang.Format("broker.channelUnloaded", moduleId));
 		return true;
 	}
 
@@ -529,14 +530,14 @@ public sealed class HintBroker : IHintBroker
 		{
 			if (_channels.ContainsKey(source.ModuleId) || _sources.ContainsKey(source.ModuleId))
 			{
-				Logger.Warn((object)("[HintChorus] 文本源 '" + source.ModuleId + "' 已存在, 拒绝重复注册(绝不抢占)"));
+				Logger.Warn(Lang.Format("broker.sourceExists", source.ModuleId));
 				return false;
 			}
 			_sources.Add(source.ModuleId, source);
 			_channelRevision++;
 		}
 		MarkDirty();
-		StartupLog.Info("[HintChorus] 文本源 '" + source.ModuleId + "' 已独立注册");
+		StartupLog.Info(Lang.Format("broker.sourceRegistered", source.ModuleId));
 		return true;
 	}
 
@@ -551,7 +552,7 @@ public sealed class HintBroker : IHintBroker
 			_channelRevision++;
 		}
 		MarkDirty();
-		StartupLog.Info("[HintChorus] 文本源 '" + moduleId + "' 已卸载");
+		StartupLog.Info(Lang.Format("broker.sourceUnloaded", moduleId));
 		return true;
 	}
 
@@ -702,7 +703,7 @@ public sealed class HintBroker : IHintBroker
 				}
 				catch (Exception ex)
 				{
-					Logger.Error((object)("[HintChorus] 单个玩家渲染异常(已隔离, 不影响其它玩家): " + ex));
+					Logger.Error(Lang.Format("broker.playerRenderError", ex));
 					UiLog.Report("RenderPlayer", ex);
 				}
 			}
@@ -717,7 +718,7 @@ public sealed class HintBroker : IHintBroker
 		}
 		catch (Exception arg)
 		{
-			Logger.Error((object)$"[HintChorus] 刷新步骤 {name} 异常(已跳过本轮该步): {arg}");
+			Logger.Error(Lang.Format("broker.refreshStepError", name, arg));
 		}
 	}
 
@@ -948,7 +949,7 @@ public sealed class HintBroker : IHintBroker
 			// 一旦为空, Dictionary.TryGetValue(null) 会抛 ArgumentNullException。
 			if (string.IsNullOrEmpty(owner))
 			{
-				owner = "(未命名)";
+				owner = Lang.Get("broker.unnamed");
 			}
 			if (!byOwner.TryGetValue(owner, out OwnerBucket bucket))
 			{
@@ -1015,7 +1016,7 @@ public sealed class HintBroker : IHintBroker
 				}
 				catch (Exception arg)
 				{
-					Logger.Error($"[HintChorus] 文本源 '{source.ModuleId}' 抛异常(已隔离): {arg}");
+					Logger.Error(Lang.Format("broker.sourceError", source.ModuleId, arg));
 					break;
 				}
 				AddLine(bucket, HintFormat.Line(source.DisplayName, showLabel: true, text, HintAlignment.Left), 2f);
@@ -1829,7 +1830,7 @@ public sealed class HintBroker : IHintBroker
 		}
 		catch (Exception arg)
 		{
-			Logger.Error((object)$"[HintChorus] 通道 '{moduleId}' 的接收过滤抛异常(已隔离): {arg}");
+			Logger.Error(Lang.Format("broker.filterError", moduleId, arg));
 			return false;
 		}
 	}
@@ -1852,7 +1853,7 @@ public sealed class HintBroker : IHintBroker
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintChorus] Hint 刷新异常: " + ex));
+				Logger.Error(Lang.Format("broker.refreshError", ex));
 				UiLog.Report("BrokerLoop", ex);
 			}
 		}

@@ -22,22 +22,20 @@
 > channel into **independent slots**, one per caller, attributed automatically from the call stack —
 > so a plugin that just calls `SendHint` / `SendBroadcast` works as-is, and stops clobbering everyone else.
 
-> **Beta 1.1.2 — Patch Arbiter, Snapshot Rollback & Takeover**
+> **15.0.0 — UI Middle Layer & Real Language Packs**
 >
 > HintChorus is in Beta: usable on regular production servers, but keep an eye on it.
 >
-> - **New: Patch Arbiter.** Harmony's five uninstall entry points are instrumented. If a framework clears a method with `Unpatch All`, our patches are restored synchronously in the same call stack and the UI is re-sent; a 0.25 s shield stays as a backstop. Other plugins can still unload and patch normally.
-> - **Snapshot Rollback & Takeover.** Third-party hints are recorded as per-player snapshots before absorption or suppression. When another hint plugin modifies the hint channel after us, HintChorus rolls it back through the snapshot and takes the patch back over.
->   - Path 1 — contention first: `HintDisplay.Show` runs at the highest Harmony priority, so mainstream hint plugins never get control of the channel.
->   - Path 2 — rollback after the fact: if another plugin already took the channel first, a postfix fallback detects that our prefix was skipped, pushes the snapshot back out, and re-takes over.
+> - **Real language packs.** Every runtime string comes from embedded `en/zh/fr/ru/es` packs (193 keys each). External packs at `configs/<port>/HintChorus/lang/<code>.lang` override any key; missing keys fall back per line (requested → base language → English → Chinese). `Hint lang` lists packs, `Hint lang reload` hot-reloads.
+> - **Hint pipeline anatomy.** [15.0-hint-internals.md](../15.0-hint-internals.md) documents the full server path `HintDisplay.Show` → `HintMessage`, the byte-level wire format, all 20 `HintParameter` types, 3 `HintEffect` types, the `SuppressedReceivers` mute switch and the 15.0 verification checklist.
+> - **Patch Arbiter + Snapshot Rollback + Shield** stay in place: Harmony's five uninstall entry points are instrumented; external `Unpatch All` is restored synchronously in the same call stack; a 0.25 s shield remains as a backstop.
 > - **Compatibility fallback**: `Hint orvs` detects mainstream hint plugins. None found → option **1** = restore vanilla + replay. Found → numbered per-plugin rollback with hot-applied last data.
-> - **Detailed log (off by default)**: font size, screen position and owning plugin for every line of text.
-> - Default logging keeps normal events and exceptions only (crash detection).
+> - Default logging keeps normal events and exceptions only (crash detection); detailed logging remains opt-in.
 >
 > If something breaks: ① run `Hint orvs native` to roll back; ② or remove/delete HintChorus and restart.
 > Target build: current public branch 14.2.x; patch targets will be re-verified after 15.0 "Megapatch III" ships.
 
-> **Language note**: the runtime embeds only the five UN languages (`en` / `zh` / `fr` / `ru` / `es`); the other 20+ languages are provided as external translations and docs, falling back to English when a line is missing. See [languages.md](../languages.md).
+> **Language note**: the DLL embeds five runtime language packs (`en` / `zh` / `fr` / `ru` / `es`); any language can be added with `configs/<port>/HintChorus/lang/<code>.lang`, overriding keys one by one and falling back per line. See [languages.md](../languages.md).
 
 ## Concise / Detailed
 

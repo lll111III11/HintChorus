@@ -1,6 +1,7 @@
 ﻿using System;
 using HintChorus.Core.Interception;
 using HintChorus.Core.Layout;
+using HintChorus.Core.Localization;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
@@ -18,7 +19,7 @@ public static class BootstrapBridge
 	{
 		if (EarlyInstalled)
 		{
-			return "抢先安装此前已完成, 本次跳过";
+			return Lang.Get("early.skipped");
 		}
 		try
 		{
@@ -29,31 +30,31 @@ public static class BootstrapBridge
 			if (pluginConfig == null)
 			{
 				EarlyInstalled = true;
-				return Finish(text + " | 尚未生成 config.yml, 交由主插件自行安装");
+				return Finish(text + " | " + Lang.Get("early.noConfig"));
 			}
 			if (!pluginConfig.InterceptThirdPartyUi)
 			{
 				EarlyInstalled = true;
-				return Finish(text + " | 配置中拦截层未开启, 无需抢先安装");
+				return Finish(text + " | " + Lang.Get("early.disabled"));
 			}
 			BootstrapConfigurator.Apply(pluginConfig);
 			UiInterception.Instance.Install();
 			EarlyInstalled = true;
 			EarlyInstallOrder = ++InstallOrder;
-			StartupLog.Info($"[抢先加载] 已在其它插件 Enable 之前装好 UI 拦截补丁(顺序 #{EarlyInstallOrder}): " + "提示条 + 屏幕广播 + 玩家控制台 + CASSIE + 管理端聊天 + 命中标记");
-			return Finish($"{text} | 已在其它插件之前安装 UI 拦截补丁(顺序 #{EarlyInstallOrder})");
+			StartupLog.Info(Lang.Format("early.installed", EarlyInstallOrder));
+			return Finish(text + " | " + Lang.Format("early.done", EarlyInstallOrder));
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintChorus] 抢先安装失败(主插件随后仍会正常安装): " + ex));
-			return "抢先安装异常: " + ex.Message;
+			Logger.Error((object)Lang.Format("early.failed", ex));
+			return Lang.Format("early.exception", ex.Message);
 		}
 	}
 
 	private static string Finish(string detail)
 	{
 		StartupLog.MarkStarted();
-		StartupLog.PrintSummary("[HintChorus] UI 通道已就绪 —— 提示条 / 广播 / 控制台 / CASSIE / 管理端聊天 / 命中标记 + 设置页");
+		StartupLog.PrintSummary(Lang.Get("early.uiReady"));
 		return detail;
 	}
 
@@ -61,20 +62,24 @@ public static class BootstrapBridge
 	{
 		if (RuntimeHome.IsReady)
 		{
-			return "自宿主目录已就绪";
+			return Lang.Get("home.ready");
 		}
 		bool flag = RuntimeHome.EnsureCreated();
 		RuntimeHome.InstallResolver();
 		int count = RuntimeHome.DiscoverModules().Count;
 		if (!RuntimeHome.IsReady)
 		{
-			return "自宿主目录创建失败";
+			return Lang.Get("home.failed");
 		}
-		StartupLog.Info("[HintChorus] 自宿主目录" + (flag ? "已创建" : "已就绪") + ": " + RuntimeHome.HomePath + $" (模块 {count} 个, 装配解析已挂载)");
+		StartupLog.Info(Lang.Format(
+			"home.status",
+			flag ? Lang.Get("home.createdState") : Lang.Get("home.readyState"),
+			RuntimeHome.HomePath,
+			count));
 		if (!flag)
 		{
-			return $"自宿主目录已就绪(模块 {count} 个)";
+			return Lang.Format("home.readyModules", count);
 		}
-		return $"已创建自宿主目录(模块 {count} 个)";
+		return Lang.Format("home.createdModules", count);
 	}
 }

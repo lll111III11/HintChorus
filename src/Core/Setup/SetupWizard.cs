@@ -16,7 +16,7 @@ namespace HintChorus.Core.Setup;
 /// 只在服务器终端控制台交互, 通过 <c>Hc setup ...</c> 逐项设置。</para>
 ///
 /// <para>状态保存在 <c>configs/&lt;端口&gt;/HintChorus/setup.state</c>,
-/// 每个版本只会引导一次。</para>
+/// 每个版本只会引导一次。所有文案来自语言包 <c>setup.*</c>。</para>
 /// </summary>
 internal static class SetupWizard
 {
@@ -81,12 +81,12 @@ internal static class SetupWizard
     {
         if (_config == null)
         {
-            response = "config not initialized";
+            response = Lang.Get("setup.notInitialized");
             return false;
         }
         if (!_active)
         {
-            response = SetupText.Get("notActive", _config.Language);
+            response = Lang.For("setup.notActive", Language);
             return false;
         }
 
@@ -109,23 +109,23 @@ internal static class SetupWizard
                     bool? value = ParseToggle(Arg(args, 1));
                     if (value == null)
                     {
-                        response = SetupText.Get("usage", Language);
+                        response = Lang.For("setup.usage", Language);
                         return false;
                     }
                     if (first == "1")
                     {
                         _config.AutoUpdate = value.Value;
-                        Logger.Info("[HintChorus] " + SetupText.Get("desc1", Language));
+                        Logger.Info("[HintChorus] " + Lang.For("setup.desc1", Language));
                     }
                     else if (first == "2")
                     {
                         _config.EnableDetailedUiLog = value.Value;
-                        Logger.Info("[HintChorus] " + SetupText.Get("desc2", Language));
+                        Logger.Info("[HintChorus] " + Lang.For("setup.desc2", Language));
                     }
                     else
                     {
                         _config.RnrAfterUpdate = value.Value;
-                        Logger.Info("[HintChorus] " + SetupText.Get("desc4", Language));
+                        Logger.Info("[HintChorus] " + Lang.For("setup.desc4", Language));
                     }
                     PrintQuestions();
                     response = string.Empty;
@@ -136,19 +136,19 @@ internal static class SetupWizard
                     bool? write = ParseToggle(Arg(args, 1));
                     if (write == null)
                     {
-                        response = SetupText.Get("usage", Language);
+                        response = Lang.For("setup.usage", Language);
                         return false;
                     }
                     if (write.Value)
                     {
                         ApplyLocale();
                         Save();
-                        Logger.Info("[HintChorus] " + SetupText.Get("desc3", Language));
-                        response = SetupText.Format("saved", Language, ConfigPath());
+                        Logger.Info("[HintChorus] " + Lang.For("setup.desc3", Language));
+                        response = Lang.FormatFor("setup.saved", Language, ConfigPath());
                     }
                     else
                     {
-                        response = SetupText.Get("skipped", Language);
+                        response = Lang.For("setup.skipped", Language);
                     }
                     MarkCompleted();
                     Logger.Info("[HintChorus] " + response);
@@ -158,24 +158,24 @@ internal static class SetupWizard
                 {
                     ApplyLocale();
                     Save();
-                    response = SetupText.Format("saved", Language, ConfigPath());
+                    response = Lang.FormatFor("setup.saved", Language, ConfigPath());
                     MarkCompleted();
                     Logger.Info("[HintChorus] " + response);
                     return true;
                 }
                 case "skip":
-                    response = SetupText.Get("skipped", Language);
+                    response = Lang.For("setup.skipped", Language);
                     MarkCompleted();
                     Logger.Info("[HintChorus] " + response);
                     return true;
                 default:
-                    response = SetupText.Get("usage", Language);
+                    response = Lang.For("setup.usage", Language);
                     return false;
             }
         }
         catch (Exception ex)
         {
-            response = "setup failed: " + ex.Message;
+            response = Lang.FormatFor("setup.failed", Language, ex.Message);
             return false;
         }
     }
@@ -190,29 +190,29 @@ internal static class SetupWizard
         _locale = locale;
         string language = locale.Language;
         Logger.Info("==================================================");
-        Logger.Info("[HintChorus] " + SetupText.Get("banner", language));
-        Logger.Info(SetupText.Format(
-            "detected",
+        Logger.Info("[HintChorus] " + Lang.For("setup.banner", language));
+        Logger.Info(Lang.FormatFor(
+            "setup.detected",
             language,
             string.IsNullOrEmpty(locale.CultureName) ? language : locale.CultureName,
             string.IsNullOrEmpty(locale.TimeZoneId) ? "unknown" : locale.TimeZoneId,
             locale.RegionDetected ? locale.Region : "en (fallback)"));
         string source = locale.TimeZoneSource == "network"
-            ? SetupText.Get("srcNetwork", language)
-            : SetupText.Get("srcLocal", language);
+            ? Lang.For("setup.srcNetwork", language)
+            : Lang.For("setup.srcLocal", language);
         string clock = locale.ClockTrusted
-            ? SetupText.Get("clockOk", language)
-            : SetupText.Format("clockSkew", language, locale.ClockSkewSeconds);
-        Logger.Info(SetupText.Format("detectedExtra", language, source, clock));
-        Logger.Info(SetupText.Format("q1", language, OnOff(_config.AutoUpdate, language)));
-        Logger.Info("    " + SetupText.Get("desc1", language));
-        Logger.Info(SetupText.Format("q2", language, OnOff(_config.EnableDetailedUiLog, language)));
-        Logger.Info("    " + SetupText.Get("desc2", language));
-        Logger.Info(SetupText.Format("q3", language, SetupText.Get("no", language)));
-        Logger.Info("    " + SetupText.Get("desc3", language));
-        Logger.Info(SetupText.Format("q4", language, OnOff(_config.RnrAfterUpdate, language)));
-        Logger.Info("    " + SetupText.Get("desc4", language));
-        Logger.Info(SetupText.Get("commands", language));
+            ? Lang.For("setup.clockOk", language)
+            : Lang.FormatFor("setup.clockSkew", language, locale.ClockSkewSeconds);
+        Logger.Info(Lang.FormatFor("setup.detectedExtra", language, source, clock));
+        Logger.Info(Lang.FormatFor("setup.q1", language, OnOff(_config.AutoUpdate, language)));
+        Logger.Info("    " + Lang.For("setup.desc1", language));
+        Logger.Info(Lang.FormatFor("setup.q2", language, OnOff(_config.EnableDetailedUiLog, language)));
+        Logger.Info("    " + Lang.For("setup.desc2", language));
+        Logger.Info(Lang.FormatFor("setup.q3", language, Lang.For("setup.no", language)));
+        Logger.Info("    " + Lang.For("setup.desc3", language));
+        Logger.Info(Lang.FormatFor("setup.q4", language, OnOff(_config.RnrAfterUpdate, language)));
+        Logger.Info("    " + Lang.For("setup.desc4", language));
+        Logger.Info(Lang.For("setup.commands", language));
         Logger.Info("==================================================");
     }
 
@@ -239,7 +239,7 @@ internal static class SetupWizard
         }
         catch (Exception ex)
         {
-            Logger.Warn("[HintChorus] 写入配置失败: " + ex.Message);
+            Logger.Warn("[HintChorus] " + Lang.FormatFor("setup.writeConfigFailed", Language, ex.Message));
         }
     }
 
@@ -261,10 +261,10 @@ internal static class SetupWizard
         }
         catch (Exception ex)
         {
-            Logger.Warn("[HintChorus] 写入向导状态失败: " + ex.Message);
+            Logger.Warn("[HintChorus] " + Lang.FormatFor("setup.writeStateFailed", Language, ex.Message));
         }
-        Logger.Info("[HintChorus] " + SetupText.Get("done", Language));
-        Logger.Info("[HintChorus] " + SetupText.Get("restart", Language));
+        Logger.Info("[HintChorus] " + Lang.For("setup.done", Language));
+        Logger.Info("[HintChorus] " + Lang.For("setup.restart", Language));
     }
 
     private static bool? ParseToggle(string value)
@@ -283,7 +283,7 @@ internal static class SetupWizard
 
     private static string OnOff(bool value, string language)
     {
-        return SetupText.Get(value ? "on" : "off", language);
+        return Lang.For(value ? "setup.on" : "setup.off", language);
     }
 
     private static string Arg(ArraySegment<string> args, int index)

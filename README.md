@@ -14,27 +14,24 @@
 
 # HintChorus
 
-> ## Beta 1.1.2 — Patch Arbiter, Snapshot Rollback & Takeover
+> ## 15.0.0 — UI Middle Layer & Real Language Packs
 >
 > **HintChorus is now in Beta.** It can be used on regular production servers, but please keep an eye on it.
 >
-> - **New: Patch Arbiter.** Harmony's five uninstall entry points are instrumented, so no framework can strip this layer by clearing a method. If a plugin calls `Unpatch All`, our patches are restored **synchronously in the same call stack**, then the UI is re-sent. A 0.25 s shield stays as a backstop. Other plugins can still unload and patch normally.
-> - **Snapshot Rollback & Takeover.** Third-party hints are recorded as per-player snapshots before absorption or suppression. When another hint plugin modifies the hint channel after us, HintChorus rolls it back through the snapshot and takes the patch back over.
->   - Path 1 — **contention first**: `HintDisplay.Show` runs at the highest Harmony priority, so mainstream hint plugins never get control of the channel.
->   - Path 2 — **rollback after the fact**: if another plugin already took the channel first, a postfix fallback detects that our prefix was skipped, pushes the snapshot back out, and re-takes over everything.
-> - **`Hint orvs` mainstream detection**: no mainstream hint plugin → the command says so and offers option **1** = restore vanilla + replay pre-override data. Mainstream plugins present → numbered per-plugin rollback, hot-applying the last recorded data per player.
-> - **Detailed logging (off by default)**: font size, screen position and owning plugin for every line of text. Enable `EnableDetailedUiLog` in the config to inspect each plugin's text behaviour.
-> - **Default logging** keeps ordinary events and exceptions only (crash detection).
-> - Multiple hint plugins can coexist without conflicts.
+> - **Real language packs.** Every user-facing runtime string now comes from embedded `en/zh/fr/ru/es` packs (193 keys each) instead of hardcoded literals. External packs at `configs/<port>/HintChorus/lang/<code>.lang` override any key; missing keys fall back per line (requested → base language → English → Chinese). `Hint lang` lists packs, `Hint lang reload` hot-reloads.
+> - **Hint pipeline anatomy.** [docs/15.0-hint-internals.md](docs/15.0-hint-internals.md) documents the full server path from `HintDisplay.Show` to `HintMessage`, the byte-level wire format, all 20 `HintParameter` types, 3 `HintEffect` types, the `SuppressedReceivers` mute switch, and the 15.0 verification checklist.
+> - **Patch Arbiter + Snapshot Rollback + Shield** stay in place: Harmony's five uninstall entry points are instrumented; external `Unpatch All` is restored synchronously in the same call stack; a 0.25 s shield remains as a backstop.
+> - **`Hint orvs` mainstream detection**: no mainstream hint plugin → option **1** = restore vanilla + replay pre-override data. Mainstream plugins present → numbered per-plugin rollback with hot-applied last data.
+> - Default logging keeps ordinary events and exceptions only (crash detection); detailed UI logging remains opt-in.
 >
 > If something breaks: run `Hint orvs native`, or remove/delete HintChorus and restart.
 > Target build: current public branch 14.2.x; patch targets will be re-verified after 15.0 “Megapatch III”.
 >
 > ---
 >
-> **HintChorus 1.1.2 版本更新：补丁仲裁层 + 快照拦回。**
+> **HintChorus 15.0.0 版本更新：真正的语言包 + UI 中间层。**
 >
-> 第三方提示在被吸收或压制之前，会先按玩家记录快照。外部 Hint 插件在我们之后修改提示通道时，会通过快照强行退回并重新接管补丁。部分框架会用 `Unpatch All` 清场：仲裁层挂住 Harmony 的卸载入口，在同一个调用栈内把本底层补丁装回去，再重发 UI；护盾每 0.25 秒兜底一次。
+> 所有用户可见的运行时文案不再硬编码，统一进入内嵌语言包（5 语 × 193 key）；外部 `lang/<code>.lang` 可逐 key 覆盖、可新增任意语言，`Hint lang reload` 热重载。新增《服务端提示管道解剖》，把 `HintDisplay.Show` → `HintMessage` 的线格式、20 种参数、3 种效果与官方静音开关全部刨清。补丁仲裁、快照拦回、护盾、抢加载 `0.dll` 与 `Hint orvs` 回退保持不变。
 >
 > 完整发布稿见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
@@ -52,7 +49,7 @@
 
 ## 简洁 / 详细（多语言版见 docs）
 
-> **语言说明**：运行时只内嵌联合国五种语言（`zh` / `en` / `fr` / `ru` / `es`）；其余 20+ 语言以外部译文与文档形式提供，缺行回退英文。详见 [docs/languages.md](docs/languages.md)。
+> **语言说明**：DLL 内嵌 5 个运行时语言包（`zh` / `en` / `fr` / `ru` / `es`）；任意语言都可用 `configs/<端口>/HintChorus/lang/<code>.lang` 扩展，逐 key 覆盖，缺行回退英文/中文。详见 [docs/languages.md](docs/languages.md)。
 
 - **简洁**：HintChorus 把游戏的单条提示通道拆成按调用方隔离的信口，插件无需改代码；内置补丁仲裁、`0.dll` 抢加载与 `Hint orvs` 回退。
 - **详细**：HintChorus 是 SCP:SL 服务器端的动态 UI 隔离底层。它拦截 Hint、广播、控制台、CASSIE、管理端聊天与命中标记六条通道，按调用方自动归因并分配独立信口；补丁仲裁层会在外部清场后同步恢复本底层补丁；`0.dll` 以最短文件名抢在其它插件之前加载；另含首次运行配置向导、安全更新检查与 15.0 模板层骨架。
@@ -65,8 +62,8 @@
 
 ## 下载 / Download
 
-**只需下载一个文件**（主 DLL 会在首次运行时自己释放前置引导器，无需手动装第二个文件）：
-(**Only one file to download** — the main DLL extracts its prerequisite bootstrap on first run, so there is no second file to install by hand.)
+**只需下载一个文件**：主 DLL 内嵌永久 shim、引导 payload 与映射组件；首次运行全部释放，提示重启一次，重启后由 shim 载入 payload 并完成抢先安装。以后更新只需替换主 DLL。
+(**Only one file to download** — the main DLL embeds the permanent shim, bootstrap payload and mapping. On first run it extracts everything and asks for one restart; after restart the shim loads the payload and finishes the early install. Future updates only replace the main DLL.)
 
 | 方式 (Method) | 链接 (Link) |
 | --- | --- |
@@ -82,14 +79,31 @@
 
 1. 把 `HintChorus.dll` 放进 `plugins/global/`
    (Put `HintChorus.dll` into `plugins/global/`)
-2. 启动服务器（首次会自动释放 `0HintChorus.Bootstrap.dll` 并提示重启一次，这是引导器抢位的设计）
-   (Start the server — on first run it automatically extracts `0HintChorus.Bootstrap.dll` and asks you to restart once; that is by design, so the bootstrap can grab the highest load priority)
-3. 按需改 `configs/<端口>/HintChorus/config.yml`（**键名是 snake_case**，见 [`docs/default-config.yml`](docs/default-config.yml)）
+2. 启动服务器：首次会自动释放 `0.dll`（永久 shim）、`HintChorus.Bootstrap.payload` 与 `dependencies/global` 映射组件，并提示重启一次
+   (Start the server — on first run it extracts `0.dll` (permanent shim), `HintChorus.Bootstrap.payload` and the mapping under `dependencies/global`, then asks you to restart once)
+3. 重启后 `0.dll` 会载入 payload，payload 再做抢先安装；之后更新只替换 `HintChorus.dll`，`0.dll` 永远不动
+   (After restart, `0.dll` loads the payload and the payload performs the early install; future updates only replace `HintChorus.dll`, while `0.dll` never changes)
+4. 按需改 `configs/<端口>/HintChorus/config.yml`（**键名是 snake_case**，见 [`docs/default-config.yml`](docs/default-config.yml)）
    (Optionally edit `configs/<端口>/HintChorus/config.yml`, where `<端口>` is your server port — **keys are snake_case**, see [`docs/default-config.yml`](docs/default-config.yml))
 
 ---
 
-## Beta 1.1.2 新增 (What's new)
+## 15.0.0 新增 (What's new in 15.0.0)
+
+### A. 运行时语言包（Language Packs）
+
+- 用户可见的运行文本（控制台命令、向导、更新、启动、模板、仲裁/自愈/护盾、合并核心、SSS）进入 `src/Resources/langpack/{en,zh,fr,ru,es}.lang`，共 193 个 key，编进 `HintChorus.dll`。
+- 外部覆盖：`configs/<端口>/HintChorus/lang/<code>.lang`，只写要改的行；逐 key 覆盖内嵌值。
+- 新增语言：放任意 `<code>.lang` 即可，缺失 key 按「请求语言 → 主代码 → en → zh」回退。
+- 命令：`Hint lang`（列出语言包/key 数/来源）、`Hint lang reload`（热重载）、`Hint lang path`（显示目录）。
+- 实现：`src/Core/Localization/LanguagePack.cs` + `Lang.cs`；语言代码不再被强制改成英文。
+
+### B. 提示管道解剖（Hint Internals）
+
+- 新增 [docs/15.0-hint-internals.md](docs/15.0-hint-internals.md)：`HintDisplay.Show` → `HintMessage` 的逐字节格式、20 种 `HintParameter`、3 种 `HintEffect`、时长倍率语义、`SuppressedReceivers` 官方静音开关、15.0 核对清单。
+- 结论：服务端不做布局；合并只能保证文本，不能凭空还原客户端 TMP 的字体/换行/CJK 回退。
+
+## 历史版本：Beta 1.1.2 新增 (What's new)
 
 ### A. 补丁仲裁层（Patch Arbiter）
 
@@ -370,8 +384,8 @@ dotnet build src/HintChorus.csproj -c Release -p:ManagedDir="<你的服务器>/S
 > 上面的注释意为：需要 .NET SDK，以及 SCP:SL 专用服务器的 `Managed` 目录；`<你的服务器>` 替换成你的服务器根目录。
 > (The comment above means: you need the .NET SDK and the `Managed` folder of a dedicated SCP:SL server; replace `<你的服务器>` with your server's root folder.)
 
-引导器是独立工程（`bootstrap/`），其产物会被主工程**内嵌**并在运行时释放。
-(The bootstrap is a separate project (`bootstrap/`); its output is **embedded** into the main project and extracted at runtime.)
+引导层拆成两个独立工程：`bootstrap-shim/` 是永久 shim（释放为 `0.dll`），`bootstrap/` 是可更新的引导 payload；两者与映射组件一起被主工程**内嵌**，首次运行时释放。
+(The bootstrap layer is split into `bootstrap-shim/` (the permanent `0.dll` shim) and `bootstrap/` (the updateable payload); both, together with the mapping component, are **embedded** into the main project and extracted on first run.)
 
 ### 验证补丁是否真装上（重要） (Verify the patches actually got installed — important)
 

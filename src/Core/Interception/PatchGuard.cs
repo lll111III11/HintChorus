@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
+using HintChorus.Core.Localization;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 
@@ -70,18 +71,18 @@ internal static class PatchGuard
 			if (type == null)
 			{
 				// 类型解析不到: 以前这里被静默跳过, 于是"拦截层其实已经死了"在诊断里完全看不出来
-				unresolved.Add(label + " (类型不存在)");
+				unresolved.Add(label + " " + Lang.Get("guard.detailTypeMissing"));
 				continue;
 			}
 			if (list2 == null)
 			{
-				unresolved.Add(label + " (枚举方法失败)");
+				unresolved.Add(label + " " + Lang.Get("guard.detailEnumFailed"));
 				continue;
 			}
 			List<MethodInfo> list3 = list2.Where((MethodInfo m) => m.Name == methodName).ToList();
 			if (list3.Count == 0)
 			{
-				unresolved.Add(label + " (方法不存在, 可能是游戏更新改了签名)");
+				unresolved.Add(label + " " + Lang.Get("guard.detailMethodMissing"));
 				continue;
 			}
 			if (!list3.Any(HasOurPatch))
@@ -100,7 +101,7 @@ internal static class PatchGuard
 		if (unresolved.Count > 0 && _unresolvedLoggedFor != unresolved.Count)
 		{
 			_unresolvedLoggedFor = unresolved.Count;
-			Logger.Error("[HintChorus] 有 " + unresolved.Count + " 个补丁落点已经找不到目标(这部分无法自愈, 请核对游戏版本): " + string.Join(", ", unresolved));
+			Logger.Error(Lang.Format("guard.unresolved", unresolved.Count, string.Join(", ", unresolved)));
 		}
 
 		if (LastMissing.Count == 0)
@@ -118,7 +119,7 @@ internal static class PatchGuard
 			if (!_gaveUpLogged)
 			{
 				_gaveUpLogged = true;
-				Logger.Error("[HintChorus] 已连续 " + MaxRepairAttempts + " 次自愈失败, 暂停自动重装以免反复打断补丁; 仍在缺失: " + string.Join(", ", LastMissing) + " (重载插件或重启服务器可重置)");
+				Logger.Error(Lang.Format("guard.gaveUp", MaxRepairAttempts, string.Join(", ", LastMissing)));
 			}
 			return false;
 		}
@@ -131,7 +132,7 @@ internal static class PatchGuard
 		}
 		catch (Exception e)
 		{
-			Logger.Error("[HintChorus] 补丁自愈重装失败(仍缺失: " + string.Join(", ", LastMissing) + "): " + e);
+			Logger.Error(Lang.Format("guard.repairFailed", string.Join(", ", LastMissing), e));
 			return false;
 		}
 		return true;

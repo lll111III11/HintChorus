@@ -4,6 +4,7 @@ using System.Reflection;
 using HarmonyLib;
 using HintChorus.Core.Broker;
 using HintChorus.Core.Diagnostics;
+using HintChorus.Core.Localization;
 using LabApi.Features.Console;
 
 namespace HintChorus.Core.Interception;
@@ -84,7 +85,7 @@ internal static class PatchArbiter
 
         _installed = true;
         Capture();
-        StartupLog.Info("[HintChorus] 补丁仲裁层已就位: Harmony 的 5 个卸载入口全部受控, 外部清场后会在同一调用栈内恢复本底层");
+        StartupLog.Info(Lang.Get("arbiter.installed"));
     }
 
     internal static void Uninstall()
@@ -102,7 +103,7 @@ internal static class PatchArbiter
         }
         catch (Exception ex)
         {
-            UiLog.ReportEvent("ARBITER", "卸载仲裁层失败: " + ex.Message);
+            UiLog.ReportEvent("ARBITER", Lang.Format("arbiter.uninstallFailed", ex.Message));
         }
         finally
         {
@@ -177,7 +178,7 @@ internal static class PatchArbiter
         MethodInfo? postfix = AccessTools.Method(typeof(PatchArbiter), postfixName);
         if (target == null || postfix == null)
         {
-            Logger.Warn($"[HintChorus] 仲裁层挂接失败: {type.Name}.{name} 找不到目标或后置");
+            Logger.Warn(Lang.Format("arbiter.hookFailed", type.Name, name));
             return;
         }
         HookPoints.Add(new HookPoint(target, postfix));
@@ -317,8 +318,8 @@ internal static class PatchArbiter
     private static void Restore(string source)
     {
         RestoreCount++;
-        Logger.Warn($"[HintChorus] 仲裁层: {source} 摘除了本底层的补丁, 正在同一调用栈内恢复");
-        UiLog.ReportEvent("ARBITER", source + " → 恢复拦截层 (第 " + RestoreCount + " 次)");
+        Logger.Warn(Lang.Format("arbiter.restoreWarn", source));
+        UiLog.ReportEvent("ARBITER", Lang.Format("arbiter.restoreEvent", source, RestoreCount));
 
         UiInterception.Instance.Repair();
         HintBroker.Instance.MarkDirty();

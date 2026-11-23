@@ -3,6 +3,7 @@ using System.Reflection;
 using HarmonyLib;
 using HintChorus.Core.Broker;
 using HintChorus.Core.Diagnostics;
+using HintChorus.Core.Localization;
 using Hints;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
@@ -148,15 +149,15 @@ internal static class PatchShield
         try
         {
             ReinstallCount++;
-            Logger.Warn("[HintChorus] 提示条补丁被外部摘掉, 护盾立即重装并在下一轮重发 UI");
+            Logger.Warn(Lang.Get("shield.reinstalled"));
             UiInterception.Instance.Repair();
             // 不等续期: 让所有玩家的复合块在下一轮(≤40ms)重新盖回去。
             HintBroker.Instance.MarkDirty();
-            UiLog.ReportEvent("SHIELD", "提示条补丁被外部摘掉, 已立即重装并重发 UI (第 " + ReinstallCount + " 次)");
+            UiLog.ReportEvent("SHIELD", Lang.Format("shield.reinstalledReport", ReinstallCount));
         }
         catch (Exception ex)
         {
-            Logger.Error("[HintChorus] 护盾重装失败: " + ex.Message);
+            Logger.Error(Lang.Format("shield.failed", ex.Message));
             UiLog.Report("ShieldRepair", ex);
         }
     }

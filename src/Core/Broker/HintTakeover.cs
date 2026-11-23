@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using HintChorus.Core.Diagnostics;
+using HintChorus.Core.Localization;
 using HintChorus.Core.Transport;
 using Hints;
 using LabApi.Features.Console;
@@ -202,7 +203,7 @@ public static class HintTakeover
         }
         catch (Exception ex)
         {
-            Logger.Warn("[HintChorus] 热应用覆盖前数据失败: " + ex.Message);
+            Logger.Warn(Lang.Format("takeover.replayFailed", ex.Message));
             UiLog.Report("TakeoverReplay", ex);
             return false;
         }
@@ -215,7 +216,9 @@ public static class HintTakeover
         ForceEnabled = false;
         HintBroker.Instance.Enabled = false;
         int count = replay ? ReplayAllPreOverride() : 0;
-        UiLog.ReportEvent("TAKEOVER", "进入原生模式" + (replay ? ", 已恢复 " + count + " 个玩家的覆盖前数据" : ", 未回放快照"));
+        UiLog.ReportEvent("TAKEOVER", replay
+            ? Lang.Format("takeover.enterNative", count)
+            : Lang.Get("takeover.enterNativeNoReplay"));
         return count;
     }
 
@@ -226,7 +229,7 @@ public static class HintTakeover
         ForceEnabled = true;
         HintBroker.Instance.Enabled = true;
         HintBroker.Instance.MarkDirty();
-        UiLog.ReportEvent("TAKEOVER", "退出原生模式, 恢复复合渲染与强接管");
+        UiLog.ReportEvent("TAKEOVER", Lang.Get("takeover.leaveNative"));
     }
 
     /// <summary>清空所有快照并复位运行时状态(插件停用时调用)。</summary>

@@ -1,0 +1,228 @@
+# ══════════════════════════════════════════════════════════════════
+# Pack de langue d'exécution HintChorus — Français
+#
+# Fichier intégré à HintChorus.dll. Pour remplacer une ligne :
+# copiez-le vers  configs/<port>/HintChorus/lang/fr.lang  puis éditez.
+# Format : key = value   Échappements : \n \r \t \\   Commentaires : # ; //
+# ══════════════════════════════════════════════════════════════════
+
+# ── assistant de configuration initiale ─────────────────────────
+setup.banner = Configuration initiale de HintChorus
+setup.detected = Détecté : langue={0} | fuseau={1} | région={2}
+setup.detectedExtra = Source du fuseau : {0} | Vérification de l'horloge : {1}
+setup.srcNetwork = IP publique + fuseau réseau
+setup.srcLocal = fuseau local
+setup.clockOk = horloge locale fiable
+setup.clockSkew = écart de {0} s
+setup.q1 = 1) Mise à jour auto : {0}    (Hc setup 1 on / off)
+setup.q2 = 2) Journal UI détaillé : {0}    (Hc setup 2 on / off)
+setup.q3 = 3) Écrire la configuration maintenant ? {0}    (Hc setup 3 yes / no)
+setup.q4 = 4) Redémarrer en fin de manche après mise à jour (RNR) : {0}    (Hc setup 4 on / off)
+setup.desc1 = Mise à jour auto : vérifie les GitHub Releases ; une fois activée, elle télécharge automatiquement, mais enregistre seulement HintChorus.dll.new par défaut.
+setup.desc2 = Journal UI détaillé : enregistre le texte, la position et le rendu par joueur dans logs/ui-*.log ; coût IO notable.
+setup.desc3 = Écrire la configuration : enregistre les choix actuels dans config.yml pour les conserver après redémarrage.
+setup.desc4 = Redémarrage en fin de manche (RNR) : après le téléchargement et le remplacement de la DLL, redémarre complètement le serveur à la fin de la manche en cours.
+setup.commands = Hc setup done pour terminer | Hc setup skip pour ignorer
+setup.on = activé
+setup.off = désactivé
+setup.yes = oui
+setup.no = non
+setup.saved = Configuration enregistrée : {0}
+setup.skipped = Ignoré. Aucun changement.
+setup.done = Configuration terminée.
+setup.restart = Le journal détaillé et les réglages similaires prennent effet après redémarrage.
+setup.notActive = L'assistant n'est pas actif (déjà terminé ou pas encore démarré).
+setup.usage = Usage : Hc setup | Hc setup 1 on|off | Hc setup 2 on|off | Hc setup 3 yes|no | Hc setup 4 on|off | Hc setup done | Hc setup skip
+setup.failed = échec de la configuration : {0}
+setup.notInitialized = configuration non initialisée
+setup.writeConfigFailed = échec de l'écriture de la configuration : {0}
+setup.writeStateFailed = échec de l'écriture de l'état de l'assistant : {0}
+
+# ── commandes de la console serveur ─────────────────────────────
+cmd.description = Console serveur HintChorus : Hint orvs détecte les plugins courants et revient aux hints natifs
+cmd.helpHeader = [HintChorus] commandes console (insensible à la casse) :
+cmd.helpOrvs = Hint orvs — détecte les plugins courants et liste les numéros (option 1 = natif si aucun)
+cmd.helpPick = Hint orvs <n> — bascule ce plugin en natif et rejoue ses dernières données
+cmd.helpMerge = Hint orvs <n> merge — rétablit ce plugin en rendu fusionné
+cmd.helpNative = Hint orvs native — tout passer en natif et rejouer les données précédentes
+cmd.helpAll = Hint orvs all — tous les plugins en natif et rejeu
+cmd.helpReset = Hint orvs reset — quitter le mode natif et rétablir le rendu fusionné
+cmd.helpYield = Hint orvs yield — céder le canal aux plugins externes (cette exécution uniquement)
+cmd.helpTake = Hint orvs take — reprendre le canal (par défaut)
+cmd.helpSetup = Hc setup — configuration initiale (maj auto / journal détaillé / écrire config / RNR)
+cmd.helpUpdate = Hc update — vérifier la dernière version GitHub maintenant
+cmd.helpLang = Hint lang [reload|path] — lister les packs de langue, recharger les packs externes ou afficher le dossier
+cmd.helpFooter = Note : plusieurs plugins de hints peuvent coexister ; utilisez orvs pour en rétablir un sans toucher aux autres.
+cmd.consoleOnly = [HintChorus] Cette commande n'est autorisée que dans la console du terminal serveur.
+cmd.unknown = [HintChorus] Sous-commande inconnue : {0}\n{1}
+cmd.yield = [HintChorus] Canal cédé : les plugins de hints externes peuvent prendre le contrôle.\nExécutez Hint orvs take pour le reprendre.
+cmd.take = [HintChorus] Canal repris : cette couche reprend le contrôle et a renvoyé l'interface.
+cmd.native = [HintChorus] Tout est repassé en hints natifs ; données d'avant remplacement restaurées pour {0} joueurs.\nExécutez Hint orvs reset pour rétablir le rendu fusionné.
+cmd.nativeNone = [HintChorus] Aucun plugin courant détecté ; l'option 1 est repassée en natif et a restauré les données de {0} joueurs.\nExécutez Hint orvs reset pour rétablir le rendu fusionné.
+cmd.all = [HintChorus] {0} plugins repassés en natif ({1} détectés) ; données restaurées pour {2} joueurs.\nExécutez Hint orvs reset pour tout rétablir en fusionné.
+cmd.reset = [HintChorus] Mode natif quitté ; rendu fusionné rétabli pour {0} plugins.
+cmd.invalidNumber = [HintChorus] Le numéro doit être numérique.\n{0}
+cmd.outOfRange = [HintChorus] Numéro hors plage : {0} (plage valide {1}-{2}).
+cmd.mergeOne = [HintChorus] {0} rétabli en rendu fusionné.
+cmd.nativeOne = [HintChorus] {0} repassé en natif ; dernières données appliquées pour {1} joueurs.\nLes autres plugins restent gérés par la couche de fusion ; restaurer : Hint orvs {2} merge
+cmd.alreadyNative = \n(ce plugin était déjà en natif)
+cmd.execFailed = [HintChorus] Échec de la commande : {0}
+cmd.registered = [HintChorus] Commande console prête : Hint orvs (insensible à la casse)
+cmd.registerFailed = [HintChorus] Échec de l'enregistrement de la commande Hint (nouvel essai toutes les 5 s) : {0}
+cmd.list.noMainstream = [HintChorus] Aucun plugin Hint courant détecté.
+cmd.list.nativeOption =   1) Revenir au natif (restaurer les données d'avant remplacement)
+cmd.list.others = Autres plugins détectés :
+cmd.list.stateNative =   [natif]
+cmd.list.stateMerged =   [fusionné]
+cmd.list.noMainstreamHint = Entrez Hint orvs 1 pour revenir au natif ; Hint orvs <n> pour basculer un seul plugin.
+cmd.list.resetHint = Rétablir le rendu fusionné : Hint orvs reset
+cmd.list.header = [HintChorus] {0} plugins Hint courants détectés{1} :
+cmd.list.nativeModeSuffix =  (actuellement en mode natif global)
+cmd.list.pickHint = Entrez Hint orvs <n> pour le passer en natif et rejouer ses dernières données ; ajoutez merge pour restaurer.
+cmd.list.nativeAllHint = Tout en natif : Hint orvs native | Tout restaurer : Hint orvs reset
+
+# ── vérification des mises à jour ───────────────────────────────
+update.started = Vérification des mises à jour lancée ; résultat dans la console.
+update.found = Nouvelle version : {0} (actuelle {1})
+update.none = Déjà à jour : {0}
+update.failed = Échec de la vérification : {0}
+update.downloaded = Nouvelle version téléchargée vers {0} ; remplacez la DLL avant redémarrage.
+update.replaced = HintChorus.dll remplacé ; le serveur redémarrera en fin de manche pour le charger.
+update.replaceFailed = Impossible de remplacer la DLL en cours (verrouillée ?) ; fichier .new conservé, remplacez-le manuellement.
+update.rnrScheduled = Redémarrage complet prévu à la fin de la manche en cours pour charger la nouvelle version.
+update.noTag = Vérification : la réponse ne contient pas de tag_name
+update.scheduleFailed = Échec de la programmation du redémarrage en fin de manche : {0}
+
+# ── libération du bootstrap ────────────────────────────────────
+bootstrap.missingResource = ressource intégrée HintChorus.Bootstrap.dll introuvable (bootstrap non intégré à la compilation ?)
+bootstrap.sameVersion = bootstrap déjà à jour : {0}
+bootstrap.released = bootstrap libéré → {0} (effectif au prochain redémarrage)
+bootstrap.failed = échec de la libération du bootstrap : {0}
+bootstrap.staged = mise à jour du bootstrap en attente dans {0} ; arrêtez le serveur puis remplacez {1} manuellement (le bootstrap actuel fonctionne toujours). Raison : {2}
+bootstrap.assetsUpdated = actifs de bootstrap mis à jour (shim / payload / mapping) ; redémarrez le serveur pour appliquer
+bootstrap.assetsCurrent = actifs de bootstrap déjà à jour
+bootstrap.assetsStaged = actifs de bootstrap préparés en .new ({0}) ; arrêtez le serveur, remplacez les fichiers .new puis redémarrez
+bootstrap.assetsFailed = échec de la libération des actifs de bootstrap : {0}
+early.skipped = installation anticipée déjà effectuée ; ignorée cette fois
+early.noConfig = config.yml pas encore généré ; installation laissée au plugin principal
+early.disabled = l'interception est désactivée dans la configuration ; aucune installation anticipée
+early.installed = [chargement anticipé] interception UI installée avant l'Enable des autres plugins (ordre #{0}) : hints + broadcast + console + CASSIE + chat admin + marqueur de touche
+early.done = interception UI installée avant les autres plugins (ordre #{0})
+early.failed = [HintChorus] Échec de l'installation anticipée (le plugin principal s'installera normalement) : {0}
+early.exception = exception d'installation anticipée : {0}
+early.uiReady = [HintChorus] Canaux UI prêts — hints / broadcast / console / CASSIE / chat admin / marqueur de touche + page de réglages
+home.ready = répertoire auto-hébergé prêt
+home.created = répertoire auto-hébergé créé
+home.failed = échec de la création du répertoire auto-hébergé
+home.status = [HintChorus] Répertoire auto-hébergé {0} : {1} (modules : {2}, résolveur d'assemblages attaché)
+home.readyState = prêt
+home.createdState = créé
+home.readyModules = répertoire auto-hébergé prêt ({0} modules)
+home.createdModules = répertoire auto-hébergé créé ({0} modules)
+
+# ── cycle de vie / rapport de démarrage ─────────────────────────
+plugin.description = Couche d'isolation UI dynamique : intercepte et attribue les appels UI tiers, alloue des canaux par UiId, gère plusieurs surfaces
+plugin.enableDone = [HintChorus] Enable terminé → les plugins externes peuvent enregistrer canaux, sources de texte et ports SSS via UiIsolation / IUiIsolation
+plugin.betaBanner = [HintChorus] 15.0.0 : 0.dll prioritaire + arbitrage de patches (restauration synchrone) + retour par instantané + bouclier (0,25 s) + packs de langue intégrés ; en cas de problème, exécutez Hint orvs
+plugin.enableFailed = [HintChorus] Échec d'Enable : {0}
+plugin.disableDone = [HintChorus] Disable terminé : interception déchargée, canaux libérés, tableau SSS restauré
+plugin.disableReport = Plugin désactivé : interception déchargée, état de retour réinitialisé
+plugin.sssGuardError = [HintChorus] Erreur du garde SSS : {0}
+plugin.shieldError = [HintChorus] Erreur du bouclier de patches : {0}
+plugin.setupStartError = [HintChorus] Échec du démarrage de l'assistant : {0}
+plugin.updateStartError = [HintChorus] Échec du démarrage de la vérification de mise à jour : {0}
+plugin.maintenanceError = [HintChorus] Erreur de la boucle de maintenance : {0}
+plugin.patchGuardError = [HintChorus] Erreur de l'auto-réparation des patches : {0}
+plugin.bootstrapBanner1 = [HintChorus] ┌────────────────────────────────────────────────────┐
+plugin.bootstrapBanner2 = [HintChorus] │  Bootstrap libéré ; redémarrez pour qu'il charge en premier  │
+plugin.bootstrapBanner3 = [HintChorus] └────────────────────────────────────────────────────┘
+plugin.reportVersion = version : {0} (beta)
+plugin.reportPort = port : {0}
+plugin.reportCore = fusion : {0} | interception tierce : {1} | arbitrage : {2} | prise forcée : {3} | mise en page : {4}
+plugin.reportTemplate = modèle : {0}
+plugin.reportLanguage = packs de langue : {0}
+plugin.reportLogs = journaux : rapport={0} | UI détaillée={1} | par joueur={2}
+plugin.reportCandidates = plugins Hint détectés : {0}
+
+# ── pont de modèles ─────────────────────────────────────────────
+template.disabled = désactivé (aucun modèle configuré)
+template.missing = composant de mapping introuvable (vérifiez dependencies\global\{0})
+template.missingHost = le composant de mapping n'a pas le type d'entrée {0}
+template.configuredButMissing = Le modèle {0} est configuré, mais {1}
+template.notFound = Le modèle {0} n'existe pas ; mise en page actuelle conservée. Disponibles : {1}
+template.resolved = modèle : {0}
+template.info = Modèle {0} résolu : {1}
+template.initFailed = échec d'initialisation du modèle : {0} : {1}
+
+# ── arbitre de patches ──────────────────────────────────────────
+arbiter.installed = [HintChorus] Arbitre de patches en place : les 5 points de déchargement Harmony sont contrôlés ; après une purge externe, cette couche est restaurée dans la même pile d'appels
+arbiter.hookFailed = [HintChorus] Échec de l'accroche de l'arbitre : cible ou postfixe {0}.{1} introuvable
+arbiter.restoreWarn = [HintChorus] Arbitre : {0} a retiré les patches de cette couche ; restauration dans la même pile d'appels
+arbiter.restoreEvent = {0} → interception restaurée (restauration n° {1})
+arbiter.uninstallFailed = échec du déchargement de l'arbitre : {0}
+
+# ── auto-réparation ────────────────────────────────────────────
+guard.unresolved = [HintChorus] {0} cibles de patch sont introuvables (auto-réparation impossible ; vérifiez la version du jeu) : {1}
+guard.gaveUp = [HintChorus] Échec de l'auto-réparation {0} fois de suite ; réinstallation automatique suspendue. Toujours manquants : {1} (rechargez le plugin ou redémarrez pour réinitialiser)
+guard.repairFailed = [HintChorus] Échec de la réinstallation auto (toujours manquants : {0}) : {1}
+guard.detailTypeMissing = (type introuvable)
+guard.detailEnumFailed = (échec de l'énumération des méthodes)
+guard.detailMethodMissing = (méthode introuvable ; la mise à jour du jeu a peut-être changé la signature)
+
+# ── bouclier de patches ────────────────────────────────────────
+shield.reinstalled = [HintChorus] Patch de hints retiré par un tiers ; le bouclier l'a réinstallé immédiatement et renverra l'UI au prochain cycle
+shield.reinstalledReport = Patch de hints retiré par un tiers ; réinstallé immédiatement et UI renvoyée (n° {0})
+shield.failed = [HintChorus] Échec de la réinstallation par le bouclier : {0}
+
+# ── retour / prise de contrôle ─────────────────────────────────
+fallback.toNative = passage en natif : {0}
+fallback.toMerge = rendu fusionné rétabli : {0}
+fallback.resetAll = tous les plugins rétablis en rendu fusionné ({0} au total)
+takeover.replayFailed = [HintChorus] Échec du rejeu des données d'avant remplacement : {0}
+takeover.enterNative = mode natif activé ; données restaurées pour {0} joueurs
+takeover.enterNativeNoReplay = mode natif activé sans rejeu des instantanés
+takeover.leaveNative = mode natif quitté ; rendu fusionné et prise forcée rétablis
+
+# ── noyau de fusion ────────────────────────────────────────────
+broker.started = [HintChorus] Noyau de rendu fusionné démarré (rafraîchissement {0}s)
+broker.stopped = [HintChorus] Noyau de rendu fusionné arrêté
+broker.layoutUnknown = [HintChorus] layout_mode non reconnu ; valeur par défaut rows. Options : rows / offsets / compact ; reçu : {0}
+broker.channelExists = [HintChorus] Canal '{0}' déjà présent ; double enregistrement refusé (jamais de préemption)
+broker.channelRegistered = [HintChorus] Canal '{0}' enregistré indépendamment
+broker.channelUnloaded = [HintChorus] Canal '{0}' déchargé
+broker.sourceExists = [HintChorus] Source de texte '{0}' déjà présente ; double enregistrement refusé (jamais de préemption)
+broker.sourceRegistered = [HintChorus] Source de texte '{0}' enregistrée indépendamment
+broker.sourceUnloaded = [HintChorus] Source de texte '{0}' déchargée
+broker.unnamed = (sans nom)
+broker.playerRenderError = [HintChorus] Échec du rendu pour un joueur (isolé, les autres ne sont pas affectés) : {0}
+broker.refreshStepError = [HintChorus] Échec de l'étape de rafraîchissement {0} (ignorée ce tour) : {1}
+broker.sourceError = [HintChorus] La source de texte '{0}' a levé une exception (isolée) : {1}
+broker.filterError = [HintChorus] Le filtre de réception du canal '{0}' a levé une exception (isolé) : {1}
+broker.refreshError = [HintChorus] Échec du rafraîchissement des hints : {0}
+
+# ── registre SSS ───────────────────────────────────────────────
+sss.started = [HintChorus] Cœur d'isolation des ports SSS démarré (anti-détournement={0})
+sss.stopped = [HintChorus] Cœur d'isolation des ports SSS arrêté
+sss.idConflict = [HintChorus] L'enregistrement '{0}' a des conflits de SettingId avec d'autres plugins ; enregistrement refusé : {1}
+sss.moduleRegistered = [HintChorus] L'enregistrement '{0}' a enregistré {1} réglages SSS indépendamment
+sss.moduleUnloaded = [HintChorus] Les réglages SSS de l'enregistrement '{0}' ont été déchargés
+sss.overwriteDetected = [HintChorus] Un plugin a remplacé ServerSpecificSettingsSync.DefinedSettings en bloc (cela casse l'UI des autres plugins) ; fusion et restauration effectuées
+sss.valueCallbackError = [HintChorus] Le callback de valeur SSS de '{0}' a levé une exception (isolé, autres modules intacts) : {1}
+sss.statusCallbackError = [HintChorus] Le callback de statut SSS de '{0}' a levé une exception (isolé) : {1}
+
+# ── métriques de texte ─────────────────────────────────────────
+metrics.missing = [HintChorus] Table de métriques intégrée HintChorus.textwidth.bin introuvable ; mise en page en mode estimé
+metrics.magic = [HintChorus] Magie de la table de métriques incorrecte ; mise en page en mode estimé
+metrics.loadFailed = [HintChorus] Échec du chargement des métriques ; mise en page en mode estimé : {0}
+metrics.loaded = [HintChorus] Métriques de texte chargées : {0} caractères, palette de {1} largeurs, {2:F1} Ko (compressé)
+
+# ── commande de langue ─────────────────────────────────────────
+lang.usage = Usage : Hint lang | Hint lang reload | Hint lang path
+lang.header = [HintChorus] Packs de langue ({0} chargés) :
+lang.entry =   {0} — {1} clés ({2})
+lang.sourceBuiltin = intégré
+lang.sourceExternal = externe
+lang.sourceBoth = intégré + externe
+lang.reloaded = [HintChorus] Packs de langue rechargés : {0} langues. {1}
+lang.unknown = [HintChorus] Action de langue inconnue : {0}\n{1}
+lang.dir = [HintChorus] Dossier des packs externes : {0}

@@ -255,7 +255,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 
 	public override string Name => "HintChorus";
 
-	public override string Description => "动态 UI 隔离底层: 拦截并归因第三方 UI 调用, 按 UiId 分配独立信口, 支持多 UI 表面";
+	public override string Description => Lang.Get("plugin.description");
 
 	public override string Author => "LabAPI-Docs";
 
@@ -316,49 +316,60 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			}
 			_maintenanceLoop = Timing.RunCoroutine(MaintenanceRoutine(), Segment.Update);
 			UiLog.WriteStartupReport(BuildStartupReport());
-			StartupLog.Info("[HintChorus] Enable 完成 → 外部插件可经 UiIsolation / IUiIsolation 注册通道、文本源、SSS 端口");
-			StartupLog.Info("[HintChorus] beta 1.1.2: 抢加载 0.dll + 补丁仲裁层(同步恢复) + 快照拦回 + 护盾(0.25 秒兜底); 出问题在控制台输入 Hint orvs 回退");
+			StartupLog.Info(Lang.Get("plugin.enableDone"));
+			StartupLog.Info(Lang.Get("plugin.betaBanner"));
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintChorus] Enable 失败: " + ex));
+			Logger.Error((object)Lang.Format("plugin.enableFailed", ex));
 			UiLog.Report("Enable", ex);
 			throw;
 		}
 	}
 
-	/// <summary>启动报告(默认日志): 版本、关键开关、已发现的 Hint 插件。</summary>
+	/// <summary>启动报告(默认日志): 版本、关键开关、语言包与已发现的 Hint 插件。</summary>
 	private string BuildStartupReport()
 	{
-		return "版本: " + GetType().Assembly.GetName().Version + " (beta)"
-			+ "\n端口: " + LabApi.Features.Wrappers.Server.Port
-			+ "\n合并核心: " + base.Config.EnableHintChorus
-			+ " | 第三方拦截: " + base.Config.InterceptThirdPartyUi
-			+ " | 补丁仲裁: " + PatchArbiter.IsInstalled
-			+ " | 强接管: " + base.Config.ForceTakeover
-			+ " | 排版: " + base.Config.LayoutMode
-			+ "\n模板: " + TemplateBridge.Status
-			+ "\n日志: 报告=" + base.Config.EnableCrashReportLog
-			+ " | 详细UI=" + base.Config.EnableDetailedUiLog
-			+ " | 逐玩家=" + base.Config.DetailedUiLogPerPlayer
-			+ "\n已发现 Hint 插件: " + string.Join(", ", HintFallback.Candidates());
+		return Lang.Format("plugin.reportVersion", GetType().Assembly.GetName().Version)
+			+ "\n" + Lang.Format("plugin.reportPort", LabApi.Features.Wrappers.Server.Port)
+			+ "\n" + Lang.Format(
+				"plugin.reportCore",
+				base.Config.EnableHintChorus,
+				base.Config.InterceptThirdPartyUi,
+				PatchArbiter.IsInstalled,
+				base.Config.ForceTakeover,
+				base.Config.LayoutMode)
+			+ "\n" + Lang.Format("plugin.reportTemplate", TemplateBridge.Status)
+			+ "\n" + Lang.Format("plugin.reportLogs", base.Config.EnableCrashReportLog, base.Config.EnableDetailedUiLog, base.Config.DetailedUiLogPerPlayer)
+			+ "\n" + Lang.Format("plugin.reportLanguage", LanguagePack.Report)
+			+ "\n" + Lang.Format("plugin.reportCandidates", string.Join(", ", HintFallback.Candidates()));
 	}
 
 	private void ReleaseBootstrapIfNeeded()
 	{
-		if (base.Config.EnableBootstrapFirstLoader)
+		if (!base.Config.EnableBootstrapFirstLoader)
 		{
-			if (BootstrapInstaller.EnsureReleased(out string detail))
-			{
+			return;
+		}
+
+		BootstrapReleaseResult result = BootstrapInstaller.EnsureReleased(out string detail);
+		switch (result)
+		{
+			case BootstrapReleaseResult.Released:
 				Logger.Warn((object)("[HintChorus] " + detail));
-				Logger.Warn((object)"[HintChorus] ┌────────────────────────────────────────────────────┐");
-				Logger.Warn((object)"[HintChorus] │  引导器已释放, 请重启服务器以便它抢占最先加载位  │");
-				Logger.Warn((object)"[HintChorus] └────────────────────────────────────────────────────┘");
-			}
-			else
-			{
+				Logger.Warn((object)Lang.Get("plugin.bootstrapBanner1"));
+				Logger.Warn((object)Lang.Get("plugin.bootstrapBanner2"));
+				Logger.Warn((object)Lang.Get("plugin.bootstrapBanner3"));
+				break;
+			case BootstrapReleaseResult.Staged:
+				Logger.Warn((object)("[HintChorus] " + detail));
+				break;
+			case BootstrapReleaseResult.Failed:
+				Logger.Error((object)("[HintChorus] " + detail));
+				break;
+			default:
 				StartupLog.Info("[HintChorus] " + detail);
-			}
+				break;
 		}
 	}
 
@@ -384,8 +395,8 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		SssRegistry.Terminate();
 		UiSlotRegistry.Clear();
 		RuntimeHome.UninstallResolver();
-		UiLog.ReportEvent("Disable", "插件已停用: 拦截层卸载、回退状态清空");
-		StartupLog.Info("[HintChorus] Disable 完成: 拦截层已卸载, 信口已释放, SSS 数组已还原");
+		UiLog.ReportEvent("Disable", Lang.Get("plugin.disableReport"));
+		StartupLog.Info(Lang.Get("plugin.disableDone"));
 	}
 
 	private static IEnumerator<float> GuardianRoutine()
@@ -399,7 +410,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintChorus] SSS 守卫检查异常: " + ex));
+				Logger.Error((object)Lang.Format("plugin.sssGuardError", ex));
 			}
 		}
 	}
@@ -415,7 +426,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintChorus] 补丁护盾检查异常: " + ex));
+				Logger.Error((object)Lang.Format("plugin.shieldError", ex));
 			}
 		}
 	}
@@ -429,7 +440,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		}
 		catch (Exception ex)
 		{
-			Logger.Error((object)("[HintChorus] 配置向导启动异常: " + ex));
+			Logger.Error((object)Lang.Format("plugin.setupStartError", ex));
 		}
 	}
 
@@ -444,7 +455,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintChorus] 更新检查启动异常: " + ex));
+				Logger.Error((object)Lang.Format("plugin.updateStartError", ex));
 			}
 			// 每 6 小时检查一次; 有新版本且开启 RNR 时会安排回合结束重启
 			yield return Timing.WaitForSeconds(21600f);
@@ -464,7 +475,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			}
 			catch (Exception ex)
 			{
-				Logger.Error((object)("[HintChorus] 维护循环异常: " + ex));
+				Logger.Error((object)Lang.Format("plugin.maintenanceError", ex));
 				UiLog.Report("Maintenance", ex);
 			}
 			int num = sinceGuard + 1;
@@ -483,7 +494,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			}
 			catch (Exception ex2)
 			{
-				Logger.Error((object)("[HintChorus] 补丁自愈检查异常: " + ex2));
+				Logger.Error((object)Lang.Format("plugin.patchGuardError", ex2));
 			}
 		}
 	}

@@ -11,6 +11,10 @@ namespace HintChorus.Bootstrap;
 ///
 /// <para>dependencies 在进程启动时、所有插件之前由 LabAPI 预加载，
 /// 所以这里是"两阶段"：本次运行释放，下一次重启才真正享受到预加载。</para>
+///
+/// <para>dependencies 里的 DLL 可能被 LabAPI 占用；因此按<b>程序集版本</b>判断是否需要更新，
+/// 同版本重建产物不会反复尝试覆盖。确实需要更新但文件被占用时，写
+/// <c>HintChorus.Mapping.dll.new</c> 并提示停服后手动替换。</para>
 /// </summary>
 internal static class MappingInstaller
 {
@@ -22,15 +26,40 @@ internal static class MappingInstaller
 
     private const string MapFileName = "template-map.ini";
 
+    private enum WriteResult
+    {
+        Unchanged,
+        Written,
+        Staged,
+        Failed
+    }
+
     internal static string EnsureReleased()
     {
         try
         {
             string directory = Path.Combine(PathManager.Dependencies.FullName, "global");
             Directory.CreateDirectory(directory);
-            bool wroteDll = WriteIfChanged(DllResource, Path.Combine(directory, DllFileName));
-            bool wroteMap = WriteIfChanged(MapResource, Path.Combine(directory, MapFileName));
-            if (wroteDll || wroteMap)
+
+            WriteResult dllResult = WriteIfChanged(
+                DllResource,
+                Path.Combine(directory, DllFileName),
+                out string dllDetail);
+            WriteResult mapResult = WriteIfChanged(
+                MapResource,
+                Path.Combine(directory, MapFileName),
+                out string mapDetail);
+
+            if (dllResult == WriteResult.Failed || mapResult == WriteResult.Failed)
+            {
+                return "释放映射组件失败: " + dllDetail + " " + mapDetail;
+            }
+            if (dllResult == WriteResult.Staged || mapResult == WriteResult.Staged)
+            {
+                return "映射组件更新已暂存: " + dllDetail + " " + mapDetail
+                    + " (当前版本仍可用; 停服后手动替换 .new 文件)";
+            }
+            if (dllResult == WriteResult.Written || mapResult == WriteResult.Written)
             {
                 return "映射组件已释放到 dependencies\\global (下一次重启由 LabAPI 预加载)";
             }
@@ -42,29 +71,61 @@ internal static class MappingInstaller
         }
     }
 
-    private static bool WriteIfChanged(string resourceName, string targetPath)
+    private static WriteResult WriteIfChanged(string resourceName, string targetPath, out string detail)
     {
+        detail = string.Empty;
         byte[]? data = ReadResource(resourceName);
         if (data == null)
         {
-            return false;
+            return WriteResult.Unchanged;
         }
+
+        bool exists = File.Exists(targetPath);
+        if (exists)
+        {
+            if (SameContent(targetPath, data))
+            {
+                return WriteResult.Unchanged;
+            }
+
+            // 同版本重建产物: 不因为字节变化去覆盖可能正在使用的 DLL。
+            Version? installed = ReadVersion(targetPath);
+            Version? embedded = ReadVersion(data);
+            if (installed != null && embedded != null && installed >= embedded)
+            {
+                return WriteResult.Unchanged;
+            }
+        }
+
         try
         {
-            if (File.Exists(targetPath))
+            string? directory = Path.GetDirectoryName(targetPath);
+            if (!string.IsNullOrEmpty(directory))
             {
-                byte[] existing = File.ReadAllBytes(targetPath);
-                if (SameContent(existing, data))
-                {
-                    return false;
-                }
+                Directory.CreateDirectory(directory);
             }
             File.WriteAllBytes(targetPath, data);
-            return true;
+            return WriteResult.Written;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return false;
+            return TryStage(targetPath, data, ex.Message, out detail);
+        }
+    }
+
+    private static WriteResult TryStage(string targetPath, byte[] data, string reason, out string detail)
+    {
+        string stagedPath = targetPath + ".new";
+        try
+        {
+            File.WriteAllBytes(stagedPath, data);
+            detail = stagedPath + " (" + reason + ")";
+            return WriteResult.Staged;
+        }
+        catch (Exception ex)
+        {
+            detail = reason + " / " + ex.Message;
+            return WriteResult.Failed;
         }
     }
 
@@ -80,19 +141,66 @@ internal static class MappingInstaller
         return memory.ToArray();
     }
 
-    private static bool SameContent(byte[] left, byte[] right)
+    private static bool SameContent(string path, byte[] right)
     {
-        if (left.Length != right.Length)
+        try
         {
-            return false;
-        }
-        for (int i = 0; i < left.Length; i++)
-        {
-            if (left[i] != right[i])
+            byte[] left = File.ReadAllBytes(path);
+            if (left.Length != right.Length)
             {
                 return false;
             }
+            for (int i = 0; i < left.Length; i++)
+            {
+                if (left[i] != right[i])
+                {
+                    return false;
+                }
+            }
+            return true;
         }
-        return true;
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    private static Version? ReadVersion(string path)
+    {
+        try
+        {
+            return AssemblyName.GetAssemblyName(path).Version;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private static Version? ReadVersion(byte[] data)
+    {
+        string temp = Path.Combine(Path.GetTempPath(), "HintChorus.Mapping." + Guid.NewGuid().ToString("N") + ".dll");
+        try
+        {
+            File.WriteAllBytes(temp, data);
+            return ReadVersion(temp);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+        finally
+        {
+            try
+            {
+                if (File.Exists(temp))
+                {
+                    File.Delete(temp);
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
     }
 }

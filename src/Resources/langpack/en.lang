@@ -1,0 +1,232 @@
+# ══════════════════════════════════════════════════════════════════
+# HintChorus runtime language pack — English (canonical)
+#
+# This file is embedded into HintChorus.dll. To override any line,
+# copy it to:  configs/<port>/HintChorus/lang/en.lang
+# and edit the value; keys are matched case-insensitively.
+#
+# Format:  key = value
+# Escapes: \n  \r  \t  \\
+# Comments: lines starting with # ; or //
+# ══════════════════════════════════════════════════════════════════
+
+# ── first-run setup wizard ───────────────────────────────────────
+setup.banner = HintChorus first-run setup
+setup.detected = Detected: language={0} | timezone={1} | region={2}
+setup.detectedExtra = Time zone source: {0} | Clock check: {1}
+setup.srcNetwork = public IP + network time zone
+setup.srcLocal = local time zone
+setup.clockOk = local clock trusted
+setup.clockSkew = local clock off by {0}s
+setup.q1 = 1) Auto update: {0}    (Hc setup 1 on / off)
+setup.q2 = 2) Detailed UI log: {0}    (Hc setup 2 on / off)
+setup.q3 = 3) Write config now? {0}    (Hc setup 3 yes / no)
+setup.q4 = 4) Restart after round when updated (RNR): {0}    (Hc setup 4 on / off)
+setup.desc1 = Auto update: checks GitHub Releases; when enabled it downloads automatically, but only saves HintChorus.dll.new by default.
+setup.desc2 = Detailed UI log: records each plugin's text, screen position and per-player composite into logs/ui-*.log; noticeable IO cost.
+setup.desc3 = Write config: saves the current choices to config.yml so they persist across restarts.
+setup.desc4 = Restart after round (RNR): after the update is downloaded and the DLL is replaced, fully restart the server at the end of the current round to load it.
+setup.commands = Hc setup done to finish | Hc setup skip to skip
+setup.on = on
+setup.off = off
+setup.yes = yes
+setup.no = no
+setup.saved = Config saved: {0}
+setup.skipped = Skipped. Nothing was changed.
+setup.done = Setup complete.
+setup.restart = Detailed log and similar settings take full effect after restart.
+setup.notActive = The setup wizard is not running (already done or not started).
+setup.usage = Usage: Hc setup | Hc setup 1 on|off | Hc setup 2 on|off | Hc setup 3 yes|no | Hc setup 4 on|off | Hc setup done | Hc setup skip
+setup.failed = setup failed: {0}
+setup.notInitialized = config not initialized
+setup.writeConfigFailed = failed to write config: {0}
+setup.writeStateFailed = failed to write setup state: {0}
+
+# ── server console commands ──────────────────────────────────────
+cmd.description = HintChorus server console: Hint orvs detects mainstream plugins and falls back to native hints
+cmd.helpHeader = [HintChorus] console commands (case-insensitive):
+cmd.helpOrvs = Hint orvs — detect mainstream plugins and list numbers (option 1 = native when none)
+cmd.helpPick = Hint orvs <n> — switch that plugin to native and replay its last data
+cmd.helpMerge = Hint orvs <n> merge — restore that plugin to merged rendering
+cmd.helpNative = Hint orvs native — switch everything to native and replay pre-override data
+cmd.helpAll = Hint orvs all — switch all plugins to native and replay
+cmd.helpReset = Hint orvs reset — leave native mode and restore merged rendering
+cmd.helpYield = Hint orvs yield — hand the hint channel to external plugins (this run only)
+cmd.helpTake = Hint orvs take — reclaim the hint channel (default)
+cmd.helpSetup = Hc setup — first-run setup (auto update / detailed log / write config / RNR)
+cmd.helpUpdate = Hc update — check the latest GitHub release now
+cmd.helpLang = Hint lang [reload|path] — list language packs, reload external packs, or show the lang directory
+cmd.helpFooter = Note: multiple hint plugins can coexist; use orvs to roll back one plugin without affecting the others.
+cmd.consoleOnly = [HintChorus] This command is only allowed on the server terminal console.
+cmd.unknown = [HintChorus] Unknown subcommand: {0}\n{1}
+cmd.yield = [HintChorus] Hint channel handed over: external hint plugins may take control now.\nRun Hint orvs take to reclaim it.
+cmd.take = [HintChorus] Hint channel reclaimed: this layer is in control again and has re-sent the UI.
+cmd.native = [HintChorus] Switched everything to native hints and restored pre-override data for {0} players.\nRun Hint orvs reset to restore merged rendering.
+cmd.nativeNone = [HintChorus] No mainstream plugins detected; option 1 switched everything to native hints and restored pre-override data for {0} players.\nRun Hint orvs reset to restore merged rendering.
+cmd.all = [HintChorus] Switched {0} plugins to native pass-through ({1} detected) and restored pre-override data for {2} players.\nRun Hint orvs reset to restore all merged rendering.
+cmd.reset = [HintChorus] Left native mode; restored merged rendering for {0} plugins.
+cmd.invalidNumber = [HintChorus] The number must be numeric.\n{0}
+cmd.outOfRange = [HintChorus] Number out of range: {0} (valid range {1}-{2}).
+cmd.mergeOne = [HintChorus] Restored {0} to merged rendering.
+cmd.nativeOne = [HintChorus] Switched {0} to native pass-through and hot-applied the last data for {1} players.\nOther plugins are still managed by the merge layer; restore with: Hint orvs {2} merge
+cmd.alreadyNative = \n(this plugin was already on native pass-through)
+cmd.execFailed = [HintChorus] Command failed: {0}
+cmd.registered = [HintChorus] Console command ready: Hint orvs (case-insensitive)
+cmd.registerFailed = [HintChorus] Failed to register console command Hint (retrying every 5 seconds): {0}
+cmd.list.noMainstream = [HintChorus] No mainstream Hint plugins detected.
+cmd.list.nativeOption =   1) Fall back to native (restore pre-override data)
+cmd.list.others = Other detected plugins:
+cmd.list.stateNative =   [native]
+cmd.list.stateMerged =   [merged]
+cmd.list.noMainstreamHint = Enter Hint orvs 1 to fall back to native; enter Hint orvs <n> to switch a single plugin.
+cmd.list.resetHint = Restore merged rendering: Hint orvs reset
+cmd.list.header = [HintChorus] Detected {0} mainstream Hint plugins{1}:
+cmd.list.nativeModeSuffix =  (currently in global native mode)
+cmd.list.pickHint = Enter Hint orvs <n> to switch it to native pass-through and hot-apply its last data; add merge to restore.
+cmd.list.nativeAllHint = Fall back everything to native: Hint orvs native | Restore all: Hint orvs reset
+
+# ── update check ─────────────────────────────────────────────────
+update.started = Update check started; see the console log for the result.
+update.found = New version found: {0} (current {1})
+update.none = Already up to date: {0}
+update.failed = Update check failed: {0}
+update.downloaded = Downloaded the new version to {0}; replace the running DLL before restart.
+update.replaced = Replaced HintChorus.dll; the server will restart at the end of the round to load it.
+update.replaceFailed = Could not replace the running DLL (possibly locked); kept the .new file, replace it manually.
+update.rnrScheduled = Scheduled a full restart at the end of the current round to load the new version.
+update.noTag = Update check: the response has no tag_name
+update.scheduleFailed = Failed to schedule the round-end restart: {0}
+
+# ── bootstrap release ────────────────────────────────────────────
+bootstrap.missingResource = embedded resource HintChorus.Bootstrap.dll not found (was the bootstrap embedded at build time?)
+bootstrap.sameVersion = bootstrap already current: {0}
+bootstrap.released = released bootstrap → {0} (takes effect on next restart)
+bootstrap.failed = failed to release the bootstrap: {0}
+bootstrap.staged = bootstrap update staged at {0}; stop the server and replace {1} manually (the current bootstrap still works). Reason: {2}
+bootstrap.assetsUpdated = bootstrap assets updated (shim / payload / mapping); restart the server to apply
+bootstrap.assetsCurrent = bootstrap assets already current
+bootstrap.assetsStaged = bootstrap assets staged as .new ({0}); stop the server and replace the .new files before restart
+bootstrap.assetsFailed = failed to release bootstrap assets: {0}
+early.skipped = early install already completed; skipped this time
+early.noConfig = config.yml not generated yet; leaving installation to the main plugin
+early.disabled = interception is disabled in the config; no early install needed
+early.installed = [early load] UI interception installed before other plugins' Enable (order #{0}): hints + broadcast + console + CASSIE + admin chat + hit marker
+early.done = UI interception installed before other plugins (order #{0})
+early.failed = [HintChorus] Early install failed (the main plugin will still install normally): {0}
+early.exception = early install exception: {0}
+early.uiReady = [HintChorus] UI channels ready — hints / broadcast / console / CASSIE / admin chat / hit marker + settings page
+home.ready = self-host directory ready
+home.created = self-host directory created
+home.failed = failed to create the self-host directory
+home.status = [HintChorus] Self-host directory {0}: {1} (modules: {2}, assembly resolver attached)
+home.readyState = ready
+home.createdState = created
+home.readyModules = self-host directory ready ({0} modules)
+home.createdModules = self-host directory created ({0} modules)
+
+# ── plugin lifecycle / startup report ────────────────────────────
+plugin.description = Dynamic UI isolation layer: intercepts and attributes third-party UI calls, assigns independent slots by UiId, supports multiple UI surfaces
+plugin.enableDone = [HintChorus] Enable complete → external plugins can register channels, text sources and SSS ports via UiIsolation / IUiIsolation
+plugin.betaBanner = [HintChorus] 15.0.0: load-first 0.dll + patch arbiter (synchronous restore) + snapshot rollback + shield (0.25 s backstop) + embedded language packs; if something breaks, run Hint orvs
+plugin.enableFailed = [HintChorus] Enable failed: {0}
+plugin.disableDone = [HintChorus] Disable complete: interception uninstalled, slots released, SSS array restored
+plugin.disableReport = Plugin disabled: interception uninstalled, rollback state cleared
+plugin.sssGuardError = [HintChorus] SSS guardian check failed: {0}
+plugin.shieldError = [HintChorus] Patch shield check failed: {0}
+plugin.setupStartError = [HintChorus] Setup wizard failed to start: {0}
+plugin.updateStartError = [HintChorus] Update check failed to start: {0}
+plugin.maintenanceError = [HintChorus] Maintenance loop failed: {0}
+plugin.patchGuardError = [HintChorus] Patch self-heal check failed: {0}
+plugin.bootstrapBanner1 = [HintChorus] ┌────────────────────────────────────────────────────┐
+plugin.bootstrapBanner2 = [HintChorus] │  Bootstrap released; restart the server so it can load first  │
+plugin.bootstrapBanner3 = [HintChorus] └────────────────────────────────────────────────────┘
+plugin.reportVersion = version: {0} (beta)
+plugin.reportPort = port: {0}
+plugin.reportCore = merge core: {0} | third-party interception: {1} | patch arbiter: {2} | force takeover: {3} | layout: {4}
+plugin.reportTemplate = template: {0}
+plugin.reportLanguage = language packs: {0}
+plugin.reportLogs = logs: report={0} | detailed UI={1} | per-player={2}
+plugin.reportCandidates = detected Hint plugins: {0}
+
+# ── template bridge ──────────────────────────────────────────────
+template.disabled = disabled (no template configured)
+template.missing = mapping component not found (check dependencies\global\{0})
+template.missingHost = mapping component is missing entry type {0}
+template.configuredButMissing = Template {0} is configured, but {1}
+template.notFound = Template {0} does not exist; keeping the current layout. Available: {1}
+template.resolved = template: {0}
+template.info = Template {0} resolved: {1}
+template.initFailed = template initialization failed: {0}: {1}
+
+# ── patch arbiter ────────────────────────────────────────────────
+arbiter.installed = [HintChorus] Patch arbiter ready: all 5 Harmony uninstall entry points are controlled; after an external purge this layer is restored in the same call stack
+arbiter.hookFailed = [HintChorus] Arbiter hook failed: {0}.{1} target or postfix not found
+arbiter.restoreWarn = [HintChorus] Arbiter: {0} removed this layer's patches; restoring in the same call stack
+arbiter.restoreEvent = {0} → interception restored (restore #{1})
+arbiter.uninstallFailed = failed to uninstall the arbiter: {0}
+
+# ── patch guard ──────────────────────────────────────────────────
+guard.unresolved = [HintChorus] {0} patch targets can no longer be resolved (cannot self-heal; check the game version): {1}
+guard.gaveUp = [HintChorus] Self-heal failed {0} times in a row; automatic reinstall paused to avoid interrupting patches. Still missing: {1} (reload the plugin or restart the server to reset)
+guard.repairFailed = [HintChorus] Patch self-heal reinstall failed (still missing: {0}): {1}
+guard.detailTypeMissing = (type not found)
+guard.detailEnumFailed = (failed to enumerate methods)
+guard.detailMethodMissing = (method not found; the game update may have changed the signature)
+
+# ── patch shield ─────────────────────────────────────────────────
+shield.reinstalled = [HintChorus] Hint patch removed externally; the shield reinstalled it immediately and will re-send the UI next tick
+shield.reinstalledReport = Hint patch removed externally; reinstalled immediately and UI re-sent (reinstall #{0})
+shield.failed = [HintChorus] Shield reinstall failed: {0}
+
+# ── plugin-level fallback / takeover ─────────────────────────────
+fallback.toNative = switched to native pass-through: {0}
+fallback.toMerge = restored merged rendering: {0}
+fallback.resetAll = restored all plugins to merged rendering ({0} total)
+takeover.replayFailed = [HintChorus] Failed to replay pre-override data: {0}
+takeover.enterNative = entered native mode, restored pre-override data for {0} players
+takeover.enterNativeNoReplay = entered native mode without replaying snapshots
+takeover.leaveNative = left native mode; merged rendering and force takeover restored
+
+# ── merge broker ─────────────────────────────────────────────────
+broker.started = [HintChorus] Merge render core started (refresh {0}s)
+broker.stopped = [HintChorus] Merge render core stopped
+broker.layoutUnknown = [HintChorus] Unrecognized layout_mode; using default rows. Options: rows / offsets / compact; got: {0}
+broker.channelExists = [HintChorus] Channel '{0}' already exists; duplicate registration refused (never preempt)
+broker.channelRegistered = [HintChorus] Channel '{0}' registered independently
+broker.channelUnloaded = [HintChorus] Channel '{0}' unloaded
+broker.sourceExists = [HintChorus] Text source '{0}' already exists; duplicate registration refused (never preempt)
+broker.sourceRegistered = [HintChorus] Text source '{0}' registered independently
+broker.sourceUnloaded = [HintChorus] Text source '{0}' unloaded
+broker.unnamed = (unnamed)
+broker.playerRenderError = [HintChorus] Render failed for one player (isolated, others unaffected): {0}
+broker.refreshStepError = [HintChorus] Refresh step {0} failed (skipped this round): {1}
+broker.sourceError = [HintChorus] Text source '{0}' threw (isolated): {1}
+broker.filterError = [HintChorus] Receive filter of channel '{0}' threw (isolated): {1}
+broker.refreshError = [HintChorus] Hint refresh failed: {0}
+
+# ── SSS registry ─────────────────────────────────────────────────
+sss.started = [HintChorus] SSS port isolation core started (anti-hijack={0})
+sss.stopped = [HintChorus] SSS port isolation core stopped
+sss.idConflict = [HintChorus] Registration '{0}' has SettingId conflicts with other plugins; registration refused: {1}
+sss.moduleRegistered = [HintChorus] Registration '{0}' registered {1} SSS settings independently
+sss.moduleUnloaded = [HintChorus] SSS settings of registration '{0}' unloaded
+sss.overwriteDetected = [HintChorus] Detected a plugin that replaced ServerSpecificSettingsSync.DefinedSettings wholesale (this breaks other plugins' UI); merged back and restored all settings registered by this core
+sss.valueCallbackError = [HintChorus] SSS value callback of registration '{0}' threw (isolated, other modules unaffected): {1}
+sss.statusCallbackError = [HintChorus] SSS status callback of registration '{0}' threw (isolated): {1}
+
+# ── text metrics ─────────────────────────────────────────────────
+metrics.missing = [HintChorus] Embedded metrics table HintChorus.textwidth.bin not found; layout falls back to estimation
+metrics.magic = [HintChorus] Metrics table magic mismatch; layout falls back to estimation
+metrics.loadFailed = [HintChorus] Failed to load the metrics table; layout falls back to estimation: {0}
+metrics.loaded = [HintChorus] Text metrics loaded: {0} characters, {1}-width palette, {2:F1} KB (compressed)
+
+# ── language command ─────────────────────────────────────────────
+lang.usage = Usage: Hint lang | Hint lang reload | Hint lang path
+lang.header = [HintChorus] Language packs ({0} loaded):
+lang.entry =   {0} — {1} keys ({2})
+lang.sourceBuiltin = built-in
+lang.sourceExternal = external
+lang.sourceBoth = built-in + external
+lang.reloaded = [HintChorus] Language packs reloaded: {0} languages. {1}
+lang.unknown = [HintChorus] Unknown language action: {0}\n{1}
+lang.dir = [HintChorus] External language pack directory: {0}

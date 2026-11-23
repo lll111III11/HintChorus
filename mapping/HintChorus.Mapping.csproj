@@ -8,7 +8,9 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<AssemblyName>HintChorus.Mapping</AssemblyName>
 		<RootNamespace>HintChorus.Mapping</RootNamespace>
-		<Version>0.1.0</Version>
+		<Version>0.1.1</Version>
+		<!-- 改动映射组件代码时必须同时提升 Version, 否则引导器会按版本跳过更新。 -->
+		<Deterministic>true</Deterministic>
 		<PlatformTarget>x64</PlatformTarget>
 		<Nullable>annotations</Nullable>
 		<GenerateDocumentationFile>false</GenerateDocumentationFile>
