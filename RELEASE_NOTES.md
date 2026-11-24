@@ -1,3 +1,23 @@
+# HintChorus 15.0.2 — Detailed Config Wizard & Auto Compatibility Mode
+
+## 中文
+
+- **第 5 项：详细配置向导。** 首次运行向导在第 4 项之后新增“是否开启详细的所有配置文件设置”；选择“是”后，除前 4 项外的所有配置参数逐个询问，显示参数名、类型、当前值、默认值与说明。
+- 详细配置支持：`Hc setup default`（剩余全部设为默认）、`Hc setup skip`（跳过剩余）、`Hc setup save`（保存配置与进度，下次启动从该参数继续）。
+- 支持 bool / int / float / byte / ushort / string / 枚举 / `Dictionary<string,string>`；`PositionOverrides` 用 `Key=Value;Key2=Value2` 输入，留空或 `default` 清空。
+- **兼容模式三态 `CompatMode`**：`Auto`=检测到主流 Hint 插件时自动切原生直通（默认）；`Notify`=只提醒不切换；`Off`=关闭检测。兼容检测下若仍出现外部清场，控制台会提示 `Hint orvs` 查看编号、`Hint orvs <编号>` 单插件回退、`Hint orvs native` 整体退回。
+- **配置项变化自动重弹向导。** `setup.state` 记录 `ConfigSchema` 指纹；新增/删除/改名/改类型配置项时自动重新进入向导。
+
+## English
+
+- **Step 5: detailed config wizard.** After the first four items, the first-run wizard asks whether to walk through every remaining config parameter one by one, showing name, type, current value, default and description.
+- Detailed mode supports `Hc setup default` (all remaining to defaults), `Hc setup skip` (skip the rest), and `Hc setup save` (save config and progress; resumes at that parameter on the next start).
+- Supports bool / int / float / byte / ushort / string / enums / `Dictionary<string,string>`; `PositionOverrides` accepts `Key=Value;Key2=Value2`, empty or `default` clears it.
+- **Three-state `CompatMode`**: `Auto` switches detected mainstream hint plugins to native pass-through (default); `Notify` only warns; `Off` disables detection. If external patch clearing persists, the console advises `Hint orvs`, `Hint orvs <n>`, or `Hint orvs native`.
+- **Config changes reopen the wizard.** `setup.state` stores a `ConfigSchema` fingerprint, so adding, removing, renaming or retyping a config key reopens the wizard automatically.
+
+---
+
 # HintChorus 15.0.1 — Console-only HC & Step-by-Step Setup
 
 ## 中文

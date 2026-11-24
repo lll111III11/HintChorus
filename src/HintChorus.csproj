@@ -8,7 +8,7 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<AssemblyName>HintChorus</AssemblyName>
 		<RootNamespace>HintChorus</RootNamespace>
-		<Version>15.0.1-beta</Version>
+		<Version>15.0.2-beta</Version>
 		<Deterministic>true</Deterministic>
 		<PlatformTarget>x64</PlatformTarget>
 		<!-- 只允许可空注解, 不因历史代码触发成百条空引用告警 -->

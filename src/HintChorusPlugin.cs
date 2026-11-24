@@ -4,6 +4,7 @@ using System.ComponentModel;
 using HintChorus.Commands;
 using HintChorus.Core.Bootstrap;
 using HintChorus.Core.Broker;
+using HintChorus.Core.Compat;
 using HintChorus.Core.Diagnostics;
 using HintChorus.Core.Enums;
 using HintChorus.Core.Interception;
@@ -127,6 +128,9 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 
 		[Description("强接管(默认开): 其它插件的 Hint 补丁抢先吞掉提示口、导致本底层 UI 直接不显示时, 用最高优先级前缀 + Postfix 兜底强制把复合块重新盖回去; 关掉退回只观测/让路")]
 		public bool ForceTakeover { get; set; } = true;
+
+		[Description("第三方 Hint 插件兼容策略: Auto=检测到主流 Hint 插件时自动把它切到原生直通, 双方互不干扰(默认); Notify=只提醒, 不改变接管状态; Off=关闭检测")]
+		public CompatibilityPolicy CompatMode { get; set; } = CompatibilityPolicy.Auto;
 
 		[Description("提示条信口优先级(64/96/128/160/192, 越小越靠上)")]
 		public byte HintSlotPriority { get; set; } = 128;
@@ -298,6 +302,9 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			}
 			HintFallback.ResetAll();
 			HintTakeover.Clear();
+			// 第三方 Hint 插件兼容模式: 按配置 Auto / Notify / Off 执行。
+			CompatibilityMode.Reset();
+			CompatibilityMode.Policy = base.Config.CompatMode;
 			// 有网时用公网 IP + 网络时区校验; 无网回退本地时区/时间戳。
 			NetworkLocaleProbe.Enabled = !string.Equals(base.Config.NetworkLocale, "off", StringComparison.OrdinalIgnoreCase);
 			NetworkLocaleProbe.Start();
@@ -384,6 +391,8 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		Timing.KillCoroutines(new CoroutineHandle[1] { _setupLoop });
 		Timing.KillCoroutines(new CoroutineHandle[1] { _updateLoop });
 		PatchShield.Uninstall();
+		CompatibilityMode.Policy = CompatibilityPolicy.Off;
+		CompatibilityMode.Reset();
 		HintFallback.ResetAll();
 		HintTakeover.Clear();
 		SssForceRewrite.Uninstall();
@@ -469,6 +478,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			try
 			{
 				UiInterception.Tick();
+				CompatibilityMode.Tick();
 			}
 			catch (Exception ex)
 			{

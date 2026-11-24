@@ -39,7 +39,7 @@
 >
 > 完整发布稿见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
-> **15.0.1 修复 / hotfix（2026-11-25）**：`HC` 只注册服务器后台控制台，RA / 查询 / 客户端不再注册；首次运行向导改为逐项询问，回答“是/否”后才显示下一项。
+> **15.0.2 更新（2026-11-25）**：新增第 5 项详细配置向导（全部配置逐个询问，可默认/跳过/保存进度）、`CompatMode`（Auto / Notify / Off）第三方 Hint 插件兼容策略，以及配置项变化时自动重弹向导。
 
 **SCP:SL 动态 UI 隔离底层** —— 让**互不相识的插件**在同一个屏幕上和平共处，谁也不用改写法。
 (**SCP:SL dynamic UI isolation layer** — lets **plugins that know nothing about each other** share one screen peacefully, with zero code changes.)

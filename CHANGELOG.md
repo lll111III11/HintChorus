@@ -3,6 +3,15 @@
 本项目已从 **alpha** 进入 **beta**：可以进入正常的生产服务器，但仍需**谨慎使用**；
 一旦出现异常，请立即按本文末尾的「回退」步骤退回上一版本或关闭插件。
 
+## 15.0.2 (2026-11-25)
+
+- **第 5 项：详细配置向导。** 首次运行向导在第 4 项之后新增第 5 项：“是否开启详细的所有配置文件设置”。选择“是”后，除前 4 项已问过的配置外，所有配置参数按声明顺序逐个询问，显示参数名、类型、当前值、默认值与说明。
+- 详细配置中支持：`Hc setup default`（剩余项全部设为默认）、`Hc setup skip`（跳过剩余项）、`Hc setup save`（保存当前配置与进度，下次启动从该参数继续）。
+- 进度写入 `configs/<端口>/HintChorus/setup.state` 的 `ResumeMode=detailed` / `ResumeIndex=<n>`；完成或跳过时清除进度并记录 `CompletedVersion`。
+- 支持 bool / int / float / byte / ushort / string / 枚举 / `Dictionary<string,string>` 八类参数；`PositionOverrides` 使用 `Key=Value;Key2=Value2` 形式输入，留空或 `default` 表示清空。
+- **第三方 Hint 插件自动兼容模式**：新增配置 `CompatMode`：`Auto`=检测到主流 Hint 插件时自动切原生直通（默认）；`Notify`=只提醒、不切换；`Off`=关闭检测。兼容检测下若仍出现外部清场（60 秒内护盾重装 ≥3 次），向控制台报告并提示 `Hint orvs` 查看编号、`Hint orvs <编号>` 单插件回退、`Hint orvs native` 整体退回。
+- **配置项变化自动重弹向导**：`setup.state` 记录配置结构指纹 `ConfigSchema`（属性名 + 类型）；新增/删除/改名/改类型配置项时，即使版本号不变也会重新进入向导，方便为新配置项做选择。
+
 ## 15.0.1 (2026-11-25)
 
 ### 修复 / Fixes
