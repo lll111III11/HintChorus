@@ -152,6 +152,7 @@ plugin.bootstrapBanner2 = [HintChorus] │  Bootstrap libéré ; redémarrez pou
 plugin.bootstrapBanner3 = [HintChorus] └────────────────────────────────────────────────────┘
 plugin.reportVersion = version : {0} (beta)
 plugin.reportPort = port : {0}
+plugin.reportGame = jeu : SCP:SL {0}
 plugin.reportCore = fusion : {0} | interception tierce : {1} | arbitrage : {2} | prise forcée : {3} | mise en page : {4}
 plugin.reportTemplate = modèle : {0}
 plugin.reportLanguage = packs de langue : {0}

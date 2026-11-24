@@ -152,6 +152,7 @@ plugin.bootstrapBanner2 = [HintChorus] │  引导器已释放, 请重启服务�
 plugin.bootstrapBanner3 = [HintChorus] └────────────────────────────────────────────────────┘
 plugin.reportVersion = 版本: {0} (beta)
 plugin.reportPort = 端口: {0}
+plugin.reportGame = 游戏: SCP:SL {0}
 plugin.reportCore = 合并核心: {0} | 第三方拦截: {1} | 补丁仲裁: {2} | 强接管: {3} | 排版: {4}
 plugin.reportTemplate = 模板: {0}
 plugin.reportLanguage = 语言包: {0}

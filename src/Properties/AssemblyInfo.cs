@@ -5,8 +5,9 @@ using System.Runtime.Versioning;
 
 [assembly: AssemblyCompany("HintChorus")]
 [assembly: AssemblyConfiguration("Release")]
-[assembly: AssemblyFileVersion("15.0.2.0")]
-[assembly: AssemblyInformationalVersion("15.0.2-beta")]
+// 版本与游戏对齐: <游戏 Major>.<游戏 Minor>.<游戏 Revision>.<插件构建号>
+[assembly: AssemblyFileVersion("14.2.9.0")]
+[assembly: AssemblyInformationalVersion("14.2.9.0 (SCP:SL 14.2.9)")]
 [assembly: AssemblyProduct("HintChorus")]
 [assembly: AssemblyTitle("HintChorus")]
-[assembly: AssemblyVersion("15.0.2.0")]
+[assembly: AssemblyVersion("14.2.9.0")]

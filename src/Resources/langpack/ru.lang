@@ -152,6 +152,7 @@ plugin.bootstrapBanner2 = [HintChorus] │  Bootstrap выпущен; перез
 plugin.bootstrapBanner3 = [HintChorus] └────────────────────────────────────────────────────┘
 plugin.reportVersion = версия: {0} (beta)
 plugin.reportPort = порт: {0}
+plugin.reportGame = игра: SCP:SL {0}
 plugin.reportCore = объединение: {0} | перехват сторонних: {1} | арбитраж: {2} | принудительный захват: {3} | вёрстка: {4}
 plugin.reportTemplate = шаблон: {0}
 plugin.reportLanguage = языковые пакеты: {0}

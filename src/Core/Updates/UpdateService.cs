@@ -177,6 +177,7 @@ internal static class UpdateService
 
     private static string CurrentVersion()
     {
-        return typeof(UpdateService).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        // 四位版本都要参与比较: 前三段是游戏版本, 第四段才区分同版本下的插件构建。
+        return typeof(UpdateService).Assembly.GetName().Version?.ToString() ?? "0.0.0.0";
     }
 }

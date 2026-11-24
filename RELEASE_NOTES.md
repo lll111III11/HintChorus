@@ -1,3 +1,21 @@
+# HintChorus 14.2.9.0 — Version Aligned with SCP:SL
+
+## 中文
+
+- **版本号与游戏对齐。** 此后版本为 `<游戏 Major>.<游戏 Minor>.<游戏 Revision>.<插件构建号>`；当前游戏 SCP:SL 14.2.9，本期发布即 `14.2.9.0`。游戏更新后前三段跟随新版本、第四段从 0 重新计数。
+- 旧的 `15.0.x` 版本号仅作历史保留，不再沿用。
+- **更新检查按四位版本比较**：同游戏版本下第 4 位构建号不再被截断，避免误判“已是最新”。
+- **启动报告新增游戏版本行**：`游戏: SCP:SL 14.2.9`，与插件版本并列显示。
+
+## English
+
+- **Version now follows the game.** Releases use `<game major>.<game minor>.<game revision>.<plugin build>`; the current game is SCP:SL 14.2.9, so this release is `14.2.9.0`. When the game updates, the first three parts follow it and the build counter restarts at 0.
+- Older `15.0.x` numbers remain for history only.
+- **Update check compares all four parts**, so a higher plugin build within the same game version is no longer reported as "already latest".
+- **Startup report adds a game version line**: `game: SCP:SL 14.2.9` next to the plugin version.
+
+---
+
 # HintChorus 15.0.2 — Detailed Config Wizard & Auto Compatibility Mode
 
 ## 中文

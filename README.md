@@ -39,6 +39,9 @@
 >
 > 完整发布稿见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
+> **14.2.9.0（2026-11-25）版本号规则变更**：HintChorus 后续版本号与游戏版本对齐，格式为 `<游戏 Major>.<游戏 Minor>.<游戏 Revision>.<插件构建号>`。当前游戏为 SCP:SL 14.2.9，因此本期发布为 `14.2.9.0`；游戏更新后前三段跟随新游戏版本，第四段从 0 重新计数。此前的 `15.0.x` 为旧的独立版本号，仅作历史保留。
+> **Versioning change:** HintChorus now follows the game version: `<game major>.<game minor>.<game revision>.<plugin build>`. Current game is SCP:SL 14.2.9, so this release is `14.2.9.0`; when the game updates, the first three parts follow it and the build counter restarts at 0. Older `15.0.x` releases keep their original numbers for history.
+
 > **15.0.2 更新（2026-11-25）**：新增第 5 项详细配置向导（全部配置逐个询问，可默认/跳过/保存进度）、`CompatMode`（Auto / Notify / Off）第三方 Hint 插件兼容策略，以及配置项变化时自动重弹向导。
 
 **SCP:SL 动态 UI 隔离底层** —— 让**互不相识的插件**在同一个屏幕上和平共处，谁也不用改写法。

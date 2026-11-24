@@ -337,6 +337,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 	private string BuildStartupReport()
 	{
 		return Lang.Format("plugin.reportVersion", GetType().Assembly.GetName().Version)
+			+ "\n" + Lang.Format("plugin.reportGame", GameCore.Version.VersionString)
 			+ "\n" + Lang.Format("plugin.reportPort", LabApi.Features.Wrappers.Server.Port)
 			+ "\n" + Lang.Format(
 				"plugin.reportCore",
