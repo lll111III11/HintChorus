@@ -39,6 +39,8 @@
 >
 > 完整发布稿见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
+> **15.0.1 修复 / hotfix（2026-11-25）**：`HC` 只注册服务器后台控制台，RA / 查询 / 客户端不再注册；首次运行向导改为逐项询问，回答“是/否”后才显示下一项。
+
 **SCP:SL 动态 UI 隔离底层** —— 让**互不相识的插件**在同一个屏幕上和平共处，谁也不用改写法。
 (**SCP:SL dynamic UI isolation layer** — lets **plugins that know nothing about each other** share one screen peacefully, with zero code changes.)
 
@@ -57,7 +59,7 @@
 
 - **简洁**：HintChorus 把游戏的单条提示通道拆成按调用方隔离的信口，插件无需改代码；内置补丁仲裁、`0.dll` 抢加载与 `Hint orvs` 回退。
 - **详细**：HintChorus 是 SCP:SL 服务器端的动态 UI 隔离底层。它拦截 Hint、广播、控制台、CASSIE、管理端聊天与命中标记六条通道，按调用方自动归因并分配独立信口；补丁仲裁层会在外部清场后同步恢复本底层补丁；`0.dll` 以最短文件名抢在其它插件之前加载；另含首次运行配置向导、安全更新检查与 15.0 模板层骨架。
-- **首次运行**：服务器终端会进入配置向导，按本地语言询问自动更新、详细日志与是否写入配置。命令：`Hc setup`、`Hc setup 1 on|off`、`Hc setup 2 on|off`、`Hc setup 3 yes|no`、`Hc setup done`、`Hc setup skip`。
+- **首次运行**：服务器终端会进入配置向导，逐项询问自动更新、详细日志、RNR 与是否写入配置；回答“是/否”后才显示下一项。命令：`Hc setup`（查看当前项）、`Hc setup 是|否`（回答当前项）、`Hc setup <1-4> on|off`（指定某一项）、`Hc setup done`、`Hc setup skip`。
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
 ![Platform](https://img.shields.io/badge/SCP%3ASL-LabAPI-blue)
@@ -128,7 +130,7 @@
 
 - 本次版本首次启动时，等所有启动文本输出完（约 6 秒），服务器终端会进入配置向导；每个版本只引导一次。
 - 向导按本地语言询问：是否开启自动更新、是否开启详细 UI 日志、是否现在写入配置、是否在更新后回合结束重启（RNR）。每选择一项，都会用当地语言显示该项的说明。
-- 命令：`Hc setup`、`Hc setup 1 on|off`、`Hc setup 2 on|off`、`Hc setup 3 yes|no`、`Hc setup 4 on|off`、`Hc setup done`、`Hc setup skip`；只接受服务器终端控制台。
+- 命令：`Hc setup`、`Hc setup 是|否`、`Hc setup <1-4> on|off`、`Hc setup done`、`Hc setup skip`；只接受服务器终端控制台，不注册到 RA 或其他位置。
 - 语言 / 时区 / 地区自动探测：有网时用公网 IP + 网络时区，并用 HTTP 时间校验本地时钟；无网时用本地时区/时间戳；地区探测失败回退英文。配置里可手动指定 `language`，或设 `network_locale: off` 关闭网络探测。
 - 安全更新：`Hc update` 立即检查 GitHub 最新版本；开启 `auto_update` 时默认只下载到 `HintChorus.dll.new`，**不覆盖正在运行的 DLL**。
 - RNR：开启 `rnr_after_update` 后，下载完成会尝试替换 `HintChorus.dll`，然后设置“本回合结束后重启”，由游戏在回合结束时彻底重启并加载新版本。

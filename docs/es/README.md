@@ -1,4 +1,4 @@
-﻿<!-- language tabs -->
+<!-- language tabs -->
 **Idioma / 语言 / Language :** [中文（主）](../../README.md) ｜ [English](../en/README.md) ｜ [Français](../fr/README.md) ｜ [Русский](../ru/README.md) ｜ **Español** ｜ [多语言 / Multilingual](../languages.md)
 
 ---
@@ -33,7 +33,7 @@
 
 - **Breve**: HintChorus convierte el único canal de hints en ranuras aisladas por llamador sin cambiar los plugins; incluye arbitraje de parches, carga prioritaria de `0.dll` y reversión `Hint orvs`.
 - **Detallado**: HintChorus es una capa de aislamiento de UI del lado del servidor para SCP:SL. Intercepta hints, broadcasts, consola, CASSIE, chat de administración y marcadores de impacto, atribuye cada llamada a su emisor y le asigna una ranura independiente. El árbitro restaura la capa en la misma pila tras un vaciado externo; `0.dll` se carga antes que los demás plugins; incluye asistente de primera configuración y comprobación segura de actualizaciones.
-- **Primer inicio**: el asistente en la consola del servidor pregunta por actualización automática, registro detallado y escritura de la configuración. Comandos: `Hc setup`, `Hc setup 1 on|off`, `Hc setup 2 on|off`, `Hc setup 3 yes|no`, `Hc setup 4 on|off`, `Hc setup done`, `Hc setup skip`.
+- **Primer inicio**: el asistente en la consola del servidor pregunta un elemento a la vez (actualización automática, registro detallado, RNR y escritura de la configuración) y muestra la siguiente pregunta solo tras responder sí/no. Comandos: `Hc setup`, `Hc setup sí|no`, `Hc setup <1-4> on|off`, `Hc setup done`, `Hc setup skip`. Solo consola del servidor; no se registra en RA ni en otros lugares.
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
 

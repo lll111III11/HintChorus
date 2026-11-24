@@ -3,6 +3,16 @@
 本项目已从 **alpha** 进入 **beta**：可以进入正常的生产服务器，但仍需**谨慎使用**；
 一旦出现异常，请立即按本文末尾的「回退」步骤退回上一版本或关闭插件。
 
+## 15.0.1 (2026-11-25)
+
+### 修复 / Fixes
+
+- **`HC` 只注册服务器后台控制台。** 改用 LabAPI `[CommandHandler(typeof(GameConsoleCommandHandler))]` 自动注册，移除手工注册与 5 秒重试；RA 面板、查询接口与玩家客户端不再出现该命令。
+- **服务器终端判定放宽。** 除 `GameCore.ConsoleCommandSender` 与 `SENDER ID = GAME CONSOLE` 外，`FullPermissions` 也放行，避免真实后台终端被误判成“只允许服务器终端”。
+- **首次运行向导改为逐项询问。** 一次只显示当前一项，回答“是/否”后才显示下一项；顺序为：自动更新 → 详细 UI 日志 → 更新后回合结束重启(RNR) → 是否写入配置。
+- 新增 `Hc setup 是|否` 与 `Hc 是|否` 快捷回答；`Hc setup <1-4> on|off` 仍可指定单项。
+- 五个语言包同步更新（en/zh/fr/ru/es，195 key/语言），README 与 docs 的向导说明同步。
+
 ## 15.0.0 (2026-11-23)
 
 ### Release headline / 发布标题

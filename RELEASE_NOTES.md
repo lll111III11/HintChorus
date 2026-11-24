@@ -1,3 +1,23 @@
+# HintChorus 15.0.1 — Console-only HC & Step-by-Step Setup
+
+## 中文
+
+- `HC` 只注册到服务器后台控制台；RA 面板、查询接口与玩家客户端不再注册，也不会再出现“只允许服务器终端”的误导提示。
+- 服务器终端判定放宽：`GameCore.ConsoleCommandSender`、`GAME CONSOLE` 或 `FullPermissions` 均放行。
+- 首次运行向导改为逐项询问：一次只显示当前一项，回答“是/否”后才显示下一项；顺序为自动更新 → 详细 UI 日志 → RNR → 是否写入配置。
+- 支持 `Hc setup 是|否`、`Hc 是|否`，以及 `Hc setup <1-4> on|off` 指定单项。
+- 语言包与文档同步（5 语 × 195 key）。
+
+## English
+
+- `HC` is now registered only on the server console. The Remote Admin panel, query interface and player client consoles no longer expose it, so the misleading "server console only" reply is gone.
+- Server console detection also accepts `FullPermissions`, so a real terminal is never rejected by mistake.
+- The first-run wizard asks one item at a time and shows the next only after a yes/no answer. Order: auto update → detailed UI log → RNR → write config.
+- `Hc setup yes|no`, `Hc yes|no`, and `Hc setup <1-4> on|off` are supported.
+- Language packs and docs updated (5 languages × 195 keys).
+
+---
+
 # HintChorus 15.0.0 — UI Middle Layer & Real Language Packs
 
 > 发布标题 / Release title:

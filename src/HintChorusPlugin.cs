@@ -298,7 +298,6 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			}
 			HintFallback.ResetAll();
 			HintTakeover.Clear();
-			HintCommand.EnsureRegistered();
 			// 有网时用公网 IP + 网络时区校验; 无网回退本地时区/时间戳。
 			NetworkLocaleProbe.Enabled = !string.Equals(base.Config.NetworkLocale, "off", StringComparison.OrdinalIgnoreCase);
 			NetworkLocaleProbe.Start();
@@ -385,7 +384,6 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		Timing.KillCoroutines(new CoroutineHandle[1] { _setupLoop });
 		Timing.KillCoroutines(new CoroutineHandle[1] { _updateLoop });
 		PatchShield.Uninstall();
-		HintCommand.Unregister();
 		HintFallback.ResetAll();
 		HintTakeover.Clear();
 		SssForceRewrite.Uninstall();
@@ -471,7 +469,6 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			try
 			{
 				UiInterception.Tick();
-				HintCommand.EnsureRegistered();
 			}
 			catch (Exception ex)
 			{

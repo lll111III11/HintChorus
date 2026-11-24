@@ -10,8 +10,6 @@ using HintChorus.Core.Interception;
 using HintChorus.Core.Localization;
 using HintChorus.Core.Setup;
 using HintChorus.Core.Updates;
-using LabApi.Features.Console;
-using Logger = LabApi.Features.Console.Logger;
 
 namespace HintChorus.Commands;
 
@@ -28,15 +26,13 @@ namespace HintChorus.Commands;
 ///
 /// <para>15.0.0 起新增 <c>Hint lang</c>: 查看内嵌/外部语言包、热重载外置语言文件。</para>
 /// </summary>
+[CommandHandler(typeof(GameConsoleCommandHandler))]
 internal sealed class HintCommand : ICommand, IUsageProvider
 {
-    internal static readonly HintCommand Instance = new HintCommand();
-
-    private static bool _registered;
-
-    private static DateTime _nextAttemptUtc = DateTime.MinValue;
-
-    private static int _failedAttempts;
+    /// <summary>LabAPI 通过 Activator 创建命令实例, 这里显式给一个公开无参构造。</summary>
+    public HintCommand()
+    {
+    }
 
     public string Command => "hint";
 
@@ -63,9 +59,9 @@ internal sealed class HintCommand : ICommand, IUsageProvider
     {
         try
         {
-            if (!IsServerConsole(sender))
+            if (!CanExecute(sender, out string denial))
             {
-                response = Lang.Get("cmd.consoleOnly");
+                response = denial;
                 return false;
             }
 
@@ -76,6 +72,16 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             }
 
             string sub = Arg(arguments, 0);
+
+            // 向导进行中允许直接回答当前项: Hc 是 / Hc 否 / Hc on / Hc off
+            if (SetupWizard.IsActive)
+            {
+                bool? answer = SetupWizard.ParseAnswer(sub);
+                if (answer != null)
+                {
+                    return SetupWizard.Handle(arguments, out response);
+                }
+            }
 
             if (sub.Equals("setup", StringComparison.OrdinalIgnoreCase))
             {
@@ -349,11 +355,26 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             .ToList();
     }
 
+    private string[] UsageLines => new[]
+    {
+        Lang.Get("cmd.helpOrvs"),
+        Lang.Get("cmd.helpPick"),
+        Lang.Get("cmd.helpMerge"),
+        Lang.Get("cmd.helpNative"),
+        Lang.Get("cmd.helpAll"),
+        Lang.Get("cmd.helpReset"),
+        Lang.Get("cmd.helpYield"),
+        Lang.Get("cmd.helpTake"),
+        Lang.Get("cmd.helpSetup"),
+        Lang.Get("cmd.helpUpdate"),
+        Lang.Get("cmd.helpLang")
+    };
+
     private static string BuildHelp()
     {
         StringBuilder builder = new StringBuilder();
         builder.AppendLine(Lang.Get("cmd.helpHeader"));
-        foreach (string line in Instance.Usage)
+        foreach (string line in new HintCommand().UsageLines)
         {
             builder.Append("  ").AppendLine(line);
         }
@@ -392,11 +413,11 @@ internal sealed class HintCommand : ICommand, IUsageProvider
     }
 
     /// <summary>
-    /// 只允许服务器终端控制台。RA 面板的 <c>RemoteAdmin.PlayerCommandSender</c>、
-    /// 查询接口的 <c>Query.QueryCommandSender</c> 以及玩家客户端控制台一律拒绝。
+    /// 只允许服务器后台终端控制台。RA 面板、查询接口与玩家客户端一律拒绝。
     /// </summary>
-    private static bool IsServerConsole(ICommandSender? sender)
+    private static bool CanExecute(ICommandSender? sender, out string denial)
     {
+        denial = Lang.Get("cmd.consoleOnly");
         if (sender == null)
         {
             return false;
@@ -409,67 +430,12 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             }
             CommandSender? commandSender = sender as CommandSender;
             return commandSender != null
-                && string.Equals(commandSender.SenderId, "GAME CONSOLE", StringComparison.Ordinal);
+                && (commandSender.FullPermissions
+                    || string.Equals(commandSender.SenderId, "GAME CONSOLE", StringComparison.Ordinal));
         }
         catch (Exception)
         {
             return false;
-        }
-    }
-
-    /// <summary>把命令注册到服务器控制台(幂等; 控制台尚未就绪时由维护循环重试)。</summary>
-    internal static void EnsureRegistered()
-    {
-        if (_registered)
-        {
-            return;
-        }
-
-        // 控制台可能在 LabAPI 插件加载阶段尚未就绪: 5 秒重试一次, 且只在前 3 次失败时打印告警, 避免刷屏。
-        DateTime now = DateTime.UtcNow;
-        if (now < _nextAttemptUtc)
-        {
-            return;
-        }
-        _nextAttemptUtc = now.AddSeconds(5);
-
-        try
-        {
-            GameCore.Console.ConsoleCommandHandler.RegisterCommand(Instance);
-            _registered = true;
-            _failedAttempts = 0;
-            UiLog.Detail("COMMAND", "registered console command Hint / hc");
-            StartupLog.Info(Lang.Get("cmd.registered"));
-        }
-        catch (Exception ex)
-        {
-            _failedAttempts++;
-            if (_failedAttempts <= 3)
-            {
-                Logger.Warn(Lang.Format("cmd.registerFailed", ex.Message));
-            }
-            UiLog.Report("CommandRegister", ex);
-        }
-    }
-
-    /// <summary>从服务器控制台注销命令。</summary>
-    internal static void Unregister()
-    {
-        if (!_registered)
-        {
-            return;
-        }
-        try
-        {
-            GameCore.Console.ConsoleCommandHandler.UnregisterCommand(Instance);
-        }
-        catch (Exception ex)
-        {
-            UiLog.Report("CommandUnregister", ex);
-        }
-        finally
-        {
-            _registered = false;
         }
     }
 }

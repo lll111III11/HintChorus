@@ -1,4 +1,4 @@
-﻿<!-- language tabs -->
+<!-- language tabs -->
 ## Language / 语言
 
 | Language | Entry |
@@ -41,7 +41,7 @@
 
 - **Concise**: HintChorus splits the game's single hint channel into per-caller isolated slots with zero plugin changes; it includes patch arbitration, a load-first `0.dll`, and `Hint orvs` rollback.
 - **Detailed**: HintChorus is a server-side dynamic UI isolation layer for SCP:SL. It intercepts hints, broadcasts, console, CASSIE, admin chat and hit markers, attributes each call to its caller and gives it an independent slot. The patch arbiter restores this layer synchronously after external clears; `0.dll` loads before other plugins; a first-run setup wizard and safe update check are included.
-- **First run**: the server console wizard asks about auto update, detailed logs and writing the config. Commands: `Hc setup`, `Hc setup 1 on|off`, `Hc setup 2 on|off`, `Hc setup 3 yes|no`, `Hc setup 4 on|off`, `Hc setup done`, `Hc setup skip`.
+- **First run**: the server console wizard asks one item at a time (auto update, detailed logs, RNR, writing the config) and shows the next question only after you answer yes/no. Commands: `Hc setup`, `Hc setup yes|no`, `Hc setup <1-4> on|off`, `Hc setup done`, `Hc setup skip`. Server console only; not registered to RA or anywhere else.
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0--1.0-lightgrey.svg)](https://creativecommons.org/publicdomain/zero/1.0/)
 ![Platform](https://img.shields.io/badge/SCP%3ASL-LabAPI-blue)
