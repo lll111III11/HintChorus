@@ -33,7 +33,7 @@ namespace HintChorus.Core.Setup;
 /// </summary>
 internal static class SetupWizard
 {
-    private const int TotalSteps = 5;
+    private const int TotalSteps = 6;
 
     private enum Mode
     {
@@ -46,7 +46,8 @@ internal static class SetupWizard
     {
         nameof(HintChorus.HintChorusPlugin.PluginConfig.AutoUpdate),
         nameof(HintChorus.HintChorusPlugin.PluginConfig.EnableDetailedUiLog),
-        nameof(HintChorus.HintChorusPlugin.PluginConfig.RnrAfterUpdate)
+        nameof(HintChorus.HintChorusPlugin.PluginConfig.RnrAfterUpdate),
+        nameof(HintChorus.HintChorusPlugin.PluginConfig.PreOpTakeover)
     };
 
     private static readonly HintChorus.HintChorusPlugin.PluginConfig DefaultConfig =
@@ -244,8 +245,12 @@ internal static class SetupWizard
                 _config.RnrAfterUpdate = value;
                 break;
             case 4:
-                // 第 4 项只记录“结束时是否写配置”, 第 5 项问完后才真正结束。
+                // 第 4 项只记录“结束时是否写配置”, 最后一项问完后才真正结束。
                 _writeConfigOnFinish = value;
+                break;
+            case 5:
+                // 保留 HC: 预更新实操作(全网络包管理 + 瞬间内存替换)。
+                _config.PreOpTakeover = value;
                 break;
             default:
                 if (value)
@@ -432,6 +437,10 @@ internal static class SetupWizard
                 question = Lang.FormatFor("setup.q5", language, state);
                 description = Lang.For("setup.desc5", language);
                 break;
+            case 6:
+                question = Lang.FormatFor("setup.q6", language, state);
+                description = Lang.For("setup.desc6", language);
+                break;
             default:
                 question = Lang.FormatFor("setup.q1", language, state);
                 description = Lang.For("setup.desc1", language);
@@ -484,6 +493,8 @@ internal static class SetupWizard
                 return _config.EnableDetailedUiLog;
             case 3:
                 return _config.RnrAfterUpdate;
+            case 5:
+                return _config.PreOpTakeover;
             default:
                 return false;
         }

@@ -9,6 +9,7 @@ using HintChorus.Core.Diagnostics;
 using HintChorus.Core.Interception;
 using HintChorus.Core.Localization;
 using HintChorus.Core.Setup;
+using HintChorus.Core.Transport;
 using HintChorus.Core.Updates;
 
 namespace HintChorus.Commands;
@@ -96,6 +97,11 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             if (sub.Equals("lang", StringComparison.OrdinalIgnoreCase))
             {
                 return HandleLang(Slice(arguments, 1), out response);
+            }
+
+            if (sub.Equals("preop", StringComparison.OrdinalIgnoreCase))
+            {
+                return HandlePreOp(Slice(arguments, 1), out response);
             }
 
             if (!sub.Equals("orvs", StringComparison.OrdinalIgnoreCase))
@@ -343,6 +349,41 @@ internal sealed class HintCommand : ICommand, IUsageProvider
         return false;
     }
 
+    /// <summary><c>Hint preop [on|off|status]</c> —— 预更新实操作: 摘外部补丁 + 全网络包管理 + 瞬间内存替换。</summary>
+    private static bool HandlePreOp(ArraySegment<string> arguments, out string response)
+    {
+        string action = arguments.Count > 0 ? Arg(arguments, 0).ToLowerInvariant() : "on";
+
+        if (action == "status" || action == "state")
+        {
+            response = PacketGovernor.Status();
+            return true;
+        }
+
+        if (action == "off" || action == "stop" || action == "0")
+        {
+            response = PacketGovernor.Disengage()
+                ? Lang.Get("preop.disengaged")
+                : Lang.Get("preop.statusOff");
+            return true;
+        }
+
+        if (action != "on" && action != "start" && action != "1")
+        {
+            response = Lang.Get("preop.usage");
+            return false;
+        }
+
+        if (!PacketGovernor.Engage(out int groups, out int players))
+        {
+            response = Lang.Get("preop.failedShort");
+            return false;
+        }
+
+        response = Lang.Format("preop.engaged", groups, players);
+        return true;
+    }
+
     private static void BuildEntries(out List<MainstreamPlugin> mainstream, out List<string> others)
     {
         mainstream = MainstreamHintPlugins.Detect().ToList();
@@ -367,7 +408,8 @@ internal sealed class HintCommand : ICommand, IUsageProvider
         Lang.Get("cmd.helpTake"),
         Lang.Get("cmd.helpSetup"),
         Lang.Get("cmd.helpUpdate"),
-        Lang.Get("cmd.helpLang")
+        Lang.Get("cmd.helpLang"),
+        Lang.Get("cmd.helpPreOp")
     };
 
     private static string BuildHelp()

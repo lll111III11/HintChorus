@@ -39,6 +39,8 @@
 >
 > 完整发布稿见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
+> **14.2.9.1（2026-11-25）预更新实操作**：`Hint preop` 一键摘掉其它 Hint 框架的补丁 + 全网络包管理（外部 UI 包在内存中判无效）+ 按快照瞬间重发本底层 UI；配置项 `PreOpTakeover` 可开机自动执行。向导第 5 项即为该选择。
+
 > **14.2.9.0（2026-11-25）版本号规则变更**：HintChorus 后续版本号与游戏版本对齐，格式为 `<游戏 Major>.<游戏 Minor>.<游戏 Revision>.<插件构建号>`。当前游戏为 SCP:SL 14.2.9，因此本期发布为 `14.2.9.0`；游戏更新后前三段跟随新游戏版本，第四段从 0 重新计数。此前的 `15.0.x` 为旧的独立版本号，仅作历史保留。
 > **Versioning change:** HintChorus now follows the game version: `<game major>.<game minor>.<game revision>.<plugin build>`. Current game is SCP:SL 14.2.9, so this release is `14.2.9.0`; when the game updates, the first three parts follow it and the build counter restarts at 0. Older `15.0.x` releases keep their original numbers for history.
 

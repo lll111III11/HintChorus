@@ -58,6 +58,11 @@ public static class NetworkSentinel
 	internal static bool OnHintMessage(NetworkConnection? conn, HintMessage message)
 	{
 		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
+		if (PacketGovernor.Active)
+		{
+			// 全网络包管理: 外部插件直发的提示包直接判无效。
+			return PacketGovernor.AllowHint(conn, message.Content);
+		}
 		if (!Enabled)
 		{
 			return true;
@@ -113,6 +118,10 @@ public static class NetworkSentinel
 
 	internal static bool OnCassiePayload(NetworkConnection? conn, CassieTtsPayload payload)
 	{
+		if (PacketGovernor.Active)
+		{
+			return PacketGovernor.AllowCassie();
+		}
 		if (!Enabled)
 		{
 			return true;
@@ -136,6 +145,10 @@ public static class NetworkSentinel
 	{
 		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		if (PacketGovernor.Active && !PacketGovernor.AllowBroadcast(message))
+		{
+			return false;
+		}
 		if (!Enabled)
 		{
 			return true;

@@ -295,6 +295,17 @@ public sealed class UiInterception : IUiInterception
 		return HintSurfaceIsolation.Instance.OnHintShow(display, hint);
 	}
 
+	/// <summary>全网络包管理需要 Mirror 汇流点补丁: 配置里没开网络哨兵时按需补装。</summary>
+	internal void EnsureNetworkPatches()
+	{
+		if (_harmony == null)
+		{
+			return;
+		}
+		NetworkSentinel.Enabled = true;
+		NetworkPatches.Install(_harmony);
+	}
+
 	internal static bool OnBroadcastAdd(NetworkConnection? conn, string message, ushort duration, Broadcast.BroadcastFlags flags)
 	{
 		return BroadcastSurfaceIsolation.Instance.OnBroadcastAdd(conn, message, duration, flags);

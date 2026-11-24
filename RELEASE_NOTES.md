@@ -1,3 +1,21 @@
+# HintChorus 14.2.9.1 — Pre-op Takeover & Full UI Packet Management
+
+## 中文
+
+- **预更新实操作。** 输入 `Hint preop`（或配置 `PreOpTakeover: true`）后：摘掉其它 Hint 框架挂在 `HintDisplay.Show` / LabAPI `Player.SendHint` 上的补丁，开启全网络包管理，并按快照瞬间重发每个玩家的 UI。
+- **全网络包管理**：Mirror 汇流点上的提示 / 广播 / CASSIE 包只放行本底层自己发出的那一份；其它插件直发的包在内存中被判为无效并丢弃，改动不会到达客户端。
+- 只影响本次运行，不写配置；`Hint preop off` 关闭过滤，重启后其它框架补丁自然恢复。
+- 向导新增第 5 项“是否保留 HintChorus 并执行全接管”；详细配置顺延为第 6 项。
+
+## English
+
+- **Pre-op takeover.** `Hint preop` (or `PreOpTakeover: true`) detaches other hint frameworks' patches on `HintDisplay.Show` / LabAPI `Player.SendHint`, enables full packet management, and instantly re-sends every player's UI from the snapshot.
+- **Full UI packet management**: at the Mirror send point, hint / broadcast / CASSIE packets are only allowed from this layer; packets sent directly by other plugins are voided in memory and never reach the client.
+- Runtime only, never written to config. `Hint preop off` stops the filter; detached foreign patches come back after a restart.
+- Setup wizard gained item 5 "keep HintChorus with full takeover"; detailed configuration moved to item 6.
+
+---
+
 # HintChorus 14.2.9.0 — Version Aligned with SCP:SL
 
 ## 中文
