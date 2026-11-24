@@ -113,6 +113,7 @@ cmd.list.nativeAllHint = 整体退回原生: Hint orvs native | 全部恢复: Hi
 update.started = 已开始检查更新, 结果见控制台日志。
 update.found = 发现新版本: {0} (当前 {1})
 update.none = 已是最新版本: {0}
+update.ignoredScheme = 发行 {0} 不属于“与游戏对齐”的版本方案(当前 {1}), 已忽略。
 update.failed = 检查更新失败: {0}
 update.downloaded = 已下载新版本到 {0}; 重启前替换正在使用的 DLL。
 update.replaced = 已替换 HintChorus.dll; 将在回合结束后重启加载新版本。

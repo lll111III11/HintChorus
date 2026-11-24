@@ -117,6 +117,7 @@ cmd.list.nativeAllHint = Fall back everything to native: Hint orvs native | Rest
 update.started = Update check started; see the console log for the result.
 update.found = New version found: {0} (current {1})
 update.none = Already up to date: {0}
+update.ignoredScheme = Release {0} does not follow the game-aligned versioning (current {1}); ignored.
 update.failed = Update check failed: {0}
 update.downloaded = Downloaded the new version to {0}; replace the running DLL before restart.
 update.replaced = Replaced HintChorus.dll; the server will restart at the end of the round to load it.

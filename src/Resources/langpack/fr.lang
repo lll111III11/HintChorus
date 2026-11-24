@@ -113,6 +113,7 @@ cmd.list.nativeAllHint = Tout en natif : Hint orvs native | Tout restaurer : Hin
 update.started = Vérification des mises à jour lancée ; résultat dans la console.
 update.found = Nouvelle version : {0} (actuelle {1})
 update.none = Déjà à jour : {0}
+update.ignoredScheme = La version {0} ne suit pas le schéma aligné sur le jeu (actuelle {1}) ; ignorée.
 update.failed = Échec de la vérification : {0}
 update.downloaded = Nouvelle version téléchargée vers {0} ; remplacez la DLL avant redémarrage.
 update.replaced = HintChorus.dll remplacé ; le serveur redémarrera en fin de manche pour le charger.

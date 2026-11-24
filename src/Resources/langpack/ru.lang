@@ -113,6 +113,7 @@ cmd.list.nativeAllHint = Всё на нативный: Hint orvs native | Вер
 update.started = Проверка обновлений запущена; результат в консоли.
 update.found = Найдена новая версия: {0} (текущая {1})
 update.none = Уже последняя версия: {0}
+update.ignoredScheme = Релиз {0} не соответствует схеме версий игры (текущая {1}); пропущен.
 update.failed = Ошибка проверки обновлений: {0}
 update.downloaded = Новая версия загружена в {0}; замените DLL перед перезапуском.
 update.replaced = HintChorus.dll заменён; сервер перезапустится в конце раунда.

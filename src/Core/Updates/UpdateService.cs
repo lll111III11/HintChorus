@@ -61,6 +61,12 @@ internal static class UpdateService
 
             Version latest = ParseVersion(tag);
             Version current = ParseVersion(CurrentVersion());
+            if (!MatchesGameScheme(latest))
+            {
+                // 旧版本号(15.0.x)不属于“与游戏对齐”的新方案, 不能当成更新, 否则会被判定为降级/串版本。
+                Logger.Info("[HintChorus] " + Lang.Format("update.ignoredScheme", latest, current));
+                return;
+            }
             if (latest <= current)
             {
                 Logger.Info("[HintChorus] " + Lang.Format("update.none", current));
@@ -179,5 +185,19 @@ internal static class UpdateService
     {
         // 四位版本都要参与比较: 前三段是游戏版本, 第四段才区分同版本下的插件构建。
         return typeof(UpdateService).Assembly.GetName().Version?.ToString() ?? "0.0.0.0";
+    }
+
+    /// <summary>版本号前两段必须与当前游戏一致, 才算同一套版本方案。</summary>
+    private static bool MatchesGameScheme(Version version)
+    {
+        try
+        {
+            return version.Major == GameCore.Version.Major
+                && version.Minor == GameCore.Version.Minor;
+        }
+        catch (Exception)
+        {
+            return true;
+        }
     }
 }
