@@ -7,6 +7,7 @@
 - **主动刷新**：`allow_active_refresh` + `Hint refresh`，跳过窗口立即刷新。
 - **安全配置**：`enable_network_security` 与提示 / 广播 / CASSIE / RPC 四类包的放行开关；`close_rich_text_tags` 自动补齐富文本闭合标签，防止颜色与字号泄漏到控制台。
 - **系统快照（Beta）**：每小时、最多 72 份、启动先存一份；包含配置、插件主体与依赖；`Hint snap list|create|restore|restart` 回溯后提示重启。
+- **⚠️ 快照注意**：含插件 DLL 时单份约 30 MB，满额约 2 GB+（控制台会自动告警）；回溯后**必须重启**才生效；正在运行的 `HintChorus.dll` 会被跳过，重启后手动替换。
 
 ## English
 
@@ -15,6 +16,7 @@
 - **Active refresh**: `allow_active_refresh` plus `Hint refresh` to skip the window and redraw immediately.
 - **Security**: `enable_network_security` with per-packet allow switches for hint / broadcast / CASSIE / RPC, and `close_rich_text_tags` to auto-close rich-text tags so colours and sizes cannot leak into the console.
 - **System snapshots (Beta)**: hourly, max 72, one taken at startup; includes configs, plugin assemblies and dependencies; `Hint snap list|create|restore|restart` restores files and prompts for a restart.
+- **⚠️ Snapshot notice**: with plugin DLLs each snapshot is ~30 MB, up to ~2 GB+ when full (the console warns automatically); a restore only writes files and **requires a restart**; the running `HintChorus.dll` is skipped and must be replaced manually after restarting.
 
 ---
 

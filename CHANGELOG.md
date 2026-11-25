@@ -12,6 +12,7 @@
 - **富文本闭合**：`close_rich_text_tags`（默认开）给所有进入 UI 的富文本自动补齐 `</color></size></b></i>` 等闭合标签，防止颜色/字号泄漏到控制台与后续文本。
 - **系统快照（Beta）**：`enable_system_snapshot` 默认开，每小时一份、最多 72 份、启动后先存一份；快照包含 `configs/<端口>`、`plugins/global` 与 `dependencies/global`。控制台 `Hint snap [list|create|restore <名字|latest>|restart]` 可列出、立即创建、回溯并提示重启。实机首份快照 238 个文件 / 33.3 MB。
 - **启动详细引导**：`startup_detailed_console`（默认关）在控制台打印生效配置摘要。
+- **快照提醒**：按当前单份体积估算满额占用，超过 2GB 时控制台明确告警；`Hint snap list` 顶部显示已用份数与合计体积。
 
 ## 14.2.9.3 (2026-11-25)
 

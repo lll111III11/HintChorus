@@ -181,6 +181,13 @@ internal static class SystemSnapshot
             PruneLocked();
             _lastName = name;
             detail = name + " | " + files + " files | " + FormatSize(bytes);
+
+            // 磁盘提醒: 按单份体积估算满额占用, 超过 2GB 时明确提示服主, 避免服务器磁盘被快照吃满。
+            long projected = bytes * _maxCount;
+            if (_includePlugins && projected > 2L * 1024 * 1024 * 1024)
+            {
+                Logger.Warn("[HintChorus] " + Lang.Format("snap.spaceWarn", FormatSize(projected), _maxCount));
+            }
             return true;
         }
         catch (Exception ex)
@@ -209,8 +216,7 @@ internal static class SystemSnapshot
     }
 
     /// <summary>列出全部快照（新 -> 旧）。</summary>
-    internal static List<SnapshotEntry> List()
-    {
+    internal static List<SnapshotEntry> List()    {
         List<SnapshotEntry> list = new List<SnapshotEntry>();
         try
         {

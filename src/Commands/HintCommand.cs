@@ -411,6 +411,12 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             List<SnapshotEntry> all = SystemSnapshot.List();
             StringBuilder builder = new StringBuilder();
             builder.AppendLine(Lang.Format("snap.header", SystemSnapshot.MaxCount, SystemSnapshot.IntervalHours));
+            long totalBytes = 0;
+            for (int i = 0; i < all.Count; i++)
+            {
+                totalBytes += all[i].Bytes;
+            }
+            builder.AppendLine(Lang.Format("snap.total", all.Count, SystemSnapshot.MaxCount, SystemSnapshot.FormatSize(totalBytes)));
             if (all.Count == 0)
             {
                 builder.Append(Lang.Get("snap.empty"));

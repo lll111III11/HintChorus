@@ -41,6 +41,12 @@
 
 > **14.2.9.4（2026-11-25）50ms 收集窗口 · UI 保留时间 · 安全策略 · 系统快照**：`hint_refresh_interval` 默认改为 `0.05`（窗口内请求收集后合并、每玩家只发一次）；`min_ui_retain_seconds` / `max_ui_retain_seconds`（默认 60/180）控制新旧 UI 保留；`Hint refresh` 主动刷新；`enable_network_security` 提供提示/广播/CASSIE/RPC 四类包放行开关，`close_rich_text_tags` 自动补齐富文本闭合标签；系统快照（Beta）每小时一份、最多 72 份，`Hint snap list|create|restore|restart` 可回溯并提示重启。
 
+> ⚠️ **系统快照（Beta）注意**
+> - 默认每小时一份、最多 72 份；含插件 DLL 时单份约 30 MB，满额约 2 GB+。磁盘紧张请调小 `snapshot_max_count` 或关闭 `snapshot_include_plugins`（控制台会自动提示预计占用）。
+> - 回溯只负责写回文件，**必须重启服务器才生效**；`Hint snap restart` 可立即重启。
+> - 正在运行的 `HintChorus.dll` 无法覆盖，回溯会跳过它并在输出中列出，重启后手动替换即可。
+> - 快照目录：`configs/<端口>/HintChorus/snapshots/`，可整体拷走做冷备；`Hint snap list` 会显示已用份数与合计体积。
+
 > **14.2.9.3（2026-11-25）预更新实操作持续生效**：`PreOpTakeover` 生效期间每 5 秒幂等复查，把插件启用后才加载的第三方 Hint 框架（HintServiceMeow / RueI）补上的 Harmony 补丁继续摘除；修复开机时首次 Engage 只能摘到 0 组的问题。
 > **14.2.9.2（2026-11-25）**：更新检查只接受前两段与游戏一致的发行（`14.2.x`），忽略旧的 `15.0.x`，避免误下载与误重启。
 
