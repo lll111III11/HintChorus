@@ -10,7 +10,7 @@
 		<RootNamespace>HintChorus</RootNamespace>
 		<!-- 版本与游戏对齐: <游戏 Major>.<游戏 Minor>.<游戏 Revision>.<插件构建号>
 		     当前游戏版本 14.2.9 (GameCore.Version); 游戏更新时前三段跟随, 第四段归零。 -->
-		<Version>14.2.9.2</Version>
+		<Version>14.2.9.3</Version>
 		<Deterministic>true</Deterministic>
 		<PlatformTarget>x64</PlatformTarget>
 		<!-- 只允许可空注解, 不因历史代码触发成百条空引用告警 -->

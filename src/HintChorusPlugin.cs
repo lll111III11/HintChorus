@@ -490,6 +490,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			{
 				UiInterception.Tick();
 				CompatibilityMode.Tick();
+				PacketGovernor.Tick();
 			}
 			catch (Exception ex)
 			{

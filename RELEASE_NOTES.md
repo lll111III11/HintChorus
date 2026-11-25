@@ -1,3 +1,19 @@
+# HintChorus 14.2.9.3 — Pre-op Enforcement After Late-Loading Frameworks
+
+## 中文
+
+- **预更新实操作持续生效。** `PreOpTakeover: true` 或 `Hint preop on` 生效期间，每 5 秒幂等复查一次，把插件启用后才加载的第三方 Hint 框架（HintServiceMeow / RueI 等）补上的 Harmony 补丁继续摘除。
+- 修复：插件先于第三方框架启用时，首次 Engage 只能摘到 0 组补丁。
+- **实机验证**：启动 7 秒摘除 2 组，第二次复查再摘 3 组（框架自愈重挂），之后稳定，无异常。
+
+## English
+
+- **Pre-op takeover now keeps enforcing.** While `PreOpTakeover: true` (or `Hint preop on`) is active, a 5-second idempotent sweep detaches Harmony patches that third-party hint frameworks (HintServiceMeow / RueI) install *after* this plugin was enabled.
+- Fixes the case where the first Engage ran before those frameworks loaded and detached 0 patch groups.
+- **Verified on a live server**: 2 groups detached 7 s after boot, 3 more on the next sweep (frameworks had self-repatched), then stable with no errors.
+
+---
+
 # HintChorus 14.2.9.1 — Pre-op Takeover & Full UI Packet Management
 
 ## 中文

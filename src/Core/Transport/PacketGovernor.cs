@@ -54,6 +54,39 @@ internal static class PacketGovernor
 
     internal static int DetachedPatchGroups { get; private set; }
 
+    /// <summary>持续摘补丁的间隔(秒): 处理开机后才加载进来的框架。</summary>
+    private const float EnforceInterval = 5f;
+
+    private static float _nextEnforce;
+
+    /// <summary>由每秒维护循环调用: PreOp 生效期间持续把外部补丁按回去(幂等)。</summary>
+    internal static void Tick()
+    {
+        if (!Active)
+        {
+            return;
+        }
+        float now = UnityEngine.Time.time;
+        if (now < _nextEnforce)
+        {
+            return;
+        }
+        _nextEnforce = now + EnforceInterval;
+        try
+        {
+            int detached = DetachForeignPatches();
+            if (detached > 0)
+            {
+                DetachedPatchGroups += detached;
+                UiLog.ReportEvent("PREOP", Lang.Format("preop.report", detached, 0));
+            }
+        }
+        catch (Exception ex)
+        {
+            UiLog.Report("PreOpTick", ex);
+        }
+    }
+
     /// <summary>进入预更新实操作: 卸外部补丁 + 开包过滤 + 瞬间内存替换。返回被摘掉的补丁组数与重发玩家数。</summary>
     internal static bool Engage(out int detachedGroups, out int resentPlayers)
     {
