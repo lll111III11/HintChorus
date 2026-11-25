@@ -160,6 +160,20 @@ public sealed class HintBroker : IHintBroker
 
 	public bool InputSignatureEnabled { get; set; } = true;
 
+	/// <summary>允许主动请求立即刷新(配置项 AllowActiveRefresh)。</summary>
+	public bool AllowActiveRefresh { get; set; } = true;
+
+	/// <summary>主动请求: 跳过收集窗口, 下一帧立即为所有玩家重新合成并下发一次。</summary>
+	public bool ForceRefresh()
+	{
+		if (!IsRunning || !Enabled || !AllowActiveRefresh)
+		{
+			return false;
+		}
+		MarkDirty(null);
+		return true;
+	}
+
 	// ── 排版(治"上下位置错位") ────────────────────────────────────────────────
 	/// <summary>固定行位排版(默认开): 易变区固定行数 + 常驻区每个归属预留一行, 于是块高恒定、
 	/// 任何 UI 的进出都不会推动别人。关掉退回紧凑排版(省屏, 但位置会随内容增减而变)。</summary>

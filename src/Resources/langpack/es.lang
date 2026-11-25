@@ -267,3 +267,24 @@ lang.sourceBoth = integrado + externo
 lang.reloaded = [HintChorus] Paquetes de idioma recargados: {0} idiomas. {1}
 lang.unknown = [HintChorus] Acción de idioma desconocida: {0}\n{1}
 lang.dir = [HintChorus] Carpeta de paquetes externos: {0}
+
+# ── Refresco activo / instantáneas / seguridad ────────────────────────
+cmd.helpRefresh = Hint refresh: omitir la ventana de 50 ms y refrescar la UI de inmediato
+cmd.helpSnap = Hint snap [list|create|restore <nombre|latest>|restart]: instantáneas del sistema (Beta)
+cmd.refreshOk = [HintChorus] Refresco inmediato solicitado.
+cmd.refreshDenied = [HintChorus] El refresco activo está desactivado, o el núcleo de fusión no está en marcha.
+snap.header = [HintChorus] Instantáneas del sistema (Beta) | máx. {0} | cada {1} h
+snap.item = [{0}] {1} | {2} | {3}
+snap.empty = [HintChorus] Aún no hay instantáneas.
+snap.created = [HintChorus] Instantánea creada: {0}
+snap.createFailed = [HintChorus] Falló la instantánea: {0}
+snap.restored = [HintChorus] Restaurado {0}: {1} archivos escritos, {2} omitidos.
+snap.lockedHint = bloqueado en ejecución (reemplazar a mano tras reiniciar):
+snap.notFound = [HintChorus] Instantánea no encontrada: {0}
+snap.restartPrompt = Hace falta reiniciar: escribe Hint snap restart para reiniciar ahora, o reinicia manualmente.
+snap.restarting = [HintChorus] Reiniciando el servidor...
+snap.restartFailed = [HintChorus] Falló el reinicio: {0}
+snap.usage = Uso: Hint snap [list|create|restore <nombre|latest>|restart]
+plugin.reportSnapshot = Instantáneas: {0} | cada {1}h | máx. {2} | última {3}
+plugin.reportSecurity = Seguridad: {0}
+plugin.reportDetailedHeader = [HintChorus] Configuración efectiva (arranque detallado):

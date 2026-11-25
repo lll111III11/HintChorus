@@ -271,3 +271,24 @@ lang.sourceBoth = built-in + external
 lang.reloaded = [HintChorus] Language packs reloaded: {0} languages. {1}
 lang.unknown = [HintChorus] Unknown language action: {0}\n{1}
 lang.dir = [HintChorus] External language pack directory: {0}
+
+# ── Active refresh / system snapshots / security ──────────────────────
+cmd.helpRefresh = Hint refresh: skip the 50 ms collection window and refresh the UI immediately
+cmd.helpSnap = Hint snap [list|create|restore <name|latest>|restart]: system snapshots (Beta)
+cmd.refreshOk = [HintChorus] Immediate refresh requested.
+cmd.refreshDenied = [HintChorus] Active refresh is disabled, or the merge core is not running.
+snap.header = [HintChorus] System snapshots (Beta) | max {0} | every {1} h
+snap.item = [{0}] {1} | {2} | {3}
+snap.empty = [HintChorus] No snapshots yet.
+snap.created = [HintChorus] Snapshot created: {0}
+snap.createFailed = [HintChorus] Snapshot failed: {0}
+snap.restored = [HintChorus] Restored {0}: {1} files written, {2} skipped.
+snap.lockedHint = locked while running (replace manually after restart):
+snap.notFound = [HintChorus] Snapshot not found: {0}
+snap.restartPrompt = A restart is required: type Hint snap restart to restart now, or restart manually.
+snap.restarting = [HintChorus] Restarting the server...
+snap.restartFailed = [HintChorus] Restart failed: {0}
+snap.usage = Usage: Hint snap [list|create|restore <name|latest>|restart]
+plugin.reportSnapshot = Snapshot: {0} | every {1}h | max {2} | latest {3}
+plugin.reportSecurity = Security: {0}
+plugin.reportDetailedHeader = [HintChorus] Effective configuration (detailed boot):

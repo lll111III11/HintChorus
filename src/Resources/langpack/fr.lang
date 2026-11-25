@@ -267,3 +267,24 @@ lang.sourceBoth = intégré + externe
 lang.reloaded = [HintChorus] Packs de langue rechargés : {0} langues. {1}
 lang.unknown = [HintChorus] Action de langue inconnue : {0}\n{1}
 lang.dir = [HintChorus] Dossier des packs externes : {0}
+
+# ── Rafraîchissement actif / instantanés / sécurité ───────────────────
+cmd.helpRefresh = Hint refresh : ignorer la fenêtre de 50 ms et rafraîchir l'UI immédiatement
+cmd.helpSnap = Hint snap [list|create|restore <nom|latest>|restart] : instantanés système (Beta)
+cmd.refreshOk = [HintChorus] Rafraîchissement immédiat demandé.
+cmd.refreshDenied = [HintChorus] Le rafraîchissement actif est désactivé, ou le noyau de fusion ne tourne pas.
+snap.header = [HintChorus] Instantanés système (Beta) | max {0} | toutes les {1} h
+snap.item = [{0}] {1} | {2} | {3}
+snap.empty = [HintChorus] Aucun instantané pour le moment.
+snap.created = [HintChorus] Instantané créé : {0}
+snap.createFailed = [HintChorus] Échec de l'instantané : {0}
+snap.restored = [HintChorus] Restauré {0} : {1} fichiers écrits, {2} ignorés.
+snap.lockedHint = verrouillé pendant l'exécution (à remplacer manuellement après redémarrage) :
+snap.notFound = [HintChorus] Instantané introuvable : {0}
+snap.restartPrompt = Un redémarrage est nécessaire : tapez Hint snap restart pour redémarrer maintenant, ou redémarrez manuellement.
+snap.restarting = [HintChorus] Redémarrage du serveur...
+snap.restartFailed = [HintChorus] Échec du redémarrage : {0}
+snap.usage = Usage : Hint snap [list|create|restore <nom|latest>|restart]
+plugin.reportSnapshot = Instantanés : {0} | toutes les {1}h | max {2} | dernier {3}
+plugin.reportSecurity = Sécurité : {0}
+plugin.reportDetailedHeader = [HintChorus] Configuration effective (démarrage détaillé) :

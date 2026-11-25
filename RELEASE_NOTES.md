@@ -1,3 +1,23 @@
+# HintChorus 14.2.9.4 — 50 ms Collection, UI Retention, Security & System Snapshots
+
+## 中文
+
+- **50ms 收集窗口**：`hint_refresh_interval` 默认改为 `0.05`；窗口内所有请求收集后合并成一份，每个玩家只发一次，内容没变不发。
+- **新旧 UI 保留时间**：`min_ui_retain_seconds`（默认 60）/ `max_ui_retain_seconds`（默认 180），旧内容至少留 60 秒、最多停留 180 秒。
+- **主动刷新**：`allow_active_refresh` + `Hint refresh`，跳过窗口立即刷新。
+- **安全配置**：`enable_network_security` 与提示 / 广播 / CASSIE / RPC 四类包的放行开关；`close_rich_text_tags` 自动补齐富文本闭合标签，防止颜色与字号泄漏到控制台。
+- **系统快照（Beta）**：每小时、最多 72 份、启动先存一份；包含配置、插件主体与依赖；`Hint snap list|create|restore|restart` 回溯后提示重启。
+
+## English
+
+- **50 ms collection window**: `hint_refresh_interval` now defaults to `0.05`; requests inside the window are merged and sent once per player, and nothing is sent when the content did not change.
+- **UI retention**: `min_ui_retain_seconds` (60) / `max_ui_retain_seconds` (180) keep old content for at least a minute and never longer than three.
+- **Active refresh**: `allow_active_refresh` plus `Hint refresh` to skip the window and redraw immediately.
+- **Security**: `enable_network_security` with per-packet allow switches for hint / broadcast / CASSIE / RPC, and `close_rich_text_tags` to auto-close rich-text tags so colours and sizes cannot leak into the console.
+- **System snapshots (Beta)**: hourly, max 72, one taken at startup; includes configs, plugin assemblies and dependencies; `Hint snap list|create|restore|restart` restores files and prompts for a restart.
+
+---
+
 # HintChorus 14.2.9.3 — Pre-op Enforcement After Late-Loading Frameworks
 
 ## 中文

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Reflection;
+using System.Text;
 using HintChorus.Commands;
 using HintChorus.Core.Bootstrap;
 using HintChorus.Core.Broker;
@@ -11,6 +13,7 @@ using HintChorus.Core.Interception;
 using HintChorus.Core.Localization;
 using HintChorus.Core.ServerSpecific;
 using HintChorus.Core.Setup;
+using HintChorus.Core.Snapshots;
 using HintChorus.Core.Templates;
 using HintChorus.Core.Transport;
 using HintChorus.Core.Updates;
@@ -30,8 +33,17 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 		[Description("启用 Hint 合并渲染核心(唯一写者)")]
 		public bool EnableHintChorus { get; set; } = true;
 
-		[Description("合并刷新间隔(秒), 越小越及时、网络包越多")]
-		public float HintRefreshInterval { get; set; } = 0.75f;
+		[Description("单次收集/刷新间隔(秒, 默认 0.05 = 50ms): 这段时间内到达的所有 UI 请求先收集, 到点合并成一份, 每个玩家只发一次")]
+		public float HintRefreshInterval { get; set; } = 0.05f;
+
+		[Description("新旧 UI 最短保留时间(秒, 默认 60): 新内容到来时, 旧提示至少保留这么久才允许被替换")]
+		public float MinUiRetainSeconds { get; set; } = 60f;
+
+		[Description("新旧 UI 最长保留时间(秒, 默认 180): 任何提示最多在屏幕上停留这么久, 到点强制清除")]
+		public float MaxUiRetainSeconds { get; set; } = 180f;
+
+		[Description("允许主动请求(默认开): 插件或控制台可以跳过 50ms 收集窗口, 立即合成并刷新一次 UI (Hint refresh)")]
+		public bool AllowActiveRefresh { get; set; } = true;
 
 		[Description("续期提前量(秒), 在到期前提前重发防止闪烁消失")]
 		public float HintResendLeeway { get; set; } = 0.15f;
@@ -249,6 +261,46 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 
 		[Description("防劫持: 检测到其它插件整体覆盖 DefinedSettings 时自动合并恢复")]
 		public bool ProtectSssFromOverwrites { get; set; } = true;
+
+		// ── 安全策略 ───────────────────────────────────────────────────────────
+
+		[Description("网络包安全策略(默认关): 开启后由下面四项决定 HC 是否放行该类出站包; 关闭=全部放行(只统计)")]
+		public bool EnableNetworkSecurity { get; set; }
+
+		[Description("安全策略: 允许提示包(HintMessage)出站")]
+		public bool AllowHintPackets { get; set; } = true;
+
+		[Description("安全策略: 允许广播包(Broadcast / 广播 RPC)出站")]
+		public bool AllowBroadcastPackets { get; set; } = true;
+
+		[Description("安全策略: 允许 CASSIE 语音包出站")]
+		public bool AllowCassiePackets { get; set; } = true;
+
+		[Description("安全策略: 允许其它 RPC 包出站(关掉会拦下所有非广播 RPC, 一般保持开)")]
+		public bool AllowRpcPackets { get; set; } = true;
+
+		[Description("富文本闭合(默认开): 给所有进入 UI 的富文本自动补齐闭合标签, 防止颜色/字号泄漏到控制台与后续文本")]
+		public bool CloseRichTextTags { get; set; } = true;
+
+		[Description("启动时输出详细引导(默认关): 在控制台打印生效配置摘要, 便于核对默认值与改动")]
+		public bool StartupDetailedConsole { get; set; }
+
+		// ── 系统快照(Beta) ────────────────────────────────────────────────────
+
+		[Description("系统快照(默认开, Beta): 定时把插件配置、插件主体与依赖复制到 configs/<端口>/HintChorus/snapshots, 可用 Hint snap 回溯")]
+		public bool EnableSystemSnapshot { get; set; } = true;
+
+		[Description("快照间隔(小时, 默认 1)")]
+		public float SnapshotIntervalHours { get; set; } = 1f;
+
+		[Description("快照最大保留数量(默认 72)")]
+		public int SnapshotMaxCount { get; set; } = 72;
+
+		[Description("快照包含插件主体与依赖 DLL(默认开): 关掉只备份配置文件, 体积更小")]
+		public bool SnapshotIncludePlugins { get; set; } = true;
+
+		[Description("启动后立即保存一份快照(默认开)")]
+		public bool SnapshotOnStartup { get; set; } = true;
 	}
 
 	private CoroutineHandle _guardianLoop;
@@ -331,6 +383,10 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			}
 			_maintenanceLoop = Timing.RunCoroutine(MaintenanceRoutine(), Segment.Update);
 			UiLog.WriteStartupReport(BuildStartupReport());
+			if (base.Config.StartupDetailedConsole)
+			{
+				WriteDetailedConfig();
+			}
 			StartupLog.Info(Lang.Get("plugin.enableDone"));
 			StartupLog.Info(Lang.Get("plugin.betaBanner"));
 		}
@@ -358,7 +414,29 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 			+ "\n" + Lang.Format("plugin.reportTemplate", TemplateBridge.Status)
 			+ "\n" + Lang.Format("plugin.reportLogs", base.Config.EnableCrashReportLog, base.Config.EnableDetailedUiLog, base.Config.DetailedUiLogPerPlayer)
 			+ "\n" + Lang.Format("plugin.reportLanguage", LanguagePack.Report)
-			+ "\n" + Lang.Format("plugin.reportCandidates", string.Join(", ", HintFallback.Candidates()));
+			+ "\n" + Lang.Format("plugin.reportCandidates", string.Join(", ", HintFallback.Candidates()))
+			+ "\n" + Lang.Format("plugin.reportSnapshot", base.Config.EnableSystemSnapshot, base.Config.SnapshotIntervalHours, base.Config.SnapshotMaxCount, SystemSnapshot.LastName)
+			+ "\n" + Lang.Format("plugin.reportSecurity", NetworkSecurity.Status());
+	}
+
+	/// <summary>启动详细引导: 打印当前生效的完整配置(StartupDetailedConsole)。</summary>
+	private void WriteDetailedConfig()
+	{
+		try
+		{
+			StringBuilder builder = new StringBuilder();
+			builder.AppendLine(Lang.Get("plugin.reportDetailedHeader"));
+			foreach (PropertyInfo property in typeof(PluginConfig).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+			{
+				object? value = property.GetValue(base.Config);
+				builder.Append("  ").Append(property.Name).Append(" = ").Append(value ?? "null").AppendLine();
+			}
+			StartupLog.Info(builder.ToString());
+		}
+		catch (Exception ex)
+		{
+			Logger.Warn("[HintChorus] " + ex.Message);
+		}
 	}
 
 	private void ReleaseBootstrapIfNeeded()
@@ -491,6 +569,7 @@ public sealed class HintChorusPlugin : Plugin<HintChorusPlugin.PluginConfig>
 				UiInterception.Tick();
 				CompatibilityMode.Tick();
 				PacketGovernor.Tick();
+				SystemSnapshot.Tick();
 			}
 			catch (Exception ex)
 			{

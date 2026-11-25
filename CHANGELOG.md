@@ -3,6 +3,16 @@
 本项目已从 **alpha** 进入 **beta**：可以进入正常的生产服务器，但仍需**谨慎使用**；
 一旦出现异常，请立即按本文末尾的「回退」步骤退回上一版本或关闭插件。
 
+## 14.2.9.4 (2026-11-25)
+
+- **单次收集/刷新默认改为 50ms**：`hint_refresh_interval` 默认 `0.05`，这段时间内到达的 UI 请求先收集，到点合并成一份、每个玩家只发一次；内容没变仍然不发。
+- **新旧 UI 保留时间**：新增 `min_ui_retain_seconds`（默认 60）与 `max_ui_retain_seconds`（默认 180），只作用于提示通道：旧内容至少留 60 秒才允许被替换，任何提示最多停留 180 秒。
+- **主动刷新**：新增 `allow_active_refresh`（默认开）与控制台 `Hint refresh`，跳过收集窗口立即合成下发一次。
+- **安全策略**：`enable_network_security`（默认关）+ `allow_hint_packets` / `allow_broadcast_packets` / `allow_cassie_packets` / `allow_rpc_packets`；本层自己合成的复合提示始终放行。
+- **富文本闭合**：`close_rich_text_tags`（默认开）给所有进入 UI 的富文本自动补齐 `</color></size></b></i>` 等闭合标签，防止颜色/字号泄漏到控制台与后续文本。
+- **系统快照（Beta）**：`enable_system_snapshot` 默认开，每小时一份、最多 72 份、启动后先存一份；快照包含 `configs/<端口>`、`plugins/global` 与 `dependencies/global`。控制台 `Hint snap [list|create|restore <名字|latest>|restart]` 可列出、立即创建、回溯并提示重启。实机首份快照 238 个文件 / 33.3 MB。
+- **启动详细引导**：`startup_detailed_console`（默认关）在控制台打印生效配置摘要。
+
 ## 14.2.9.3 (2026-11-25)
 
 - **预更新实操作改为持续生效**：新增 `PacketGovernor.Tick()`，在 PreOp 生效期间每 5 秒幂等复查一次，把「本插件启用之后才加载」的第三方框架（HintServiceMeow / RueI 等）补上的 Harmony 补丁继续摘除。此前 `PreOpTakeover: true` 在开机时执行，第三方框架尚未挂补丁，首次 Engage 会摘到 0 组。

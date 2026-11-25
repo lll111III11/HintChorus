@@ -267,3 +267,24 @@ lang.sourceBoth = встроенный + внешний
 lang.reloaded = [HintChorus] Языковые пакеты перезагружены: {0} языков. {1}
 lang.unknown = [HintChorus] Неизвестное действие языка: {0}\n{1}
 lang.dir = [HintChorus] Папка внешних языковых пакетов: {0}
+
+# ── Активное обновление / снимки / безопасность ───────────────────────
+cmd.helpRefresh = Hint refresh: пропустить окно сбора 50 мс и обновить UI сразу
+cmd.helpSnap = Hint snap [list|create|restore <имя|latest>|restart]: системные снимки (Beta)
+cmd.refreshOk = [HintChorus] Запрошено немедленное обновление.
+cmd.refreshDenied = [HintChorus] Активное обновление отключено или ядро объединения не запущено.
+snap.header = [HintChorus] Системные снимки (Beta) | максимум {0} | каждые {1} ч
+snap.item = [{0}] {1} | {2} | {3}
+snap.empty = [HintChorus] Снимков пока нет.
+snap.created = [HintChorus] Снимок создан: {0}
+snap.createFailed = [HintChorus] Не удалось создать снимок: {0}
+snap.restored = [HintChorus] Восстановлено {0}: записано {1} файлов, пропущено {2}.
+snap.lockedHint = занято во время работы (замените вручную после перезапуска):
+snap.notFound = [HintChorus] Снимок не найден: {0}
+snap.restartPrompt = Требуется перезапуск: введите Hint snap restart, чтобы перезапустить сейчас, или перезапустите вручную.
+snap.restarting = [HintChorus] Перезапуск сервера...
+snap.restartFailed = [HintChorus] Не удалось перезапустить: {0}
+snap.usage = Использование: Hint snap [list|create|restore <имя|latest>|restart]
+plugin.reportSnapshot = Снимки: {0} | каждые {1}ч | максимум {2} | последний {3}
+plugin.reportSecurity = Безопасность: {0}
+plugin.reportDetailedHeader = [HintChorus] Действующая конфигурация (подробный запуск):

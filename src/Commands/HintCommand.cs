@@ -9,8 +9,10 @@ using HintChorus.Core.Diagnostics;
 using HintChorus.Core.Interception;
 using HintChorus.Core.Localization;
 using HintChorus.Core.Setup;
+using HintChorus.Core.Snapshots;
 using HintChorus.Core.Transport;
 using HintChorus.Core.Updates;
+using ServerOutput;
 
 namespace HintChorus.Commands;
 
@@ -53,7 +55,9 @@ internal sealed class HintCommand : ICommand, IUsageProvider
         Lang.Get("cmd.helpTake"),
         Lang.Get("cmd.helpSetup"),
         Lang.Get("cmd.helpUpdate"),
-        Lang.Get("cmd.helpLang")
+        Lang.Get("cmd.helpLang"),
+        Lang.Get("cmd.helpRefresh"),
+        Lang.Get("cmd.helpSnap")
     };
 
     public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
@@ -102,6 +106,19 @@ internal sealed class HintCommand : ICommand, IUsageProvider
             if (sub.Equals("preop", StringComparison.OrdinalIgnoreCase))
             {
                 return HandlePreOp(Slice(arguments, 1), out response);
+            }
+
+            if (sub.Equals("refresh", StringComparison.OrdinalIgnoreCase))
+            {
+                response = HintBroker.Instance.ForceRefresh()
+                    ? Lang.Get("cmd.refreshOk")
+                    : Lang.Get("cmd.refreshDenied");
+                return true;
+            }
+
+            if (sub.Equals("snap", StringComparison.OrdinalIgnoreCase))
+            {
+                return HandleSnap(Slice(arguments, 1), out response);
             }
 
             if (!sub.Equals("orvs", StringComparison.OrdinalIgnoreCase))
@@ -384,6 +401,77 @@ internal sealed class HintCommand : ICommand, IUsageProvider
         return true;
     }
 
+    /// <summary>系统快照(Beta): list / create / restore &lt;名字|latest&gt; / restart。</summary>
+    private static bool HandleSnap(ArraySegment<string> arguments, out string response)
+    {
+        string action = arguments.Count > 0 ? Arg(arguments, 0).ToLowerInvariant() : "list";
+
+        if (action == "list" || action == "ls" || action == "status")
+        {
+            List<SnapshotEntry> all = SystemSnapshot.List();
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine(Lang.Format("snap.header", SystemSnapshot.MaxCount, SystemSnapshot.IntervalHours));
+            if (all.Count == 0)
+            {
+                builder.Append(Lang.Get("snap.empty"));
+            }
+            else
+            {
+                for (int i = 0; i < all.Count; i++)
+                {
+                    builder.AppendLine(Lang.Format(
+                        "snap.item",
+                        i + 1,
+                        all[i].Name,
+                        all[i].CreatedLocal.ToString("yyyy-MM-dd HH:mm"),
+                        SystemSnapshot.FormatSize(all[i].Bytes)));
+                }
+            }
+            response = builder.ToString().TrimEnd();
+            return true;
+        }
+
+        if (action == "create" || action == "now" || action == "save")
+        {
+            bool ok = SystemSnapshot.Create("manual", out string detail);
+            response = ok ? Lang.Format("snap.created", detail) : Lang.Format("snap.createFailed", detail);
+            return ok;
+        }
+
+        if (action == "restore" || action == "back")
+        {
+            string name = arguments.Count > 1 ? Arg(arguments, 1) : "latest";
+            bool ok = SystemSnapshot.Restore(name, out string detail);
+            response = ok ? detail + "\n" + Lang.Get("snap.restartPrompt") : detail;
+            return ok;
+        }
+
+        if (action == "restart" || action == "reboot")
+        {
+            try
+            {
+                ServerStatic.StopNextRound = ServerStatic.NextRoundAction.Restart;
+                try
+                {
+                    ServerConsole.AddOutputEntry(default(ExitActionRestartEntry));
+                }
+                catch (Exception)
+                {
+                }
+                response = Lang.Get("snap.restarting");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                response = Lang.Format("snap.restartFailed", ex.Message);
+                return false;
+            }
+        }
+
+        response = Lang.Get("snap.usage");
+        return false;
+    }
+
     private static void BuildEntries(out List<MainstreamPlugin> mainstream, out List<string> others)
     {
         mainstream = MainstreamHintPlugins.Detect().ToList();
@@ -409,7 +497,9 @@ internal sealed class HintCommand : ICommand, IUsageProvider
         Lang.Get("cmd.helpSetup"),
         Lang.Get("cmd.helpUpdate"),
         Lang.Get("cmd.helpLang"),
-        Lang.Get("cmd.helpPreOp")
+        Lang.Get("cmd.helpPreOp"),
+        Lang.Get("cmd.helpRefresh"),
+        Lang.Get("cmd.helpSnap")
     };
 
     private static string BuildHelp()

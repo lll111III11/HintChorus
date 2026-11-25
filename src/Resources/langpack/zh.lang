@@ -267,3 +267,24 @@ lang.sourceBoth = 内嵌+外部
 lang.reloaded = [HintChorus] 语言包已重载: {0} 种语言。{1}
 lang.unknown = [HintChorus] 未知语言操作: {0}\n{1}
 lang.dir = [HintChorus] 外部语言包目录: {0}
+
+# ── 主动刷新 / 系统快照 / 安全策略 ─────────────────────────────────────
+cmd.helpRefresh = Hint refresh: 跳过 50ms 收集窗口, 立即刷新一次 UI
+cmd.helpSnap = Hint snap [list|create|restore <名字|latest>|restart]: 系统快照(Beta)
+cmd.refreshOk = [HintChorus] 已请求立即刷新。
+cmd.refreshDenied = [HintChorus] 主动刷新已关闭, 或合并核心未运行。
+snap.header = [HintChorus] 系统快照(Beta) | 最多 {0} 份 | 每 {1} 小时一份
+snap.item = [{0}] {1} | {2} | {3}
+snap.empty = [HintChorus] 还没有任何快照。
+snap.created = [HintChorus] 快照已创建: {0}
+snap.createFailed = [HintChorus] 快照创建失败: {0}
+snap.restored = [HintChorus] 已回溯到 {0}: 写回 {1} 个文件, 跳过 {2} 个。
+snap.lockedHint = 正在使用而无法覆盖(重启后手动替换):
+snap.notFound = [HintChorus] 找不到快照: {0}
+snap.restartPrompt = 需要重启服务器才会生效: 输入 Hint snap restart 立即重启, 或手动重启。
+snap.restarting = [HintChorus] 正在重启服务器...
+snap.restartFailed = [HintChorus] 重启失败: {0}
+snap.usage = 用法: Hint snap [list|create|restore <名字|latest>|restart]
+plugin.reportSnapshot = 快照: {0} | 间隔 {1}h | 最多 {2} 份 | 最近 {3}
+plugin.reportSecurity = 安全: {0}
+plugin.reportDetailedHeader = [HintChorus] 生效配置(详细引导):

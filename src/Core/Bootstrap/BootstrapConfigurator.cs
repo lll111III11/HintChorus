@@ -8,6 +8,10 @@ using HintChorus.Core.Diagnostics;
 using HintChorus.Core.Identity;
 using HintChorus.Core.Interception;
 using HintChorus.Core.Layout;
+using HintChorus.Core.Models;
+using HintChorus.Core.Snapshots;
+using HintChorus.Core.Transport;
+using HintChorus.Core.Utilities;
 using LabApi.Features.Console;
 using Logger = LabApi.Features.Console.Logger;
 using LabApi.Features.Wrappers;
@@ -87,6 +91,13 @@ internal static class BootstrapConfigurator
 		IntercomGuard.ThrottleInterval = config.IntercomThrottleInterval;
 		instance.ApplyConfig();
 		HintBroker.Instance.SuppressUnchangedResend = config.SuppressUnchangedResend;
+		// 新旧 UI 保留时间(只作用于提示通道) + 主动刷新 + 富文本闭合 + 网络包安全策略
+		UiSlot.RetainFloor = Math.Max(0f, config.MinUiRetainSeconds);
+		UiSlot.RetainCeiling = Math.Max(0.5f, Math.Max(config.MinUiRetainSeconds, config.MaxUiRetainSeconds));
+		HintBroker.Instance.AllowActiveRefresh = config.AllowActiveRefresh;
+		RichTextGuard.Enabled = config.CloseRichTextTags;
+		NetworkSecurity.Apply(config);
+		SystemSnapshot.Configure(config, Server.Port);
 		// 排版: 治上下位置错位(rows=空行占位 / offsets=算偏移 / compact=紧凑)
 		HintBroker.Instance.Layout = HintBroker.ParseLayoutMode(config.LayoutMode);
 		HintBroker.Instance.OffsetRowHeight = config.OffsetRowHeight;

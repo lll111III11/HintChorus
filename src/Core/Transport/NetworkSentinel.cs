@@ -58,6 +58,16 @@ public static class NetworkSentinel
 	internal static bool OnHintMessage(NetworkConnection? conn, HintMessage message)
 	{
 		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
+		if (!NetworkSecurity.HintAllowed)
+		{
+			// 安全策略: 禁止外部提示包, 但本层自己合成的复合提示必须放行, 否则画面会被自己拦掉。
+			Hint own = message.Content;
+			if (own == null || !HintBroker.Instance.IsOwnMergedHint(own))
+			{
+				NetworkSecurity.BlockedHints++;
+				return false;
+			}
+		}
 		if (PacketGovernor.Active)
 		{
 			// 全网络包管理: 外部插件直发的提示包直接判无效。
@@ -118,6 +128,11 @@ public static class NetworkSentinel
 
 	internal static bool OnCassiePayload(NetworkConnection? conn, CassieTtsPayload payload)
 	{
+		if (!NetworkSecurity.CassieAllowed)
+		{
+			NetworkSecurity.BlockedCassie++;
+			return false;
+		}
 		if (PacketGovernor.Active)
 		{
 			return PacketGovernor.AllowCassie();
@@ -145,6 +160,24 @@ public static class NetworkSentinel
 	{
 		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		if (NetworkSecurity.Enabled && (!NetworkSecurity.AllowBroadcastPackets || !NetworkSecurity.AllowRpcPackets))
+		{
+			try
+			{
+				Broadcast broadcast = Broadcast.Singleton;
+				bool isBroadcast = broadcast != null
+					&& ((NetworkBehaviour)broadcast).netId == message.netId
+					&& ((NetworkBehaviour)broadcast).ComponentIndex == message.componentIndex;
+				if (isBroadcast)
+				{
+					NetworkSecurity.BlockedBroadcasts++;
+					return false;
+				}
+			}
+			catch (Exception)
+			{
+			}
+		}
 		if (PacketGovernor.Active && !PacketGovernor.AllowBroadcast(message))
 		{
 			return false;

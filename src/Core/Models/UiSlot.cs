@@ -60,6 +60,12 @@ public sealed class UiSlot : IUiSlot
 
 	public long Revision { get; private set; }
 
+	/// <summary>提示类 UI 的全局最短保留时间(秒)。0=不限制。</summary>
+	internal static float RetainFloor { get; set; }
+
+	/// <summary>提示类 UI 的全局最长保留时间(秒)。</summary>
+	internal static float RetainCeiling { get; set; } = float.MaxValue;
+
 	public int EntryCount
 	{
 		get
@@ -85,6 +91,20 @@ public sealed class UiSlot : IUiSlot
 	internal void Push(string text, float now, float duration)
 	{
 		float num = Math.Min(Math.Max(duration, 0.5f), _maxDuration);
+		if (Id.Surface == UiSurface.Hint)
+		{
+			// 新旧 UI 的最短/最长保留时间: 只作用于提示通道, 聊天/广播等易变内容仍按各自上限。
+			if (RetainFloor > 0f && num < RetainFloor)
+			{
+				num = RetainFloor;
+			}
+			if (RetainCeiling > 0f && num > RetainCeiling)
+			{
+				num = RetainCeiling;
+			}
+		}
+		// 富文本收尾: 外部插件常不写闭合标签, 颜色/字号会泄漏到后续文本与其它通道。
+		text = RichTextGuard.EnsureClosed(text);
 		lock (_gate)
 		{
 			TotalReceived++;

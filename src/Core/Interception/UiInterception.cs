@@ -308,6 +308,11 @@ public sealed class UiInterception : IUiInterception
 
 	internal static bool OnBroadcastAdd(NetworkConnection? conn, string message, ushort duration, Broadcast.BroadcastFlags flags)
 	{
+		if (!NetworkSecurity.BroadcastAllowed)
+		{
+			NetworkSecurity.BlockedBroadcasts++;
+			return false;
+		}
 		return BroadcastSurfaceIsolation.Instance.OnBroadcastAdd(conn, message, duration, flags);
 	}
 
